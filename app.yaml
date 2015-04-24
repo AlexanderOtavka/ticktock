@@ -1,0 +1,23 @@
+application: anticipate
+
+# Version 0.0.0
+version: v0-0-0
+api_version: 1
+runtime: python27
+threadsafe: true
+
+
+handlers:
+
+# Web client resources
+- url: /res
+  static_dir: bower_components
+
+
+libraries:
+- name: pycrypto
+  version: latest
+- name: endpoints
+  version: 1.0
+- name: webapp2
+  version: latest
