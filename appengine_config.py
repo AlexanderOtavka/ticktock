@@ -1,6 +1,10 @@
 import os
 import sys
 
-ENDPOINTS_PROJECT_DIR = os.path.join(os.path.dirname(__file__),
-                                     'libs/endpoints-proto-datastore')
-sys.path.append(ENDPOINTS_PROJECT_DIR)
+LIBS = [
+    os.path.join(os.path.dirname(__file__), 'libs/endpoints-proto-datastore'),
+    os.path.join(os.path.dirname(__file__), 'libs/google-api-python-client'),
+    os.path.join(os.path.dirname(__file__), 'libs/appengine-picturesque-python'),
+    os.path.join(os.path.dirname(__file__), 'libs/wrapt'),
+    ]
+sys.path += LIBS

@@ -4,83 +4,108 @@ __copyright__ = 'Copyright (C) 2015 DHS Developers Club'
 
 
 import endpoints
-from protorpc import remote
-from google.appengine.ext import ndb
-from endpoints_proto_datastore.ndb import EndpointsModel
+from protorpc import remote, message_types
+# from google.appengine.ext import ndb
+# from endpoints_proto_datastore.ndb import EndpointsModel
+from auth_util import get_google_plus_user_id
 
-# import auth
+import auth
+import messages
 import models
+from oauth2 import get_calendar_service
 
 
 WEB_CLIENT_ID = ''
 ANDROID_CLIENT_ID = ''
 ANDROID_AUDIENCE = ANDROID_CLIENT_ID
 IOS_CLIENT_ID = ''
+SCOPES = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    # 'https://www.googleapis.com/auth/plus.profile.emails.read',
+    'https://www.googleapis.com/auth/plus.me',
+    ]
+ALLOWED_CLIENT_IDS = [
+    endpoints.API_EXPLORER_CLIENT_ID,
+    ]
 
 
-@endpoints.api(name='anticipate', version='v1',
-               allowed_client_ids=[endpoints.API_EXPLORER_CLIENT_ID])
+@endpoints.api(name='anticipate', version='v1', scopes=SCOPES,
+               allowed_client_ids=ALLOWED_CLIENT_IDS)
 class AnticipateAPI(remote.Service):
     '''Mediates between the client and the datastore and calendar APIs.'''
 
-    @models.Calendar.query_method(name='calendars.get', user_required=True,
-                                  http_method='GET', path='calendars')
-    def get_calendars(self, query):
+    @endpoints.method(message_types.VoidMessage, messages.CalendarCollection,
+                      name='calendars.get', http_method='GET', path='calendars')
+    @auth.required
+    def get_calendars(self, request):
         '''Get a list of calendars the user has chosen.'''
-        return query
+        return request
 
-    @models.Calendar.query_method(name='calendars.public.get', user_required=False,
-                                  http_method='GET', path='calendars/public')
-    def get_public_calendars(self, query):
+    @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
+                      name='calendars.public.get', http_method='GET', path='calendars/public')
+    def get_public_calendars(self, request):
         '''Get a list of public calendars.'''
-        return query
+        return request
 
-    @models.Calendar.query_method(name='calendars.user.get', user_required=True,
-                                  http_method='GET', path='calendars/user')
-    def get_user_calendars(self, query):
+    @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
+                      name='calendars.user.get', http_method='GET', path='calendars/user')
+    @auth.required
+    def get_user_calendars(self, request):
         '''Get all of the user's calendars for a given google account.'''
-        return query
+        service = get_calendar_service(get_google_plus_user_id())
+        calendar_list = service.calendarList().list(pageToken=None).execute()
+        return messages.CalendarCollection(items=[
+                messages.Calendar(
+                    name=item['summary'],
+                    color=item['backgroundColor'])
+                for item in calendar_list['items']])
 
-    @models.Calendar.method(name='calendars.put', user_required=True,
-                            http_method='PUT', path='calendars')
-    def put_calendar(self, model):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='calendars.post', http_method='POST', path='calendars')
+    @auth.required
+    def post_calendar(self, request):
         '''Add a calendar to the user's list.'''
-        return model
+        pass
 
-    @models.Calendar.method(name='calendars.post', user_required=True,
-                            http_method='POST', path='calendars')
-    def post_calendar(self, model):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='calendars.put', http_method='PUT', path='calendars')
+    @auth.required
+    def put_calendar(self, request):
         '''Update a calendar's data.'''
-        return model
+        pass
 
-    @models.Calendar.method(name='calendars.delete', user_required=True,
-                            http_method='DELETE', path='calendars')
-    def delete_calendar(self, model):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='calendars.delete', http_method='DELETE', path='calendars')
+    @auth.required
+    def delete_calendar(self, request):
         '''Remove a calendar from a user's list.'''
-        return model
+        pass
 
-    @models.Event.query_method(name='events.get', user_required=False,
-                               http_method='GET', path='events')
-    def get_events(self, query):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='events.get', http_method='GET', path='events')
+    def get_events(self, request):
         '''Get a list of events for a given calendar.'''
-        return query
+        pass
 
-    @models.Event.method(name='events.post', user_required=True,
-                         http_method='POST', path='events')
-    def post_event(self, model):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='events.put', http_method='PUT', path='events')
+    @auth.required
+    def put_event(self, request):
         '''Update an event's data.'''
-        return model
+        pass
 
-    @models.Settings.query_method(name='settings.get', user_required=True,
-                                  http_method='GET', path='settings')
-    def get_settings(self, query):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='settings.get', http_method='GET', path='settings')
+    @auth.required
+    def get_settings(self, request):
         '''Get the current user's settings data.'''
-        return query
+        pass
 
-    @models.Settings.method(name='settings.post', user_required=True,
-                            http_method='POST', path='settings')
-    def post_settings(self, model):
+    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+                      name='settings.put', http_method='PUT', path='settings')
+    @auth.required
+    def put_settings(self, request):
         '''Change the current user's settings.'''
-        return model
+        pass
 
 application = endpoints.api_server([AnticipateAPI])

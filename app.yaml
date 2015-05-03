@@ -9,9 +9,13 @@ threadsafe: true
 
 handlers:
 
-# Endpoints api
+# Endpoints API
 - url: /_ah/spi/.*
   script: api.application
+
+# OAuth2 redirect handlers
+- url: /oauth2/.*
+  script: api.oauth2.redirect_handlers
 
 # Web client resources
 - url: /res

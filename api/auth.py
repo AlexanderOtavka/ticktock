@@ -2,6 +2,7 @@
 
 
 import endpoints
+import wrapt
 
 
 @wrapt.decorator
