@@ -14,7 +14,6 @@ from auth_util import get_google_plus_user_id
 import auth
 import messages
 import models
-from oauth2 import get_calendar_service
 import calendar_api
 
 
@@ -43,7 +42,7 @@ class AnticipateAPI(remote.Service):
     def get_calendars(self, request):
         '''Get a list of calendars the user has chosen.'''
         user_id = get_google_plus_user_id()
-        service = get_calendar_service(user_id)
+        service = auth.get_calendar_service(user_id)
         all_calendars = (calendar_api.get_personal_calendars(service) +
                          calendar_api.get_public_calendars())
 
@@ -76,7 +75,7 @@ class AnticipateAPI(remote.Service):
     def get_personal_calendars(self, request):
         '''Get all of the user's personal calendars for a given google account.'''
         user_id = get_google_plus_user_id()
-        service = get_calendar_service(user_id)
+        service = auth.get_calendar_service(user_id)
         calendars = calendar_api.get_personal_calendars(service)
         return messages.CalendarCollection(items=calendars)
 
@@ -108,7 +107,9 @@ class AnticipateAPI(remote.Service):
             raise endpoints.ForbiddenException(
                 'No calendar with id of "{}" in user\'s list.'.format(cal_id))
 
-        model.hidden = request.hidden
+        temp = request.hidden
+        if temp is not None:
+            model.hidden = temp
         model.put()
         return messages.Calendar(
             calendar_id=cal_id,
@@ -131,31 +132,99 @@ class AnticipateAPI(remote.Service):
             hidden = entity.hidden,
         )
 
-    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+    @endpoints.method(messages.SearchQuery, messages.EventCollection,
                       name='events.get', http_method='GET', path='events')
+    @auth.required
     def get_events(self, request):
-        '''Get a list of events for a given calendar.'''
-        pass
+        '''Get a list of events for a given calendar.
 
-    @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
+        If no calendar is given, events from all of the user's calendars will be shown.
+        '''
+        user_id = get_google_plus_user_id()
+        user_key = models.get_user_key(user_id)
+        service = auth.get_calendar_service(user_id)
+
+        cal_id = request.calendar_id
+        if cal_id:
+            events = calendar_api.get_events(service, cal_id)
+        else:
+            events = []
+            hidden = request.only_hidden
+            if hidden is None:
+                hidden = False
+            query = models.Calendar.query(models.Calendar.hidden == hidden, ancestor=user_key)
+            for calendar in query.fetch():
+                events += calendar_api.get_events(service, calendar.key.string_id())
+
+        for event in events:
+            key = ndb.Key(models.Event, event.event_id,
+                          parent=ndb.Key(models.Calendar, event.calendar_id, parent=user_key))
+            entity = key.get()
+            if entity is not None:
+                event.hidden = entity.hidden
+                event.starred = entity.starred
+            # TODO: implement garbage collection for old or unbound event entities
+
+        return messages.EventCollection(items=events)
+
+    @endpoints.method(messages.SearchQuery, messages.EventCollection,
+                      name='events.public.get', http_method='GET', path='events/public')
+    def get_public_events(self, request):
+        '''Get a list of events for a given public calendar.'''
+        events = []
+        return messages.EventCollection(items=events)
+
+    @endpoints.method(messages.Event, messages.Event,
                       name='events.put', http_method='PUT', path='events')
     @auth.required
     def put_event(self, request):
-        '''Update an event's data.'''
-        pass
+        '''Update an event's data.
+
+        Only Event.hidden and Event.starred can be changed.  An event cannot be starred if it is
+        hidden.
+        '''
+        user_id = get_google_plus_user_id()
+        cal_id = request.calendar_id
+        event_id = request.event_id
+        user_key = models.get_user_key(user_id)
+        cal_key = ndb.Key(models.Calendar, cal_id, parent=user_key)
+        if cal_key.get() is None:
+            raise endpoints.ForbiddenException(
+                'No calendar with id of "{}" in user\'s list.'.format(cal_id))
+
+        model = ndb.Key(models.Event, event_id, parent=cal_key).get()
+        if model is None:
+            model = models.Event(id=event_id, parent=cal_key)
+
+        hidden = request.hidden
+        starred = request.starred
+        if hidden is not None:
+            model.hidden = hidden
+        if model.hidden:
+            starred = False
+        if starred is not None:
+            model.starred = starred
+
+        model.put()
+        return messages.Event(
+            event_id=event_id,
+            calendar_id=cal_id,
+            hidden=model.hidden,
+            starred=model.starred,
+        )
 
     @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
                       name='settings.get', http_method='GET', path='settings')
     @auth.required
     def get_settings(self, request):
         '''Get the current user's settings data.'''
-        pass
+        raise NotImplementedError()
 
     @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
                       name='settings.put', http_method='PUT', path='settings')
     @auth.required
     def put_settings(self, request):
         '''Change the current user's settings.'''
-        pass
+        raise NotImplementedError()
 
 application = endpoints.api_server([AnticipateAPI])

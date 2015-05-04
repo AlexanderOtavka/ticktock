@@ -24,11 +24,11 @@ class EventSettings(messages.Message):
 class Event(messages.Message):
     event_id = messages.StringField(1, required=True)
     calendar_id = messages.StringField(2, required=True)
-    name = messages.StringField(3, required=True)
-    start_date = message_types.DateTimeField(4, required=True)
-    end_date = message_types.DateTimeField(5, required=True)
-    starred = messages.BooleanField(6, default=False)
-    hidden = messages.BooleanField(7, default=False)
+    name = messages.StringField(3)
+    start_date = message_types.DateTimeField(4)
+    end_date = message_types.DateTimeField(5)
+    starred = messages.BooleanField(6)
+    hidden = messages.BooleanField(7)
     link = messages.StringField(8)
     settings = messages.MessageField(EventSettings, 9)
 
@@ -53,6 +53,7 @@ class SearchQuery(messages.Message):
     search = messages.StringField(1)
     calendar_id = messages.StringField(2)
     only_hidden = messages.BooleanField(3)
+    # TODO: implement paging.
     page_token = messages.StringField(4)
     # FUTURE: implement timezones
     timezone = messages.StringField(5)
