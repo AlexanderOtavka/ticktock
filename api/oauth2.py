@@ -1,5 +1,7 @@
 '''Functions for accessing Google APIs.'''
 __author__ = 'Alexander Otavka'
+__copyright__ = 'Copyright (C) 2015 DHS Developers Club'
+
 
 
 import os
@@ -31,8 +33,8 @@ class NoStoredCredentialsError(Exception):
 
 class AuthRedirectException(endpoints.ServiceException):
     http_status = httplib.BAD_REQUEST
-    # http_status = httplib.CONFLICT
-    # http_status = httplib.PROXY_AUTHENTICATION_REQUIRED
+    #http_status = httplib.CONFLICT
+    #http_status = httplib.PROXY_AUTHENTICATION_REQUIRED
 
 def get_credentials(client_secret_file, scope, user_id, redirect_uri):
     '''Gets valid user credentials from storage.

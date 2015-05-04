@@ -6,6 +6,9 @@ __copyright__ = 'Copyright (C) 2015 DHS Developers Club'
 from google.appengine.ext import ndb
 
 
+def get_user_key(user_id):
+    return ndb.Key('User', int(user_id) % (1 << 48))
+
 class Calendar(ndb.Model):
     hidden = ndb.BooleanProperty(default=False)
 
