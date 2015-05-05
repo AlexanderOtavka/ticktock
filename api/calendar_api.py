@@ -14,6 +14,8 @@ API_NAME = 'calendar'
 API_VERSION = 'v3'
 
 
+# TODO: optimize api requests to only ask for needed fields.
+
 def get_personal_calendars(service):
     page_token = None
     calendars = []
@@ -36,13 +38,16 @@ def get_personal_calendars(service):
 def get_public_calendars():
     return []
 
+def datetime_from_string(string):
+    date_format = '%Y-%m-%dT%H:%M:%S'
+    return datetime.strptime(string[:19], date_format)
+
 def get_events(service, cal_id, page_token=None, time_zone=None):
     events = []
-    now = datetime.utcnow().isoformat() + 'Z'
+#    now = datetime.utcnow().isoformat() + 'Z'
     api_query_result = service.events().list(calendarId=cal_id, pageToken=page_token,
-                                             maxResults=10, timeMin=now,
+                                             maxResults=10, #timeMin=now,
                                              timeZone=time_zone).execute()
-    date_format = '%Y-%m-%dT%H:%M:%S'
 
     for item in api_query_result['items']:
         try:
@@ -51,8 +56,8 @@ def get_events(service, cal_id, page_token=None, time_zone=None):
                 event_id=item['id'],
                 calendar_id=cal_id,
                 name=item['summary'],
-                start_date=datetime.strptime(item['start']['dateTime'][:-6], date_format),
-                end_date=datetime.strptime(item['end']['dateTime'][:-6], date_format),
+                start_date=datetime_from_string(item['start']['dateTime']),
+                end_date=datetime_from_string(item['end']['dateTime']),
                 hidden=False,
                 starred=False,
             )

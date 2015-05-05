@@ -56,8 +56,8 @@ class AnticipateAPI(remote.Service):
                     chosen_calendars.append(cal)
                     break
             else:
-                logging.warning('Bad entity with id of "{}".  Deleting...'
-                                .format(entity.key.string_id()))
+                logging.info('Deleted: unbound Calendar entity with calendar_id = "{}" and ' +
+                             'user_id = "{}".'.format(entity.key.string_id(), user_id))
                 entity.key.delete()
 
         return messages.CalendarCollection(items=chosen_calendars)

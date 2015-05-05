@@ -55,5 +55,5 @@ class SearchQuery(messages.Message):
     only_hidden = messages.BooleanField(3)
     # TODO: implement paging.
     page_token = messages.StringField(4)
-    # FUTURE: implement timezones
+    # FUTURE: implement timezones.
     timezone = messages.StringField(5)

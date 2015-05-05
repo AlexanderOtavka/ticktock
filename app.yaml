@@ -16,7 +16,7 @@ handlers:
 # Garbage collectors
 - url: /_ah/garbagecollect/.*
   script: api.garbagecollect.collectors
-#  login: admin # TODO: uncomment on release.
+  login: admin
 
 # OAuth2 redirect handlers
 - url: /oauth2/.*
