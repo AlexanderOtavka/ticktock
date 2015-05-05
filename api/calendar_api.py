@@ -10,6 +10,10 @@ import messages
 import models
 
 
+API_NAME = 'calendar'
+API_VERSION = 'v3'
+
+
 def get_personal_calendars(service):
     page_token = None
     calendars = []

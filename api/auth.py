@@ -3,7 +3,6 @@ __author__ = 'Alexander Otavka'
 __copyright__ = 'Copyright (C) 2015 DHS Developers Club'
 
 
-
 import os
 import pickle
 import httplib
@@ -18,6 +17,8 @@ from apiclient.discovery import build
 from oauth2client import client
 from oauth2client.appengine import CredentialsProperty, StorageByKeyName
 from httplib2 import Http
+
+import calendar_api
 
 
 @wrapt.decorator
@@ -69,6 +70,9 @@ def get_credentials(client_secret_file, scope, user_id, redirect_uri):
         raise NoStoredCredentialsError(auth_uri)
     return credentials
 
+def get_service_from_credentials(api_name, api_version, credentials):
+    return build(api_name, api_version, http=credentials.authorize(Http()))
+
 def get_calendar_service(user_id):
     '''Get a Resource object for calendar API v3 for a given user.
 
@@ -88,7 +92,8 @@ def get_calendar_service(user_id):
         credentials = get_credentials(client_secret_file, scope, user_id, redirect_uri)
     except NoStoredCredentialsError as e:
         raise AuthRedirectException(e.auth_uri)
-    return build('calendar', 'v3', http=credentials.authorize(Http()))
+    return get_service_from_credentials(calendar_api.API_NAME, calendar_api.API_VERSION,
+                                        credentials)
 
 
 class CalendarRedirectHandler(webapp2.RequestHandler):
@@ -103,5 +108,5 @@ class CalendarRedirectHandler(webapp2.RequestHandler):
             '<!DOCTYPE html><html><body><script> window.close(); </script></body></html>')
 
 redirect_handlers = webapp2.WSGIApplication([
-    (r'/oauth2/calendar/(\d+)', CalendarRedirectHandler)
-    ])
+    (r'/oauth2/calendar/(\d+)', CalendarRedirectHandler),
+])

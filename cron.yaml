@@ -1,0 +1,4 @@
+cron:
+- description: datastore garbage collection
+  url: /_ah/garbagecollect/go
+  schedule: every 30 days

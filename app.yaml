@@ -13,13 +13,21 @@ handlers:
 - url: /_ah/spi/.*
   script: api.application
 
+# Garbage collectors
+- url: /_ah/garbagecollect/.*
+  script: api.garbagecollect.collectors
+#  login: admin # TODO: uncomment on release.
+
 # OAuth2 redirect handlers
 - url: /oauth2/.*
-  script: api.oauth2.redirect_handlers
+  script: api.auth.redirect_handlers
 
 # Web client resources
 - url: /res
   static_dir: bower_components
+
+# Web client pages
+#-url: /
 
 
 libraries:

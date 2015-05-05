@@ -163,7 +163,6 @@ class AnticipateAPI(remote.Service):
             if entity is not None:
                 event.hidden = entity.hidden
                 event.starred = entity.starred
-            # TODO: implement garbage collection for old or unbound event entities
 
         return messages.EventCollection(items=events)
 
