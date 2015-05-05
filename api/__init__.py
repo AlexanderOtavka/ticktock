@@ -92,9 +92,9 @@ class AnticipateAPI(remote.Service):
         return message_types.VoidMessage()
 
     @endpoints.method(messages.Calendar, messages.Calendar,
-                      name='calendars.put', http_method='PUT', path='calendars')
+                      name='calendars.patch', http_method='PATCH', path='calendars')
     @auth.required
-    def put_calendar(self, request):
+    def patch_calendar(self, request):
         '''Update a calendar's data.
 
         Only Calendar.hidden can be changed.
@@ -174,9 +174,9 @@ class AnticipateAPI(remote.Service):
         return messages.EventCollection(items=events)
 
     @endpoints.method(messages.Event, messages.Event,
-                      name='events.put', http_method='PUT', path='events')
+                      name='events.patch', http_method='PATCH', path='events')
     @auth.required
-    def put_event(self, request):
+    def patch_event(self, request):
         '''Update an event's data.
 
         Only Event.hidden and Event.starred can be changed.  An event cannot be starred if it is
@@ -220,9 +220,9 @@ class AnticipateAPI(remote.Service):
         raise NotImplementedError()
 
     @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
-                      name='settings.put', http_method='PUT', path='settings')
+                      name='settings.patch', http_method='PATCH', path='settings')
     @auth.required
-    def put_settings(self, request):
+    def patch_settings(self, request):
         '''Change the current user's settings.'''
         raise NotImplementedError()
 
