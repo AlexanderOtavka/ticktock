@@ -18,11 +18,11 @@ from oauth2client import client
 from oauth2client.appengine import CredentialsProperty, StorageByKeyName
 from httplib2 import Http
 
-import calendar_api
+import gapiutils
 
 
 @wrapt.decorator
-def required(func, instance, args, kwargs):
+def auth_required(func, instance, args, kwargs):
     current_user = endpoints.get_current_user()
     if current_user is None:
         raise endpoints.UnauthorizedException('Invalid token.')
@@ -92,7 +92,7 @@ def get_calendar_service(user_id):
         credentials = get_credentials(client_secret_file, scope, user_id, redirect_uri)
     except NoStoredCredentialsError as e:
         raise AuthRedirectException(e.auth_uri)
-    return get_service_from_credentials(calendar_api.API_NAME, calendar_api.API_VERSION,
+    return get_service_from_credentials(gapiutils.API_NAME, gapiutils.API_VERSION,
                                         credentials)
 
 

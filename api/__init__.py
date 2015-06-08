@@ -8,13 +8,13 @@ import logging
 import endpoints
 from protorpc import remote, message_types
 from google.appengine.ext import ndb
-#from endpoints_proto_datastore.ndb import EndpointsModel
 from auth_util import get_google_plus_user_id
 
-import auth
+import authutils
 import messages
 import models
-import calendar_api
+import gapiutils
+import searchutils
 
 
 SCOPES = [
@@ -38,13 +38,13 @@ class AnticipateAPI(remote.Service):
 
     @endpoints.method(message_types.VoidMessage, messages.CalendarCollection,
                       name='calendars.get', http_method='GET', path='calendars')
-    @auth.required
+    @authutils.auth_required
     def get_calendars(self, request):
         '''Get a list of calendars the user has chosen.'''
         user_id = get_google_plus_user_id()
-        service = auth.get_calendar_service(user_id)
-        all_calendars = (calendar_api.get_personal_calendars(service) +
-                         calendar_api.get_public_calendars())
+        service = authutils.get_calendar_service(user_id)
+        all_calendars = (gapiutils.get_personal_calendars(service) +
+                         gapiutils.get_public_calendars())
 
         user_key = models.get_user_key(user_id)
         chosen_ndb = models.Calendar.query(ancestor=user_key).fetch()
@@ -66,22 +66,23 @@ class AnticipateAPI(remote.Service):
                       name='calendars.public.get', http_method='GET', path='calendars/public')
     def get_public_calendars(self, request):
         '''Get a list of public calendars.'''
-        calendars = calendar_api.get_public_calendars()
+        # TODO: implement public calendars
+        calendars = gapiutils.get_public_calendars()
         return messages.CalendarCollection(items=calendars)
 
     @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
                       name='calendars.personal.get', http_method='GET', path='calendars/personal')
-    @auth.required
+    @authutils.auth_required
     def get_personal_calendars(self, request):
         '''Get all of the user's personal calendars for a given google account.'''
         user_id = get_google_plus_user_id()
-        service = auth.get_calendar_service(user_id)
-        calendars = calendar_api.get_personal_calendars(service)
+        service = authutils.get_calendar_service(user_id)
+        calendars = gapiutils.get_personal_calendars(service)
         return messages.CalendarCollection(items=calendars)
 
     @endpoints.method(messages.Calendar, message_types.VoidMessage,
                       name='calendars.post', http_method='POST', path='calendars')
-    @auth.required
+    @authutils.auth_required
     def post_calendar(self, request):
         '''Add a calendar to the user's list.'''
         user_id = get_google_plus_user_id()
@@ -93,7 +94,7 @@ class AnticipateAPI(remote.Service):
 
     @endpoints.method(messages.Calendar, messages.Calendar,
                       name='calendars.patch', http_method='PATCH', path='calendars')
-    @auth.required
+    @authutils.auth_required
     def patch_calendar(self, request):
         '''Update a calendar's data.
 
@@ -118,7 +119,7 @@ class AnticipateAPI(remote.Service):
 
     @endpoints.method(messages.Calendar, messages.Calendar,
                       name='calendars.delete', http_method='DELETE', path='calendars')
-    @auth.required
+    @authutils.auth_required
     def delete_calendar(self, request):
         '''Remove a calendar from a user's list.'''
         user_id = get_google_plus_user_id()
@@ -134,35 +135,63 @@ class AnticipateAPI(remote.Service):
 
     @endpoints.method(messages.SearchQuery, messages.EventCollection,
                       name='events.get', http_method='GET', path='events')
-    @auth.required
+    @authutils.auth_required
     def get_events(self, request):
         '''Get a list of events for a given calendar.
 
         If no calendar is given, events from all of the user's calendars will be shown.
         '''
+        # NOTE: ensure GET /events works with repeating events
         user_id = get_google_plus_user_id()
         user_key = models.get_user_key(user_id)
-        service = auth.get_calendar_service(user_id)
+        logging.debug('start get service')
+        service = authutils.get_calendar_service(user_id)
+        logging.debug('end get service')
+        hidden = request.only_hidden
+        if hidden is None:
+            hidden = False
 
+        # get event list from the google api
         cal_id = request.calendar_id
         if cal_id:
-            events = calendar_api.get_events(service, cal_id)
+            events = gapiutils.get_events(service, cal_id)
         else:
             events = []
-            hidden = request.only_hidden
-            if hidden is None:
-                hidden = False
-            query = models.Calendar.query(models.Calendar.hidden == hidden, ancestor=user_key)
+            query = models.Calendar.query(models.Calendar.hidden==hidden, ancestor=user_key)
             for calendar in query.fetch():
-                events += calendar_api.get_events(service, calendar.key.string_id())
+                events += gapiutils.get_events(service, calendar.key.string_id())
 
+        # update event list with fields stored in the datastore
         for event in events:
-            key = ndb.Key(models.Event, event.event_id,
-                          parent=ndb.Key(models.Calendar, event.calendar_id, parent=user_key))
-            entity = key.get()
+            cal_key = ndb.Key(models.Calendar, event.calendar_id, parent=user_key)
+            event_key = ndb.Key(models.Event, event.event_id, parent=cal_key)
+            entity = event_key.get()
             if entity is not None:
                 event.hidden = entity.hidden
                 event.starred = entity.starred
+
+        # insert any starred events not included
+        query = models.Event.query(models.Event.starred==True, ancestor=user_key)
+        for entity in query.fetch():
+            entity_id = entity.key.string_id()
+            for event in events:
+                if event.event_id == entity_id:
+                    break
+            else:
+                try:
+                    event = gapiutils.get_event(service, entity.key.parent().string_id(),
+                                                entity_id)
+                except gapiutils.OldEventError:
+                    continue
+                event.starred = True
+                events.append(event)
+
+        # sort and search
+        search = request.search
+        if search:
+            events = searchutils.keyword_chron_search(events, keywords)
+        else:
+            events = searchutils.chron_sort(events)
 
         return messages.EventCollection(items=events)
 
@@ -170,12 +199,13 @@ class AnticipateAPI(remote.Service):
                       name='events.public.get', http_method='GET', path='events/public')
     def get_public_events(self, request):
         '''Get a list of events for a given public calendar.'''
+        # TODO: implement events.public.get
         events = []
         return messages.EventCollection(items=events)
 
     @endpoints.method(messages.Event, messages.Event,
                       name='events.patch', http_method='PATCH', path='events')
-    @auth.required
+    @authutils.auth_required
     def patch_event(self, request):
         '''Update an event's data.
 
@@ -214,14 +244,14 @@ class AnticipateAPI(remote.Service):
 
     @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
                       name='settings.get', http_method='GET', path='settings')
-    @auth.required
+    @authutils.auth_required
     def get_settings(self, request):
         '''Get the current user's settings data.'''
         raise NotImplementedError()
 
     @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
                       name='settings.patch', http_method='PATCH', path='settings')
-    @auth.required
+    @authutils.auth_required
     def patch_settings(self, request):
         '''Change the current user's settings.'''
         raise NotImplementedError()

@@ -53,7 +53,7 @@ class SearchQuery(messages.Message):
     search = messages.StringField(1)
     calendar_id = messages.StringField(2)
     only_hidden = messages.BooleanField(3)
-    # TODO: implement paging.
+    # TODO: implement paging (get all the data for forever, then memcache it)
     page_token = messages.StringField(4)
     # FUTURE: implement timezones.
     timezone = messages.StringField(5)

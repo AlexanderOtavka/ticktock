@@ -20,14 +20,14 @@ handlers:
 
 # OAuth2 redirect handlers
 - url: /oauth2/.*
-  script: api.auth.redirect_handlers
+  script: api.authutils.redirect_handlers
 
 # Web client resources
 - url: /res
   static_dir: bower_components
 
 # Web client pages
-#-url: /
+#- url: /
 
 
 libraries:
