@@ -1,3 +1,0 @@
-calendar-blank: http://materialdesignicons.com/icon/calendar-blank
-calendar-remove: http://materialdesignicons.com/icon/calendar-remove
-calendar-multiple: http://materialdesignicons.com/icon/calendar-multiple

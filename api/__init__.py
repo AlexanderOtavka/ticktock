@@ -16,6 +16,8 @@ import models
 import gapiutils
 import searchutils
 
+from redirect import explorer_redirect
+
 
 SCOPES = [
     #'https://www.googleapis.com/auth/plus.profile.emails.read',

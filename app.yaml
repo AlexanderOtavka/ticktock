@@ -1,4 +1,4 @@
-application: anticipate
+application: anticipate-api
 
 # Version 0.0.0
 version: v0-0-0
@@ -27,7 +27,8 @@ handlers:
   static_dir: bower_components
 
 # Web client pages
-#- url: /
+- url: /
+  script: api.explorer_redirect
 
 
 libraries:
