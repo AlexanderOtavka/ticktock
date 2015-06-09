@@ -1,0 +1,22 @@
+{
+  "language": {
+    "html": {
+      "spaceUnits": 2
+    },
+    "less": {
+      "spaceUnits": 4
+    },
+    "javascript": {
+      "spaceUnits": 4
+    },
+    "python": {
+      "spaceUnits": 4
+    },
+    "yaml": {
+      "spaceUnits": 2
+    },
+    "json": {
+      "spaceUnits": 2
+    }
+  }
+}
