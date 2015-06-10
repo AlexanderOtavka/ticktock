@@ -22,11 +22,7 @@ handlers:
 - url: /oauth2/.*
   script: api.authutils.redirect_handlers
 
-# Web client resources
-- url: /res
-  static_dir: bower_components
-
-# Web client pages
+# API explorer redirect
 - url: /
   script: api.explorer_redirect
 
