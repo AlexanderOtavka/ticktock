@@ -19,13 +19,20 @@ import gapiutils
 
 
 def auth_required(func):
-    def auth_required_func(self, request):
+    """Decorator to make given endpoints method require signin.
+
+    :type func: __builtin__.function
+    :rtype: __builtin.function
+    """
+    def wrapped(self, request):
         current_user = endpoints.get_current_user()
         if current_user is None:
             raise endpoints.UnauthorizedException("Invalid token.")
         return func(self, request)
 
-    return auth_required_func
+    wrapped.__name__ = func.__name__
+    wrapped.__doc__ = func.__doc__
+    return wrapped
 
 
 class CredentialsModel(db.Model):
@@ -79,12 +86,8 @@ def get_service_from_credentials(api_name, api_version, credentials):
 def get_calendar_service(user_id):
     """Get a Resource object for calendar API v3 for a given user.
 
-    Args:
-        user_id (string): Google+ user id.
-    Returns:
-        Resource: The calendar API v3 service.
-    Raises:
-        AuthRedirectException: Includes auth uri in message.
+    :return: The calendar API v3 service.
+    :raise AuthRedirectException: Includes auth uri in message.
     """
     user_id = str(user_id)
     scope = "https://www.googleapis.com/auth/calendar.readonly"

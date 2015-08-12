@@ -101,8 +101,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
 def get_event(service, cal_id, event_id, time_zone="UTC"):
     """Get a specific event by ID.
 
-    Raises:
-        OldEventError: if the requested event takes place in the past.
+    :raise OldEventError: If the requested event takes place in the past.
     """
     result = service.events().get(
         fields=EVENT_FIELDS,

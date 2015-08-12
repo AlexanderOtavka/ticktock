@@ -29,9 +29,9 @@ ALLOWED_CLIENT_IDS = [
 ]
 
 
-@endpoints.api(name="anticipate", version="v1", scopes=SCOPES,
+@endpoints.api(name="ticktock", version="v1", scopes=SCOPES,
                allowed_client_ids=ALLOWED_CLIENT_IDS)
-class AnticipateAPI(remote.Service):
+class TickTockAPI(remote.Service):
     """Mediates between the client and the datastore and calendar APIs."""
 
     @endpoints.method(message_types.VoidMessage, messages.CalendarCollection,
@@ -255,4 +255,4 @@ class AnticipateAPI(remote.Service):
         raise NotImplementedError()
 
 
-application = endpoints.api_server([AnticipateAPI])
+application = endpoints.api_server([TickTockAPI])

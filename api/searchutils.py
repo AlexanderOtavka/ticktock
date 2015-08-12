@@ -3,6 +3,9 @@ __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
+from messages import Event
+
+
 class NullSearchError(Exception):
     def __init__(self):
         super(NullSearchError, self).__init__("Insufficient matches found for data item.")
@@ -10,6 +13,11 @@ class NullSearchError(Exception):
 
 def _get_kw_score(event, keywords, narrow=False):
     """Get a relevance score for an event based on keyword matches.
+
+    :type event: Event
+    :type keywords: str
+    :type narrow: bool
+    :rtype: int
 
     :param keywords: Search terms separated by spaces.
     :param narrow: If true, throw NullSearchError for insufficient keyword matches.
