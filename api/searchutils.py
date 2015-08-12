@@ -2,7 +2,6 @@
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
-
 from messages import Event
 
 
@@ -14,14 +13,11 @@ class NullSearchError(Exception):
 def _get_kw_score(event, keywords, narrow=False):
     """Get a relevance score for an event based on keyword matches.
 
-    :type event: Event
-    :type keywords: str
-    :type narrow: bool
-    :rtype: int
+    :param Event event: Event to be scored.
+    :param str keywords: Search terms separated by spaces.
+    :param bool narrow: If true, throw NullSearchError for insufficient keyword matches.
 
-    :param keywords: Search terms separated by spaces.
-    :param narrow: If true, throw NullSearchError for insufficient keyword matches.
-    :return: The number of matches.
+    :rtype: int
     :raise NullSearchError: If narrow=True and insufficient keyword matches are found.
     """
     event_string_data = event.name
@@ -35,20 +31,20 @@ def _get_kw_score(event, keywords, narrow=False):
     return matches
 
 
-STARRED = lambda e: not e.starred
-START_DATE = lambda e: e.start_date
-KW_SCORE = lambda kw, narrow: lambda e: _get_kw_score(e, kw, narrow)
+STARRED = lambda e: float(not e.starred)
+START_DATE = lambda e: float(e.start_date)
+KW_SCORE = lambda kw, narrow: lambda e: float(_get_kw_score(e, kw, narrow))
 
-CHRONOLOGICAL_ORDER = (STARRED, START_DATE)
-KW_CHRON_ORDER = lambda kw, narrow: (STARRED, KW_SCORE(kw, narrow), START_DATE)
+CHRONOLOGICAL_ORDER = [STARRED, START_DATE]
+KW_CHRON_ORDER = lambda kw, narrow: [STARRED, KW_SCORE(kw, narrow), START_DATE]
 
 
 def search(list_, order):
     """Search and sort list_ based on tuple of order functions.
 
-    :type list_: list
-    :type order: tuple
-    :rtype: list
+    :type list_: list[T]
+    :type order: list[(Event) -> float]
+    :rtype: list[T]
     """
     sorted_list = []
     for i in list_:
@@ -61,19 +57,19 @@ def search(list_, order):
 
 
 def keyword_chron_search(event_list, keywords):
-    """Convenience function searches with KW_CHRON_ORDER.
+    """Convenience function, search with KW_CHRON_ORDER.
 
-    :type event_list: list
+    :type event_list: list[Event]
     :type keywords: str
-    :rtype: list
+    :rtype: list[Event]
     """
     return search(event_list, KW_CHRON_ORDER(keywords, True))
 
 
 def chron_sort(event_list):
-    """Convenience function searches with CHRONOLOGICAL_ORDER.
+    """Convenience function, search with CHRONOLOGICAL_ORDER.
 
-    :type event_list: list
-    :rtype: list
+    :type event_list: list[Event]
+    :rtype: list[Event]
     """
     return search(event_list, CHRONOLOGICAL_ORDER)

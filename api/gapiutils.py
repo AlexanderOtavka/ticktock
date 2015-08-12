@@ -20,6 +20,11 @@ class OldEventError(Exception):
 
 
 def get_personal_calendars(service):
+    """
+    Return a list of the current user's calendars.
+
+    :rtype: list[messages.Calendar]
+    """
     page_token = None
     calendars = []
     while True:
@@ -34,7 +39,7 @@ def get_personal_calendars(service):
                 hidden=False,
             )
             for item in api_query_result["items"]
-            ]
+        ]
         page_token = api_query_result.get("nextPageToken")
         if not page_token:
             break
@@ -46,16 +51,36 @@ def get_public_calendars():
 
 
 def datetime_from_string(string):
+    """
+    Parse a datetime string.
+
+    :type string: str
+    :rtype: datetime
+    """
     date_format = "%Y-%m-%dT%H:%M:%S"
     return datetime.strptime(string[:19], date_format)
 
 
 def datetime_from_date_string(string):
+    """
+    Parse a date string.
+
+    :type string: str
+    :rtype: datetime
+    """
     date_format = "%Y-%m-%d"
     return datetime.strptime(string[:10], date_format)
 
 
 def get_events(service, cal_id, page_token=None, time_zone="UTC"):
+    """
+    Return a list of events for a given calendar.
+
+    :type cal_id: str
+    :type page_token: str
+    :type time_zone: str
+    :rtype: list[messages.Event]
+    """
     events = []
     now = datetime.utcnow().isoformat() + "Z"
     result = service.events().list(
@@ -99,8 +124,10 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
 
 
 def get_event(service, cal_id, event_id, time_zone="UTC"):
-    """Get a specific event by ID.
+    """
+    Get a specific event by ID.
 
+    :rtype: messages.Event
     :raise OldEventError: If the requested event takes place in the past.
     """
     result = service.events().get(
@@ -109,8 +136,14 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
         eventId=event_id,
         timeZone=time_zone,
     ).execute()
+
+    end = result["end"]
+    if "dateTime" in end:
+        end_date = datetime_from_string(end["dateTime"])
+    else:
+        end_date = datetime_from_date_string(end["date"])
+
     now = datetime.utcnow()
-    end_date = datetime_from_string(result["end"]["dateTime"])
     if end_date < now:
         raise OldEventError("Event \"{}\" ended in the past.".format(event_id))
 

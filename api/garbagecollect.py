@@ -14,13 +14,15 @@ import models
 
 
 class GarbageCollector(webapp2.RequestHandler):
+    """Respond to scheduled chron job by ensuring the event database is clean."""
+
     # noinspection PyMethodMayBeStatic
     def get(self):
         credentials_entity_list = authutils.CredentialsModel.all()
         for cred_entity in credentials_entity_list:
             service = authutils.get_service_from_credentials(
                 gapiutils.API_NAME, gapiutils.API_VERSION, cred_entity.credentials)
-            user_id = int(cred_entity.key().name())
+            user_id = cred_entity.key().name()
             events = models.Event.query(ancestor=models.get_user_key(user_id)).fetch()
             for event in events:
                 event_id = event.key.string_id()

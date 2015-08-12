@@ -21,8 +21,8 @@ import gapiutils
 def auth_required(func):
     """Decorator to make given endpoints method require signin.
 
-    :type func: __builtin__.function
-    :rtype: __builtin.function
+    :type func: (T, U) -> V
+    :rtype: (T, U) -> V
     """
     def wrapped(self, request):
         current_user = endpoints.get_current_user()
@@ -36,10 +36,21 @@ def auth_required(func):
 
 
 class CredentialsModel(db.Model):
+    """
+    A db model for storing oauth2 credentials.
+
+    :type credentials: client.Credentials
+    """
     credentials = CredentialsProperty()
 
     @classmethod
     def get_store(cls, user_id):
+        """
+        Get a storage object for a credentials model for a given user id.
+
+        :type user_id: str
+        :rtype: StorageByKeyName
+        """
         return StorageByKeyName(cls, user_id, "credentials")
 
 
@@ -56,7 +67,8 @@ class AuthRedirectException(endpoints.ServiceException):
 
 
 def get_credentials(client_secret_file, scope, user_id, redirect_uri):
-    """Gets valid user credentials from storage.
+    """
+    Get valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
     the OAuth2 flow is completed to obtain the new credentials.
@@ -65,7 +77,7 @@ def get_credentials(client_secret_file, scope, user_id, redirect_uri):
     :type scope: str
     :type user_id: str
     :type redirect_uri: str
-
+    :rtype: client.OAuth2Credentials
     :raise NoStoredCredentialsError: Includes the auth_uri to point the user to.
     """
     store = CredentialsModel.get_store(user_id)
@@ -80,13 +92,21 @@ def get_credentials(client_secret_file, scope, user_id, redirect_uri):
 
 
 def get_service_from_credentials(api_name, api_version, credentials):
+    """
+    Get a resource object for a given api using given credentials.
+
+    :type api_name: str
+    :type api_version: str
+    :type credentials: client.OAuth2Credentials
+    """
     return build(api_name, api_version, http=credentials.authorize(Http()))
 
 
 def get_calendar_service(user_id):
-    """Get a Resource object for calendar API v3 for a given user.
+    """
+    Get a Resource object for calendar API v3 for a given user.
 
-    :return: The calendar API v3 service.
+    :type user_id: unicode
     :raise AuthRedirectException: Includes auth uri in message.
     """
     user_id = str(user_id)
@@ -103,6 +123,8 @@ def get_calendar_service(user_id):
 
 
 class CalendarRedirectHandler(webapp2.RequestHandler):
+    """Handle oauth2 redirects for calendar api requests."""
+
     def get(self, user_id):
         code = self.request.get("code")
         flow = pickle.loads(memcache.get(user_id))

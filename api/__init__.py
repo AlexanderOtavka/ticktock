@@ -94,7 +94,8 @@ class TickTockAPI(remote.Service):
                       name="calendars.patch", http_method="PATCH", path="calendars")
     @authutils.auth_required
     def patch_calendar(self, request):
-        """Update a calendar's data.
+        """
+        Update a calendar's data.
 
         Only Calendar.hidden can be changed.
         """
@@ -135,7 +136,8 @@ class TickTockAPI(remote.Service):
                       name="events.get", http_method="GET", path="events")
     @authutils.auth_required
     def get_events(self, request):
-        """Get a list of events for a given calendar.
+        """
+        Get a list of events for a given calendar.
 
         If no calendar is given, events from all of the user's calendars will be shown.
         """
@@ -205,7 +207,8 @@ class TickTockAPI(remote.Service):
                       name="events.patch", http_method="PATCH", path="events")
     @authutils.auth_required
     def patch_event(self, request):
-        """Update an event's data.
+        """
+        Update an event's data.
 
         Only Event.hidden and Event.starred can be changed.  An event cannot be starred if it is
         hidden.
