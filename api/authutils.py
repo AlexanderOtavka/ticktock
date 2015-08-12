@@ -24,6 +24,7 @@ def auth_required(func):
     :type func: (T, U) -> V
     :rtype: (T, U) -> V
     """
+
     def wrapped(self, request):
         current_user = endpoints.get_current_user()
         if current_user is None:
@@ -56,7 +57,8 @@ class CredentialsModel(db.Model):
 
 class NoStoredCredentialsError(Exception):
     def __init__(self, auth_uri):
-        super(NoStoredCredentialsError, self).__init__("No credentials found in storage.")
+        super(NoStoredCredentialsError, self).__init__(
+            "No credentials found in storage.")
         self.auth_uri = auth_uri
 
 
@@ -111,14 +113,18 @@ def get_calendar_service(user_id):
     """
     user_id = str(user_id)
     scope = "https://www.googleapis.com/auth/calendar.readonly"
-    client_secret_file = os.path.join(os.path.dirname(__file__), "client_secret.json")
-    redirect_uri = "http://" + get_default_version_hostname() + "/oauth2/calendar/" + user_id
+    client_secret_file = os.path.join(os.path.dirname(__file__),
+                                      "client_secret.json")
+    redirect_uri = ("http://" + get_default_version_hostname() +
+                    "/oauth2/calendar/" + user_id)
 
     try:
-        credentials = get_credentials(client_secret_file, scope, user_id, redirect_uri)
+        credentials = get_credentials(client_secret_file, scope, user_id,
+                                      redirect_uri)
     except NoStoredCredentialsError as e:
         raise AuthRedirectException(e.auth_uri)
-    return get_service_from_credentials(gapiutils.API_NAME, gapiutils.API_VERSION,
+    return get_service_from_credentials(gapiutils.API_NAME,
+                                        gapiutils.API_VERSION,
                                         credentials)
 
 
@@ -133,7 +139,10 @@ class CalendarRedirectHandler(webapp2.RequestHandler):
         store.put(credentials)
         self.response.type = "text/html"
         self.response.write(
-            "<!DOCTYPE html><html><body><script> window.close(); </script></body></html>")
+            "<!doctype html>" +
+            "<html><body><script>" +
+            "window.close();" +
+            "</script></body></html>")
 
 
 redirect_handlers = webapp2.WSGIApplication([

@@ -1,8 +1,7 @@
-"""Tools for getting data from the Google Calendar API, once a service has been generated."""
+"""Tools for getting data from the Google Calendar API."""
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
-import logging
 from datetime import datetime
 
 import messages
@@ -27,10 +26,13 @@ def get_personal_calendars(service):
     """
     page_token = None
     calendars = []
+
     while True:
-        api_query_result = service.calendarList().list(fields=LIST_FIELDS.format(CALENDAR_FIELDS),
-                                                       pageToken=page_token).execute()
-        logging.debug("query result = " + str(api_query_result))
+        api_query_result = service.calendarList().list(
+            fields=LIST_FIELDS.format(CALENDAR_FIELDS),
+            pageToken=page_token
+        ).execute()
+
         calendars += [
             messages.Calendar(
                 calendar_id=item["id"],
@@ -40,9 +42,11 @@ def get_personal_calendars(service):
             )
             for item in api_query_result["items"]
         ]
+
         page_token = api_query_result.get("nextPageToken")
         if not page_token:
             break
+
     return calendars
 
 

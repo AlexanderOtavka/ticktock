@@ -7,7 +7,8 @@ from messages import Event
 
 class NullSearchError(Exception):
     def __init__(self):
-        super(NullSearchError, self).__init__("Insufficient matches found for data item.")
+        super(NullSearchError, self).__init__(
+            "Insufficient matches found for data item.")
 
 
 def _get_kw_score(event, keywords, narrow=False):
@@ -15,10 +16,12 @@ def _get_kw_score(event, keywords, narrow=False):
 
     :param Event event: Event to be scored.
     :param str keywords: Search terms separated by spaces.
-    :param bool narrow: If true, throw NullSearchError for insufficient keyword matches.
+    :param bool narrow:
+        If true, throw NullSearchError for insufficient keyword matches.
 
     :rtype: int
-    :raise NullSearchError: If narrow=True and insufficient keyword matches are found.
+    :raise NullSearchError:
+        If narrow=True and insufficient keyword matches are found.
     """
     event_string_data = event.name
     search_set = set(keywords.split())

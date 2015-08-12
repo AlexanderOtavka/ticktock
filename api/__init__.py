@@ -54,14 +54,17 @@ class TickTockAPI(remote.Service):
                     chosen_calendars.append(cal)
                     break
             else:
-                logging.info("Deleted: unbound Calendar entity with calendar_id = \"{}\" and " +
-                             "user_id = \"{}\".".format(entity.key.string_id(), user_id))
+                logging.info(
+                    "Deleted: unbound Calendar entity with calendar_id = " +
+                    "\"{}\" and user_id = \"{}\"."
+                    .format(entity.key.string_id(), user_id))
                 entity.key.delete()
 
         return messages.CalendarCollection(items=chosen_calendars)
 
     @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
-                      name="calendars.public.get", http_method="GET", path="calendars/public")
+                      name="calendars.public.get", http_method="GET",
+                      path="calendars/public")
     def get_public_calendars(self, request):
         """Get a list of public calendars."""
         # TODO: implement public calendars
@@ -69,17 +72,19 @@ class TickTockAPI(remote.Service):
         return messages.CalendarCollection(items=calendars)
 
     @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
-                      name="calendars.personal.get", http_method="GET", path="calendars/personal")
+                      name="calendars.personal.get", http_method="GET",
+                      path="calendars/personal")
     @authutils.auth_required
     def get_personal_calendars(self, request):
-        """Get all of the user's personal calendars for a given google account."""
+        """Get all of the current user's personal calendars."""
         user_id = get_google_plus_user_id()
         service = authutils.get_calendar_service(user_id)
         calendars = gapiutils.get_personal_calendars(service)
         return messages.CalendarCollection(items=calendars)
 
     @endpoints.method(messages.Calendar, message_types.VoidMessage,
-                      name="calendars.post", http_method="POST", path="calendars")
+                      name="calendars.post", http_method="POST",
+                      path="calendars")
     @authutils.auth_required
     def post_calendar(self, request):
         """Add a calendar to the user's list."""
@@ -91,7 +96,8 @@ class TickTockAPI(remote.Service):
         return message_types.VoidMessage()
 
     @endpoints.method(messages.Calendar, messages.Calendar,
-                      name="calendars.patch", http_method="PATCH", path="calendars")
+                      name="calendars.patch", http_method="PATCH",
+                      path="calendars")
     @authutils.auth_required
     def patch_calendar(self, request):
         """
@@ -117,7 +123,8 @@ class TickTockAPI(remote.Service):
         )
 
     @endpoints.method(messages.Calendar, messages.Calendar,
-                      name="calendars.delete", http_method="DELETE", path="calendars")
+                      name="calendars.delete", http_method="DELETE",
+                      path="calendars")
     @authutils.auth_required
     def delete_calendar(self, request):
         """Remove a calendar from a user's list."""
@@ -139,7 +146,8 @@ class TickTockAPI(remote.Service):
         """
         Get a list of events for a given calendar.
 
-        If no calendar is given, events from all of the user's calendars will be shown.
+        If no calendar is given, events from all of the user's calendars will
+        be shown.
         """
         # NOTE: ensure GET /events works with repeating events
         user_id = get_google_plus_user_id()
@@ -157,13 +165,16 @@ class TickTockAPI(remote.Service):
             events = gapiutils.get_events(service, cal_id)
         else:
             events = []
-            query = models.Calendar.query(models.Calendar.hidden == hidden, ancestor=user_key)
+            query = models.Calendar.query(models.Calendar.hidden == hidden,
+                                          ancestor=user_key)
             for calendar in query.fetch():
-                events += gapiutils.get_events(service, calendar.key.string_id())
+                events += gapiutils.get_events(service,
+                                               calendar.key.string_id())
 
         # update event list with fields stored in the datastore
         for event in events:
-            cal_key = ndb.Key(models.Calendar, event.calendar_id, parent=user_key)
+            cal_key = ndb.Key(models.Calendar, event.calendar_id,
+                              parent=user_key)
             event_key = ndb.Key(models.Event, event.event_id, parent=cal_key)
             entity = event_key.get()
             if entity is not None:
@@ -171,7 +182,8 @@ class TickTockAPI(remote.Service):
                 event.starred = entity.starred
 
         # insert any starred events not included
-        query = models.Event.query(models.Event.starred is True, ancestor=user_key)
+        query = models.Event.query(models.Event.starred is True,
+                                   ancestor=user_key)
         for entity in query.fetch():
             entity_id = entity.key.string_id()
             for event in events:
@@ -179,7 +191,8 @@ class TickTockAPI(remote.Service):
                     break
             else:
                 try:
-                    event = gapiutils.get_event(service, entity.key.parent().string_id(),
+                    event = gapiutils.get_event(service,
+                                                entity.key.parent().string_id(),
                                                 entity_id)
                 except gapiutils.OldEventError:
                     continue
@@ -196,7 +209,8 @@ class TickTockAPI(remote.Service):
         return messages.EventCollection(items=events)
 
     @endpoints.method(messages.SearchQuery, messages.EventCollection,
-                      name="events.public.get", http_method="GET", path="events/public")
+                      name="events.public.get", http_method="GET",
+                      path="events/public")
     def get_public_events(self, request):
         """Get a list of events for a given public calendar."""
         # TODO: implement events.public.get
@@ -210,8 +224,8 @@ class TickTockAPI(remote.Service):
         """
         Update an event's data.
 
-        Only Event.hidden and Event.starred can be changed.  An event cannot be starred if it is
-        hidden.
+        Only Event.hidden and Event.starred can be changed.  An event cannot be
+        starred if it is hidden.
         """
         user_id = get_google_plus_user_id()
         cal_id = request.calendar_id
@@ -251,7 +265,8 @@ class TickTockAPI(remote.Service):
         raise NotImplementedError()
 
     @endpoints.method(message_types.VoidMessage, message_types.VoidMessage,
-                      name="settings.patch", http_method="PATCH", path="settings")
+                      name="settings.patch", http_method="PATCH",
+                      path="settings")
     @authutils.auth_required
     def patch_settings(self, request):
         """Change the current user's settings."""

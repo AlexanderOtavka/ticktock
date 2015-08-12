@@ -93,7 +93,7 @@ class SearchQuery(messages.Message):
 
     :cvar search: A generic search string.
     :cvar calendar_id: For event searches, narrow by calendar_id.
-    :cvar only_hidden: For event searches, either show only hidden, or show no hidden.
+    :cvar only_hidden: Either show only hidden, or show no hidden items.
     :cvar page_token: For queries to large data sets.
     :cvar timezone: For event searches, not yet implemented.
     """
