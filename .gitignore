@@ -59,3 +59,4 @@ target/
 # PyCharm user files
 .idea/workspace.xml
 .idea/tasks.xml
+.idea/shelf/
