@@ -19,6 +19,7 @@ SCOPES = [
     # "https://www.googleapis.com/auth/plus.profile.emails.read",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/plus.me",
+    "https://www.googleapis.com/auth/calendar.readonly"
 ]
 WEB_CLIENT_ID = ""
 ANDROID_CLIENT_ID = ""
@@ -29,8 +30,8 @@ ALLOWED_CLIENT_IDS = [
 ]
 
 
-@endpoints.api(name="ticktock", version="v1", scopes=SCOPES,
-               allowed_client_ids=ALLOWED_CLIENT_IDS)
+@endpoints.api(name="ticktock", version="v1", title="TickTock API",
+               scopes=SCOPES, allowed_client_ids=ALLOWED_CLIENT_IDS)
 class TickTockAPI(remote.Service):
     """Mediates between the client and the datastore and calendar APIs."""
 
@@ -40,7 +41,7 @@ class TickTockAPI(remote.Service):
     def get_calendars(self, request):
         """Get a list of calendars the user has chosen."""
         user_id = get_google_plus_user_id()
-        service = authutils.get_calendar_service(user_id)
+        service = authutils.get_calendar_service()
         all_calendars = (gapiutils.get_personal_calendars(service) +
                          gapiutils.get_public_calendars())
 
@@ -77,8 +78,7 @@ class TickTockAPI(remote.Service):
     @authutils.auth_required
     def get_personal_calendars(self, request):
         """Get all of the current user's personal calendars."""
-        user_id = get_google_plus_user_id()
-        service = authutils.get_calendar_service(user_id)
+        service = authutils.get_calendar_service()
         calendars = gapiutils.get_personal_calendars(service)
         return messages.CalendarCollection(items=calendars)
 
@@ -153,7 +153,7 @@ class TickTockAPI(remote.Service):
         user_id = get_google_plus_user_id()
         user_key = models.get_user_key(user_id)
         logging.debug("start get service")
-        service = authutils.get_calendar_service(user_id)
+        service = authutils.get_calendar_service()
         logging.debug("end get service")
         hidden = request.only_hidden
         if hidden is None:

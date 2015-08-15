@@ -6,8 +6,8 @@ from datetime import datetime
 
 import messages
 
-API_NAME = "calendar"
-API_VERSION = "v3"
+CALENDAR_API_NAME = "calendar"
+CALENDAR_API_VERSION = "v3"
 
 CALENDAR_FIELDS = "id,summary,backgroundColor"
 EVENT_FIELDS = "id,summary,start,end"

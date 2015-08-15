@@ -18,10 +18,6 @@ handlers:
   script: api.garbagecollect.collectors
   login: admin
 
-# OAuth2 redirect handlers
-- url: /oauth2/.*
-  script: api.authutils.redirect_handlers
-
 # API explorer redirect
 - url: /
   script: api.explorer_redirect
