@@ -21,7 +21,7 @@ class OldEventError(Exception):
     pass
 
 
-def get_personal_calendars(service):
+def get_calendars(service):
     """
     Return a list of the current user's calendars.
 
@@ -61,10 +61,6 @@ def get_personal_calendars(service):
             break
 
     return calendars
-
-
-def get_public_calendars():
-    return []
 
 
 def datetime_from_string(string):

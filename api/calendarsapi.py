@@ -28,8 +28,7 @@ class CalendarsAPI(remote.Service):
 
         service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
                                         gapiutils.CALENDAR_API_VERSION)
-        all_calendars = (gapiutils.get_personal_calendars(service) +
-                         gapiutils.get_public_calendars())
+        all_calendars = gapiutils.get_calendars(service)
 
         user_key = models.get_user_key(user_id)
         chosen_ndb = models.Calendar.query(ancestor=user_key).fetch()
