@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 import logging
 import httplib
 from datetime import datetime
+from oauth2client.appengine import CredentialsNDBModel
 
 import webapp2
 from apiclient.errors import HttpError
@@ -18,13 +19,13 @@ class GarbageCollector(webapp2.RequestHandler):
 
     # noinspection PyMethodMayBeStatic
     def get(self):
-        credentials_entity_list = authutils.CredentialsModel.all()
+        credentials_entity_list = CredentialsNDBModel.query()
 
         for cred_entity in credentials_entity_list:
-            service = authutils.get_service_from_credentials(
-                gapiutils.API_NAME, gapiutils.API_VERSION,
-                cred_entity.credentials)
-            user_id = cred_entity.key().name()
+            service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
+                                            gapiutils.CALENDAR_API_VERSION,
+                                            cred_entity.credentials)
+            user_id = cred_entity.key.string_id()
             events = models.Event.query(
                 ancestor=models.get_user_key(user_id)).fetch()
 

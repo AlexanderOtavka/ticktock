@@ -11,7 +11,7 @@ handlers:
 
 # Endpoints API
 - url: /_ah/spi/.*
-  script: api.application
+  script: api.server
 
 # Garbage collectors
 - url: /_ah/garbagecollect/.*

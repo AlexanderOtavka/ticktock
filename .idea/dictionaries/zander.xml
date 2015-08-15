@@ -3,6 +3,7 @@
     <words>
       <w>chron</w>
       <w>datastore</w>
+      <w>memcache</w>
       <w>otavka</w>
     </words>
   </dictionary>

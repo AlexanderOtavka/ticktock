@@ -4,6 +4,9 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 from datetime import datetime
 
+from endpoints import NotFoundException, ForbiddenException
+from apiclient.errors import HttpError
+
 import messages
 
 CALENDAR_API_NAME = "calendar"
@@ -22,19 +25,29 @@ def get_personal_calendars(service):
     """
     Return a list of the current user's calendars.
 
-    :rtype: list[messages.Calendar]
-    """
+    :rtype: list[messages.CalendarProperties]
+    :raise ForbiddenException: API request failed with status 403.
+    :raise NotFoundException: API request failed with status 404.
+   """
     page_token = None
     calendars = []
 
     while True:
-        api_query_result = service.calendarList().list(
-            fields=LIST_FIELDS.format(CALENDAR_FIELDS),
-            pageToken=page_token
-        ).execute()
+        try:
+            api_query_result = service.calendarList().list(
+                fields=LIST_FIELDS.format(CALENDAR_FIELDS),
+                pageToken=page_token
+            ).execute()
+        except HttpError as e:
+            if e.resp.status == 404:
+                raise NotFoundException()
+            elif e.resp.status == 403:
+                raise ForbiddenException()
+            else:
+                raise
 
         calendars += [
-            messages.Calendar(
+            messages.CalendarProperties(
                 calendar_id=item["id"],
                 name=item["summary"],
                 color=item["backgroundColor"],
@@ -83,18 +96,28 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
     :type cal_id: str
     :type page_token: str
     :type time_zone: str
-    :rtype: list[messages.Event]
+    :rtype: list[messages.EventProperties]
+    :raise ForbiddenException: API request failed with status 403.
+    :raise NotFoundException: API request failed with status 404.
     """
     events = []
     now = datetime.utcnow().isoformat() + "Z"
-    result = service.events().list(
-        fields=LIST_FIELDS.format(EVENT_FIELDS),
-        calendarId=cal_id,
-        pageToken=page_token,
-        maxResults=10,
-        timeMin=now,
-        timeZone=time_zone,
-    ).execute()
+    try:
+        result = service.events().list(
+            fields=LIST_FIELDS.format(EVENT_FIELDS),
+            calendarId=cal_id,
+            pageToken=page_token,
+            maxResults=10,
+            timeMin=now,
+            timeZone=time_zone,
+        ).execute()
+    except HttpError as e:
+        if e.resp.status == 404:
+            raise NotFoundException()
+        elif e.resp.status == 403:
+            raise ForbiddenException()
+        else:
+            raise
 
     for item in result["items"]:
         name = "(Untitled Event)"
@@ -113,7 +136,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
         else:
             end_date = datetime_from_date_string(end["date"])
 
-        event = messages.Event(
+        event = messages.EventProperties(
             event_id=item["id"],
             calendar_id=cal_id,
             name=name,
@@ -131,15 +154,34 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
     """
     Get a specific event by ID.
 
-    :rtype: messages.Event
-    :raise OldEventError: If the requested event takes place in the past.
+    :type cal_id: str
+    :type event_id: str
+    :type time_zone: str
+    :rtype: messages.EventProperties
+    :raise OldEventError: The requested event takes place in the past.
+    :raise ForbiddenException: API request failed with status 403.
+    :raise NotFoundException: API request failed with status 404.
     """
-    result = service.events().get(
-        fields=EVENT_FIELDS,
-        calendarId=cal_id,
-        eventId=event_id,
-        timeZone=time_zone,
-    ).execute()
+    try:
+        result = service.events().get(
+            fields=EVENT_FIELDS,
+            calendarId=cal_id,
+            eventId=event_id,
+            timeZone=time_zone,
+        ).execute()
+    except HttpError as e:
+        if e.resp.status == 404:
+            raise NotFoundException()
+        elif e.resp.status == 403:
+            raise ForbiddenException()
+        else:
+            raise
+
+    start = result["start"]
+    if "dateTime" in start:
+        start_date = datetime_from_string(start["dateTime"])
+    else:
+        start_date = datetime_from_date_string(start["date"])
 
     end = result["end"]
     if "dateTime" in end:
@@ -151,11 +193,11 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
     if end_date < now:
         raise OldEventError("Event \"{}\" ended in the past.".format(event_id))
 
-    return messages.Event(
+    return messages.EventProperties(
         event_id=event_id,
         calendar_id=cal_id,
         name=result["summary"],
-        start_date=datetime_from_string(result["start"]["dateTime"]),
+        start_date=start_date,
         end_date=end_date,
         hidden=False,
         starred=False,

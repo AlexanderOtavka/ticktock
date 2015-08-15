@@ -2,7 +2,7 @@
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
-from messages import Event
+from messages import EventProperties
 
 
 class NullSearchError(Exception):
@@ -14,7 +14,7 @@ class NullSearchError(Exception):
 def _get_kw_score(event, keywords, narrow=False):
     """Get a relevance score for an event based on keyword matches.
 
-    :param Event event: Event to be scored.
+    :param EventProperties event: Event to be scored.
     :param str keywords: Search terms separated by spaces.
     :param bool narrow:
         If true, throw NullSearchError for insufficient keyword matches.
@@ -62,9 +62,9 @@ def search(list_, order):
 def keyword_chron_search(event_list, keywords):
     """Convenience function, search with KW_CHRON_ORDER.
 
-    :type event_list: list[Event]
+    :type event_list: list[EventProperties]
     :type keywords: str
-    :rtype: list[Event]
+    :rtype: list[EventProperties]
     """
     return search(event_list, KW_CHRON_ORDER(keywords, True))
 
@@ -72,7 +72,7 @@ def keyword_chron_search(event_list, keywords):
 def chron_sort(event_list):
     """Convenience function, search with CHRONOLOGICAL_ORDER.
 
-    :type event_list: list[Event]
-    :rtype: list[Event]
+    :type event_list: list[EventProperties]
+    :rtype: list[EventProperties]
     """
     return search(event_list, CHRONOLOGICAL_ORDER)

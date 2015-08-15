@@ -5,9 +5,10 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 from datetime import datetime
 
 from protorpc import messages, message_types
+import endpoints
 
 
-class Calendar(messages.Message):
+class CalendarProperties(messages.Message):
     """
     Data for certain properties of a calendar.
 
@@ -23,6 +24,11 @@ class Calendar(messages.Message):
     color = messages.StringField(4)
     link = messages.StringField(5)
 
+CALENDAR_RESOURCE_CONTAINER = endpoints.ResourceContainer(
+    CalendarProperties,
+    calendar_id=messages.StringField(1, required=True)
+)
+
 
 class CalendarCollection(messages.Message):
     """
@@ -31,7 +37,7 @@ class CalendarCollection(messages.Message):
     :type items: list[Calendar]
     :type next_page_token: str
     """
-    items = messages.MessageField(Calendar, 1, repeated=True)
+    items = messages.MessageField(CalendarProperties, 1, repeated=True)
     next_page_token = messages.StringField(2)
 
 
@@ -40,7 +46,7 @@ class EventSettings(messages.Message):
     pass
 
 
-class Event(messages.Message):
+class EventProperties(messages.Message):
     """
     Data for certain properties of events.
 
@@ -64,6 +70,12 @@ class Event(messages.Message):
     link = messages.StringField(8)
     settings = messages.MessageField(EventSettings, 9)
 
+EVENT_RESOURCE_CONTAINER = endpoints.ResourceContainer(
+    EventProperties,
+    event_id=messages.StringField(1, required=True),
+    calendar_id=messages.StringField(2, required=True)
+)
+
 
 class EventCollection(messages.Message):
     """
@@ -72,7 +84,7 @@ class EventCollection(messages.Message):
     :type items: list[Event]
     :type next_page_token: str
     """
-    items = messages.MessageField(Event, 1, repeated=True)
+    items = messages.MessageField(EventProperties, 1, repeated=True)
     next_page_token = messages.StringField(2)
 
 
@@ -86,21 +98,23 @@ class SearchQuery(messages.Message):
     Search query with various optional filters.
 
     :type search: str
-    :type calendar_id: str
     :type only_hidden: bool
     :type page_token: str
     :type timezone: str
 
     :cvar search: A generic search string.
-    :cvar calendar_id: For event searches, narrow by calendar_id.
     :cvar only_hidden: Either show only hidden, or show no hidden items.
     :cvar page_token: For queries to large data sets.
     :cvar timezone: For event searches, not yet implemented.
     """
     search = messages.StringField(1)
-    calendar_id = messages.StringField(2)
-    only_hidden = messages.BooleanField(3)
+    only_hidden = messages.BooleanField(2)
     # TODO: implement paging (get all the data for forever, then memcache it)
-    page_token = messages.StringField(4)
+    page_token = messages.StringField(3)
     # FUTURE: implement timezones.
-    timezone = messages.StringField(5)
+    timezone = messages.StringField(4)
+
+EVENT_SEARCH_RESOURCE_CONTAINER = endpoints.ResourceContainer(
+    SearchQuery,
+    calendar_id=messages.StringField(5, required=True)
+)
