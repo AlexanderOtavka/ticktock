@@ -7,7 +7,6 @@ from protorpc import remote
 
 from ticktockapi import ticktock_api
 import messages
-import gapiutils
 
 
 @ticktock_api.api_class(resource_name="public",
@@ -20,7 +19,7 @@ class PublicAPI(remote.Service):
     def get_public_calendars(self, request):
         """Get a list of public calendars."""
         # TODO: implement public calendars
-        calendars = gapiutils.get_public_calendars()
+        calendars = []
         return messages.CalendarCollection(items=calendars)
 
     @endpoints.method(messages.EVENT_SEARCH_RESOURCE_CONTAINER,

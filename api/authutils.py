@@ -8,18 +8,18 @@ import endpoints
 from apiclient.discovery import build
 from oauth2client import client
 from httplib2 import Http
-from auth_util import get_google_plus_user_id
 from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
+from auth_util import get_google_plus_user_id as get_user_id
 
 
-def require_id():
+def require_user_id():
     """
     Return the current user's google plus id or raise 401.
 
     :rtype: unicode
     :raise endpoints.UnauthorizedException: if user ID not found.
     """
-    current_user_id = get_google_plus_user_id()
+    current_user_id = get_user_id()
     if current_user_id is None:
         raise endpoints.UnauthorizedException("Invalid token.")
     return current_user_id
@@ -32,9 +32,8 @@ def get_credentials():
         user_agent = os.environ["HTTP_USER_AGENT"]
         credentials = client.AccessTokenCredentials(token, user_agent)
 
-        assert get_google_plus_user_id() is not None
-        store = StorageByKeyName(CredentialsNDBModel,
-                                 get_google_plus_user_id(),
+        assert get_user_id() is not None
+        store = StorageByKeyName(CredentialsNDBModel, get_user_id(),
                                  "credentials")
         store.put(credentials)
 

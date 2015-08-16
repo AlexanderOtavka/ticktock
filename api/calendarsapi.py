@@ -24,7 +24,7 @@ class CalendarsAPI(remote.Service):
                       name="list", http_method="GET", path="/calendars")
     def list_calendars(self, request):
         """Get a list of calendars the user has chosen."""
-        user_id = authutils.require_id()
+        user_id = authutils.require_user_id()
 
         service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
                                         gapiutils.CALENDAR_API_VERSION)
@@ -52,7 +52,7 @@ class CalendarsAPI(remote.Service):
                       name="insert", http_method="POST", path="/calendars")
     def insert_calendar(self, request):
         """Add a calendar to the user's list."""
-        user_id = authutils.require_id()
+        user_id = authutils.require_user_id()
 
         cal_id = request.calendar_id
         user_key = models.get_user_key(user_id)
@@ -69,7 +69,7 @@ class CalendarsAPI(remote.Service):
 
         Only Calendar.hidden can be changed.
         """
-        user_id = authutils.require_id()
+        user_id = authutils.require_user_id()
 
         cal_id = request.calendar_id
         user_key = models.get_user_key(user_id)
@@ -92,7 +92,7 @@ class CalendarsAPI(remote.Service):
                       name="delete", http_method="DELETE", path="{calendar_id}")
     def delete_calendar(self, request):
         """Remove a calendar from a user's list."""
-        user_id = authutils.require_id()
+        user_id = authutils.require_user_id()
 
         cal_id = request.calendar_id
         user_key = models.get_user_key(user_id)

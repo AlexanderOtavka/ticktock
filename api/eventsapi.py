@@ -32,7 +32,7 @@ class EventsAPI(remote.Service):
         be shown.
         """
         # NOTE: ensure events.list works with repeating events
-        user_id = authutils.require_id()
+        user_id = authutils.require_user_id()
 
         user_key = models.get_user_key(user_id)
         service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
@@ -100,7 +100,7 @@ class EventsAPI(remote.Service):
         Only Event.hidden and Event.starred can be changed.  An event cannot be
         starred if it is hidden.
         """
-        user_id = authutils.require_id()
+        user_id = authutils.require_user_id()
 
         cal_id = request.calendar_id
         event_id = request.event_id
