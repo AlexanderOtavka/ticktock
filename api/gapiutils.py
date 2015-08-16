@@ -9,9 +9,6 @@ from apiclient.errors import HttpError
 
 import messages
 
-CALENDAR_API_NAME = "calendar"
-CALENDAR_API_VERSION = "v3"
-
 CALENDAR_FIELDS = "id,summary,backgroundColor"
 EVENT_FIELDS = "id,summary,start,end"
 LIST_FIELDS = "nextPageToken,items({})"
@@ -28,7 +25,7 @@ def get_calendars(service):
     :rtype: list[messages.CalendarProperties]
     :raise ForbiddenException: API request failed with status 403.
     :raise NotFoundException: API request failed with status 404.
-   """
+    """
     page_token = None
     calendars = []
 

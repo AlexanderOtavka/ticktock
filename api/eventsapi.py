@@ -31,17 +31,17 @@ class EventsAPI(remote.Service):
         If no calendar is given, events from all of the user's calendars will
         be shown.
         """
-        # NOTE: ensure events.list works with repeating events
+        # TODO: ensure events.list works with repeating events
         user_id = authutils.require_user_id()
 
         user_key = models.get_user_key(user_id)
-        service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
-                                        gapiutils.CALENDAR_API_VERSION)
+        service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                        authutils.CALENDAR_API_VERSION)
         hidden = request.only_hidden
         if hidden is None:
             hidden = False
 
-        # get event list from the google api
+        # Get event list from the google api
         cal_id = request.calendar_id
         if cal_id:
             events = gapiutils.get_events(service, cal_id)
@@ -53,7 +53,7 @@ class EventsAPI(remote.Service):
                 events += gapiutils.get_events(service,
                                                calendar.key.string_id())
 
-        # update event list with fields stored in the datastore
+        # Update event list with fields stored in the datastore
         for event in events:
             cal_key = ndb.Key(models.Calendar, event.calendar_id,
                               parent=user_key)
@@ -63,7 +63,7 @@ class EventsAPI(remote.Service):
                 event.hidden = entity.hidden
                 event.starred = entity.starred
 
-        # insert any starred events not included
+        # Insert any starred events not included
         query = models.Event.query(models.Event.starred is True,
                                    ancestor=user_key)
         for entity in query.fetch():
@@ -81,7 +81,7 @@ class EventsAPI(remote.Service):
                 event.starred = True
                 events.append(event)
 
-        # sort and search
+        # Sort and search
         search = request.search
         if search:
             events = searchutils.keyword_chron_search(events, search)
@@ -102,6 +102,7 @@ class EventsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        # Get ndb key for calendar
         cal_id = request.calendar_id
         event_id = request.event_id
         user_key = models.get_user_key(user_id)
@@ -110,10 +111,12 @@ class EventsAPI(remote.Service):
             raise endpoints.NotFoundException(
                 "No calendar with id of \"{}\" in user's list.".format(cal_id))
 
+        # Get or create model from calendar key and event id
         model = ndb.Key(models.Event, event_id, parent=cal_key).get()
         if model is None:
             model = models.Event(id=event_id, parent=cal_key)
 
+        # Set properties on the model from the request
         hidden = request.hidden
         starred = request.starred
         if hidden is not None:

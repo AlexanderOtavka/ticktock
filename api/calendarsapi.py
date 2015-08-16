@@ -7,6 +7,7 @@ import logging
 import endpoints
 from google.appengine.ext import ndb
 from protorpc import remote, message_types
+from oauth2client.appengine import AppAssertionCredentials
 
 from ticktockapi import ticktock_api
 import messages
@@ -26,10 +27,18 @@ class CalendarsAPI(remote.Service):
         """Get a list of calendars the user has chosen."""
         user_id = authutils.require_user_id()
 
-        service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
-                                        gapiutils.CALENDAR_API_VERSION)
-        all_calendars = gapiutils.get_calendars(service)
+        # Get list of all calendars available to the user
+        user_service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                             authutils.CALENDAR_API_VERSION)
+        app_service = authutils.get_service(
+            authutils.CALENDAR_API_NAME,
+            authutils.CALENDAR_API_VERSION,
+            AppAssertionCredentials(authutils.SERVICE_ACCOUNT_SCOPES)
+        )
+        all_calendars = (gapiutils.get_calendars(user_service) +
+                         gapiutils.get_calendars(app_service))
 
+        # Filter out calendars not added in user's ndb
         user_key = models.get_user_key(user_id)
         chosen_ndb = models.Calendar.query(ancestor=user_key).fetch()
         chosen_calendars = []
@@ -71,6 +80,7 @@ class CalendarsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        # Get the ndb model
         cal_id = request.calendar_id
         user_key = models.get_user_key(user_id)
         model = ndb.Key(models.Calendar, cal_id, parent=user_key).get()
@@ -78,9 +88,11 @@ class CalendarsAPI(remote.Service):
             raise endpoints.NotFoundException(
                 "No calendar with id of \"{}\" in user's list.".format(cal_id))
 
-        temp = request.hidden
-        if temp is not None:
-            model.hidden = temp
+        # Set properties from request on the model
+        hidden = request.hidden
+        if hidden is not None:
+            model.hidden = hidden
+
         model.put()
         return messages.CalendarProperties(
             calendar_id=cal_id,

@@ -9,9 +9,7 @@
     </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/libs/appengine-picturesque-python" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/libs/endpoints-proto-datastore" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libs/google-api-python-client" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/libs/wrapt" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

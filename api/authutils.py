@@ -12,6 +12,12 @@ from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
 from auth_util import get_google_plus_user_id as get_user_id
 
 
+CALENDAR_API_NAME = "calendar"
+CALENDAR_API_VERSION = "v3"
+
+SERVICE_ACCOUNT_SCOPES = "https://www.googleapis.com/auth/calendar"
+
+
 def require_user_id():
     """
     Return the current user's google plus id or raise 401.
@@ -25,7 +31,7 @@ def require_user_id():
     return current_user_id
 
 
-def get_credentials():
+def get_user_credentials():
     """Get oauth2 credentials from the endpoints environment."""
     if "HTTP_AUTHORIZATION" in os.environ and "HTTP_USER_AGENT" in os.environ:
         tokentype, token = os.environ["HTTP_AUTHORIZATION"].split(" ")
@@ -49,7 +55,9 @@ def get_service(api_name, api_version, credentials=None):
     :type api_name: str
     :type api_version: str
     """
-    credentials = credentials or get_credentials()
+    credentials = credentials or get_user_credentials()
     if credentials is None or credentials.invalid:
         return None
-    return build(api_name, api_version, http=credentials.authorize(Http()))
+    else:
+        return build(api_name, api_version, http=credentials.authorize(Http()))
+

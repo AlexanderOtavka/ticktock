@@ -22,8 +22,8 @@ class GarbageCollector(webapp2.RequestHandler):
         credentials_entity_list = CredentialsNDBModel.query()
 
         for cred_entity in credentials_entity_list:
-            service = authutils.get_service(gapiutils.CALENDAR_API_NAME,
-                                            gapiutils.CALENDAR_API_VERSION,
+            service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                            authutils.CALENDAR_API_VERSION,
                                             cred_entity.credentials)
             user_id = cred_entity.key.string_id()
             events = models.Event.query(
