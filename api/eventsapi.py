@@ -84,9 +84,9 @@ class EventsAPI(remote.Service):
         # Sort and search
         search = request.search
         if search:
-            events = searchutils.keyword_chron_search(events, search)
+            events = searchutils.event_keyword_chron_search(events, search)
         else:
-            events = searchutils.chron_sort(events)
+            events = searchutils.event_chron_sort(events)
 
         return messages.EventCollection(items=events)
 

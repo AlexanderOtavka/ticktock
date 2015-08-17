@@ -14,6 +14,7 @@ import messages
 import models
 import authutils
 import gapiutils
+import searchutils
 
 
 @ticktock_api.api_class(resource_name="calendars", path="calendars",
@@ -21,7 +22,7 @@ import gapiutils
 class CalendarsAPI(remote.Service):
     """Manage user calendars added to ticktock."""
 
-    @endpoints.method(message_types.VoidMessage, messages.CalendarCollection,
+    @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
                       name="list", http_method="GET", path="/calendars")
     def list_calendars(self, request):
         """Get a list of calendars the user has chosen."""
@@ -54,6 +55,14 @@ class CalendarsAPI(remote.Service):
                     "\"{}\" and user_id = \"{}\"."
                     .format(entity.key.string_id(), user_id))
                 entity.key.delete()
+
+        # Sort and search
+        search = request.search
+        if search:
+            chosen_calendars = searchutils.calendar_keyword_alpha_search(
+                chosen_calendars, search)
+        else:
+            chosen_calendars = searchutils.calendar_alpha_sort(chosen_calendars)
 
         return messages.CalendarCollection(items=chosen_calendars)
 
