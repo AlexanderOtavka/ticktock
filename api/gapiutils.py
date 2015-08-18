@@ -10,7 +10,7 @@ from apiclient.errors import HttpError
 import messages
 
 CALENDAR_FIELDS = "id,summary,backgroundColor"
-EVENT_FIELDS = "id,summary,start,end"
+EVENT_FIELDS = "id,recurringEventId,summary,start,end"
 LIST_FIELDS = "nextPageToken,items({})"
 
 
@@ -48,7 +48,7 @@ def get_calendars(service):
                 calendar_id=item["id"],
                 name=item["summary"],
                 color=item["backgroundColor"],
-                hidden=False,
+                hidden=False
             )
             for item in api_query_result["items"]
         ]
@@ -103,6 +103,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
             maxResults=10,
             timeMin=now,
             timeZone=time_zone,
+            singleEvents=True
         ).execute()
     except HttpError as e:
         if e.resp.status == 404:
@@ -113,6 +114,10 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
             raise
 
     for item in result["items"]:
+        recurrence_id = None
+        if "recurringEventId" in item:
+            recurrence_id = item["recurringEventId"]
+
         name = "(Untitled Event)"
         if "summary" in item:
             name = item["summary"]
@@ -137,6 +142,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
             end_date=end_date,
             hidden=False,
             starred=False,
+            recurrence_id=recurrence_id
         )
         events.append(event)
 
@@ -160,7 +166,7 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
             fields=EVENT_FIELDS,
             calendarId=cal_id,
             eventId=event_id,
-            timeZone=time_zone,
+            timeZone=time_zone
         ).execute()
     except HttpError as e:
         if e.resp.status == 404:
@@ -193,5 +199,5 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
         start_date=start_date,
         end_date=end_date,
         hidden=False,
-        starred=False,
+        starred=False
     )

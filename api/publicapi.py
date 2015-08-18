@@ -18,10 +18,11 @@ import searchutils
 class PublicAPI(remote.Service):
     """Access and manage public calendars."""
 
-    @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
+    @endpoints.method(messages.CALENDAR_SEARCH_RESOURCE,
+                      messages.CalendarCollection,
                       name="calendars.list",
                       http_method="GET", path="calendars")
-    def get_public_calendars(self, request):
+    def calendars_list(self, request):
         """Get a list of public calendars."""
         service = authutils.get_service(
             authutils.CALENDAR_API_NAME,
@@ -31,6 +32,7 @@ class PublicAPI(remote.Service):
         calendars = gapiutils.get_calendars(service)
 
         # Sort and search
+        # TODO: sort by number of people following the calendar
         search = request.search
         if search:
             calendars = searchutils.calendar_keyword_alpha_search(
@@ -40,11 +42,11 @@ class PublicAPI(remote.Service):
 
         return messages.CalendarCollection(items=calendars)
 
-    @endpoints.method(messages.EVENT_SEARCH_RESOURCE_CONTAINER,
+    @endpoints.method(messages.EVENT_SEARCH_RESOURCE,
                       messages.EventCollection,
-                      name="events.list", http_method="GET",
-                      path="calendars/{calendar_id}/events")
-    def get_public_events(self, request):
+                      name="events.list",
+                      http_method="GET", path="calendars/{calendar_id}/events")
+    def events_list(self, request):
         """Get a list of events for a given public calendar."""
         service = authutils.get_service(
             authutils.CALENDAR_API_NAME,

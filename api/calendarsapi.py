@@ -22,9 +22,10 @@ import searchutils
 class CalendarsAPI(remote.Service):
     """Manage user calendars added to ticktock."""
 
-    @endpoints.method(messages.SearchQuery, messages.CalendarCollection,
-                      name="list", http_method="GET", path="/calendars")
-    def list_calendars(self, request):
+    @endpoints.method(messages.CALENDAR_SEARCH_RESOURCE,
+                      messages.CalendarCollection,
+                      http_method="GET", path="/calendars")
+    def list(self, request):
         """Get a list of calendars the user has chosen."""
         user_id = authutils.require_user_id()
 
@@ -66,9 +67,9 @@ class CalendarsAPI(remote.Service):
 
         return messages.CalendarCollection(items=chosen_calendars)
 
-    @endpoints.method(messages.CalendarProperties, message_types.VoidMessage,
-                      name="insert", http_method="POST", path="/calendars")
-    def insert_calendar(self, request):
+    @endpoints.method(messages.CALENDAR_ID_RESOURCE, message_types.VoidMessage,
+                      http_method="POST", path="/calendars")
+    def insert(self, request):
         """Add a calendar to the user's list."""
         user_id = authutils.require_user_id()
 
@@ -78,10 +79,10 @@ class CalendarsAPI(remote.Service):
         model.put()
         return message_types.VoidMessage()
 
-    @endpoints.method(messages.CALENDAR_RESOURCE_CONTAINER,
+    @endpoints.method(messages.CALENDAR_PATCH_RESOURCE,
                       messages.CalendarProperties,
-                      name="patch", http_method="PATCH", path="{calendar_id}")
-    def patch_calendar(self, request):
+                      http_method="PATCH", path="{calendar_id}")
+    def patch(self, request):
         """
         Update a calendar's data.
 
@@ -108,10 +109,10 @@ class CalendarsAPI(remote.Service):
             hidden=model.hidden,
         )
 
-    @endpoints.method(messages.CALENDAR_RESOURCE_CONTAINER,
+    @endpoints.method(messages.CALENDAR_ID_RESOURCE,
                       messages.CalendarProperties,
-                      name="delete", http_method="DELETE", path="{calendar_id}")
-    def delete_calendar(self, request):
+                      http_method="DELETE", path="{calendar_id}")
+    def delete(self, request):
         """Remove a calendar from a user's list."""
         user_id = authutils.require_user_id()
 

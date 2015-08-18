@@ -20,18 +20,15 @@ import searchutils
 class EventsAPI(remote.Service):
     """Manage events."""
 
-    @endpoints.method(messages.EVENT_SEARCH_RESOURCE_CONTAINER,
-                      messages.EventCollection,
-                      name="list",
+    @endpoints.method(messages.EVENT_SEARCH_RESOURCE, messages.EventCollection,
                       http_method="GET", path="/calendars/{calendar_id}/events")
-    def get_events(self, request):
+    def list(self, request):
         """
         Get a list of events for a given calendar.
 
         If no calendar is given, events from all of the user's calendars will
         be shown.
         """
-        # TODO: ensure events.list works with repeating events
         user_id = authutils.require_user_id()
 
         user_key = models.get_user_key(user_id)
@@ -58,24 +55,32 @@ class EventsAPI(remote.Service):
             cal_key = ndb.Key(models.Calendar, event.calendar_id,
                               parent=user_key)
             event_key = ndb.Key(models.Event, event.event_id, parent=cal_key)
-            entity = event_key.get()
-            if entity is not None:
-                event.hidden = entity.hidden
-                event.starred = entity.starred
+            event_entity = event_key.get()
+
+            if event_entity is not None:
+                event.hidden = event_entity.hidden
+                event.starred = event_entity.starred
+            elif event.recurrence_id is not None:
+                recurrence_entity = ndb.Key(
+                    models.Event, event.recurrence_id, parent=cal_key).get()
+                if recurrence_entity is not None:
+                    event.hidden = recurrence_entity.hidden
+                    event.starred = recurrence_entity.starred
 
         # Insert any starred events not included
-        query = models.Event.query(models.Event.starred is True,
+        # noinspection PyPep8
+        query = models.Event.query(models.Event.starred == True,
                                    ancestor=user_key)
-        for entity in query.fetch():
-            entity_id = entity.key.string_id()
+        for event_entity in query.fetch():
+            entity_id = event_entity.key.string_id()
             for event in events:
                 if event.event_id == entity_id:
                     break
             else:
                 try:
-                    event = gapiutils.get_event(service,
-                                                entity.key.parent().string_id(),
-                                                entity_id)
+                    event = gapiutils.get_event(
+                        service, event_entity.key.parent().string_id(),
+                        entity_id)
                 except gapiutils.OldEventError:
                     continue
                 event.starred = True
@@ -90,10 +95,9 @@ class EventsAPI(remote.Service):
 
         return messages.EventCollection(items=events)
 
-    @endpoints.method(messages.EVENT_RESOURCE_CONTAINER,
-                      messages.EventProperties,
-                      name="patch", http_method="PATCH", path="{event_id}")
-    def patch_event(self, request):
+    @endpoints.method(messages.EVENT_PATCH_RESOURCE, messages.EventProperties,
+                      http_method="PATCH", path="{event_id}")
+    def patch(self, request):
         """
         Update an event's data.
 
@@ -116,20 +120,45 @@ class EventsAPI(remote.Service):
         if model is None:
             model = models.Event(id=event_id, parent=cal_key)
 
+        if request.recurrence_id is not None:
+            recurring_parent_model = ndb.Key(
+                models.Event, request.recurrence_id, parent=cal_key).get()
+        else:
+            recurring_parent_model = None
+
         # Set properties on the model from the request
-        hidden = request.hidden
-        starred = request.starred
-        if hidden is not None:
-            model.hidden = hidden
+        if recurring_parent_model is not None:
+            model.hidden = recurring_parent_model.hidden
+            model.starred = recurring_parent_model.starred
+        if request.hidden is not None:
+            model.hidden = request.hidden
+        if request.starred is not None:
+            model.starred = request.starred
         if model.hidden:
-            starred = False
-        if starred is not None:
-            model.starred = starred
+            model.starred = False
 
         model.put()
         return messages.EventProperties(
             event_id=event_id,
             calendar_id=cal_id,
             hidden=model.hidden,
-            starred=model.starred,
+            starred=model.starred
+        )
+
+    @endpoints.method(messages.EVENT_ID_RESOURCE, messages.EventProperties,
+                      http_method="DELETE", path="{event_id}")
+    def reset(self, request):
+        """Remove data saved for an event."""
+        user_id = authutils.require_user_id()
+
+        user_key = models.get_user_key(user_id)
+        cal_key = ndb.Key(models.Calendar, request.calendar_id, parent=user_key)
+        event_key = ndb.Key(models.Event, request.event_id, parent=cal_key)
+        entity = event_key.get()
+        event_key.delete()
+        return messages.EventProperties(
+            event_id=request.event_id,
+            calendar_id=request.calendar_id,
+            hidden=entity.hidden,
+            starred=entity.starred
         )

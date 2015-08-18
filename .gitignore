@@ -60,3 +60,6 @@ target/
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/shelf/
+
+# Pem key for accessing service account
+service-account-secret-key.pem

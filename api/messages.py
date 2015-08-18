@@ -24,9 +24,15 @@ class CalendarProperties(messages.Message):
     color = messages.StringField(4)
     link = messages.StringField(5)
 
-CALENDAR_RESOURCE_CONTAINER = endpoints.ResourceContainer(
+_CALENDAR_ID_FIELD = messages.StringField(
+    1, variant=messages.Variant.STRING, required=True)
+CALENDAR_ID_RESOURCE = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    calendar_id=_CALENDAR_ID_FIELD
+)
+CALENDAR_PATCH_RESOURCE = endpoints.ResourceContainer(
     CalendarProperties,
-    calendar_id=messages.StringField(1, required=True)
+    calendar_id=_CALENDAR_ID_FIELD
 )
 
 
@@ -59,6 +65,7 @@ class EventProperties(messages.Message):
     :type hidden: bool
     :type link: str
     :type settings: EventSettings
+    :type recurrence_id: str
     """
     event_id = messages.StringField(1, required=True)
     calendar_id = messages.StringField(2, required=True)
@@ -69,11 +76,21 @@ class EventProperties(messages.Message):
     hidden = messages.BooleanField(7)
     link = messages.StringField(8)
     settings = messages.MessageField(EventSettings, 9)
+    recurrence_id = messages.StringField(10)
 
-EVENT_RESOURCE_CONTAINER = endpoints.ResourceContainer(
+_EVENT_ID_FIELD = messages.StringField(
+    1, variant=messages.Variant.STRING, required=True)
+_EVENT_CALENDAR_ID_FIELD = messages.StringField(
+    2, variant=messages.Variant.STRING, required=True)
+EVENT_ID_RESOURCE = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    event_id=_EVENT_ID_FIELD,
+    calendar_id=_EVENT_CALENDAR_ID_FIELD
+)
+EVENT_PATCH_RESOURCE = endpoints.ResourceContainer(
     EventProperties,
-    event_id=messages.StringField(1, required=True),
-    calendar_id=messages.StringField(2, required=True)
+    event_id=_EVENT_ID_FIELD,
+    calendar_id=_EVENT_CALENDAR_ID_FIELD
 )
 
 
@@ -86,11 +103,6 @@ class EventCollection(messages.Message):
     """
     items = messages.MessageField(EventProperties, 1, repeated=True)
     next_page_token = messages.StringField(2)
-
-
-class Settings(messages.Message):
-    """Settings for a user."""
-    pass
 
 
 class SearchQuery(messages.Message):
@@ -114,7 +126,9 @@ class SearchQuery(messages.Message):
     # FUTURE: implement timezones.
     timezone = messages.StringField(4)
 
-EVENT_SEARCH_RESOURCE_CONTAINER = endpoints.ResourceContainer(
+EVENT_SEARCH_RESOURCE = endpoints.ResourceContainer(
     SearchQuery,
-    calendar_id=messages.StringField(5, required=True)
+    calendar_id=messages.StringField(
+        5, variant=messages.Variant.STRING, required=True)
 )
+CALENDAR_SEARCH_RESOURCE = endpoints.ResourceContainer(SearchQuery)

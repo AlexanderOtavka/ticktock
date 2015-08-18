@@ -74,16 +74,18 @@ CALENDAR_KW_ALPHA_ORDER = lambda kw, narrow: [CALENDAR_KW_SCORE(kw, narrow),
 CALENDAR_ALPHA_ORDER = [CALENDAR_ALPHA_SCORE]
 
 
-def search(list_, order):
+def search(search_list, order):
     """
-    Search and sort list_ based on tuple of order functions.
+    Search and sort search_list based on tuple of order functions.
 
-    :type list_: list[T]
+    :type search_list: list[T]
     :type order: list[(T) -> object]
     :rtype: list[T]
     """
+    if not search_list:
+        return []
     sorted_list = []
-    for i in list_:
+    for i in search_list:
         try:
             sorted_list.append(tuple(score(i) for score in order) + (i,))
         except NullSearchError:
