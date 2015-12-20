@@ -1,8 +1,9 @@
 """TickTock API definition."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import endpoints
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 SCOPES = [

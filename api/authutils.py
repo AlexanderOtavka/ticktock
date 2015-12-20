@@ -1,6 +1,4 @@
 """Tools for connecting to Google APIs and authenticating the user."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import os
 
@@ -9,7 +7,11 @@ from apiclient.discovery import build
 from oauth2client import client
 from httplib2 import Http
 from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
+from oauth2client.client import Credentials
 from auth_util import get_google_plus_user_id as get_user_id
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 CALENDAR_API_NAME = "calendar"
@@ -32,7 +34,11 @@ def require_user_id():
 
 
 def get_user_credentials():
-    """Get oauth2 credentials from the endpoints environment."""
+    """
+    Get oauth2 credentials from the endpoints environment.
+
+    :rtype: client.AccessTokenCredentials
+    """
     if "HTTP_AUTHORIZATION" in os.environ and "HTTP_USER_AGENT" in os.environ:
         tokentype, token = os.environ["HTTP_AUTHORIZATION"].split(" ")
         user_agent = os.environ["HTTP_USER_AGENT"]
@@ -54,10 +60,11 @@ def get_service(api_name, api_version, credentials=None):
 
     :type api_name: str
     :type api_version: str
+    :type credentials: Credentials
+    :return: Resource object.
     """
     credentials = credentials or get_user_credentials()
     if credentials is None or credentials.invalid:
         return None
     else:
         return build(api_name, api_version, http=credentials.authorize(Http()))
-

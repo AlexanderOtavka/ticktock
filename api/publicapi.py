@@ -1,6 +1,4 @@
 """API for accessing public calendars and events."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import endpoints
 from protorpc import remote
@@ -11,6 +9,9 @@ import authutils
 import messages
 import gapiutils
 import searchutils
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 @ticktock_api.api_class(resource_name="public", path="public",
@@ -23,7 +24,11 @@ class PublicAPI(remote.Service):
                       name="calendars.list",
                       http_method="GET", path="calendars")
     def calendars_list(self, request):
-        """Get a list of public calendars."""
+        """
+        Get a list of public calendars.
+
+        :type request: messages.CALENDAR_SEARCH_RESOURCE
+        """
         service = authutils.get_service(
             authutils.CALENDAR_API_NAME,
             authutils.CALENDAR_API_VERSION,
@@ -47,7 +52,11 @@ class PublicAPI(remote.Service):
                       name="events.list",
                       http_method="GET", path="calendars/{calendar_id}/events")
     def events_list(self, request):
-        """Get a list of events for a given public calendar."""
+        """
+        Get a list of events for a given public calendar.
+
+        :type request: messages.EVENT_SEARCH_RESOURCE
+        """
         service = authutils.get_service(
             authutils.CALENDAR_API_NAME,
             authutils.CALENDAR_API_VERSION,

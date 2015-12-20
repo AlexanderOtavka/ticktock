@@ -1,6 +1,4 @@
 """Clear out old or unbound datastore entities."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import logging
 import httplib
@@ -12,6 +10,9 @@ from apiclient.errors import HttpError
 import gapiutils
 import authutils
 import models
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 class GarbageCollector(webapp2.RequestHandler):

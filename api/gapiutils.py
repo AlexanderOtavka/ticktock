@@ -1,6 +1,4 @@
 """Tools for getting data from the Google Calendar API."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 from datetime import datetime
 
@@ -8,6 +6,10 @@ from endpoints import NotFoundException, ForbiddenException
 from apiclient.errors import HttpError
 
 import messages
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
+
 
 CALENDAR_FIELDS = "id,summary,backgroundColor"
 EVENT_FIELDS = "id,recurringEventId,summary,start,end"
@@ -22,6 +24,7 @@ def get_calendars(service):
     """
     Return a list of the current user's calendars.
 
+    :param service: Calendar resource object.
     :rtype: list[messages.CalendarProperties]
     :raise ForbiddenException: API request failed with status 403.
     :raise NotFoundException: API request failed with status 404.
@@ -86,6 +89,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
     """
     Return a list of events for a given calendar.
 
+    :param service: Calendar resource object.
     :type cal_id: str
     :type page_token: str
     :type time_zone: str
@@ -153,6 +157,7 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
     """
     Get a specific event by ID.
 
+    :param service: Calendar resource object.
     :type cal_id: str
     :type event_id: str
     :type time_zone: str

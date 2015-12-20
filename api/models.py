@@ -1,8 +1,9 @@
 """Datastore models."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 from google.appengine.ext import ndb
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 def get_user_key(user_id):

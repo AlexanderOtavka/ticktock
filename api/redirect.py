@@ -1,8 +1,9 @@
 """The endpoints server."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import webapp2
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 class RedirectHandler(webapp2.RequestHandler):

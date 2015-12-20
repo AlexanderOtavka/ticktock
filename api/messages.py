@@ -1,11 +1,12 @@
 """Endpoints messages."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 from datetime import datetime
 
 from protorpc import messages, message_types
 import endpoints
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 class CalendarProperties(messages.Message):

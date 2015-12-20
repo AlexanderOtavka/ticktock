@@ -1,6 +1,4 @@
 """API for managing calendars."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import logging
 
@@ -16,6 +14,9 @@ import authutils
 import gapiutils
 import searchutils
 
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
+
 
 @ticktock_api.api_class(resource_name="calendars", path="calendars",
                         auth_level=endpoints.AUTH_LEVEL.REQUIRED)
@@ -26,7 +27,11 @@ class CalendarsAPI(remote.Service):
                       messages.CalendarCollection,
                       http_method="GET", path="/calendars")
     def list(self, request):
-        """Get a list of calendars the user has chosen."""
+        """
+        Get a list of calendars the user has chosen.
+
+        :type request: messages.CALENDAR_SEARCH_RESOURCE
+        """
         user_id = authutils.require_user_id()
 
         # Get list of all calendars available to the user
@@ -70,7 +75,11 @@ class CalendarsAPI(remote.Service):
     @endpoints.method(messages.CALENDAR_ID_RESOURCE, message_types.VoidMessage,
                       http_method="POST", path="/calendars")
     def insert(self, request):
-        """Add a calendar to the user's list."""
+        """
+        Add a calendar to the user's list.
+
+        :type request: messages.CALENDAR_ID_RESOURCE
+        """
         user_id = authutils.require_user_id()
 
         cal_id = request.calendar_id
@@ -87,6 +96,8 @@ class CalendarsAPI(remote.Service):
         Update a calendar's data.
 
         Only Calendar.hidden can be changed.
+
+        :type request: messages.CALENDAR_PATCH_RESOURCE
         """
         user_id = authutils.require_user_id()
 
@@ -113,7 +124,11 @@ class CalendarsAPI(remote.Service):
                       messages.CalendarProperties,
                       http_method="DELETE", path="{calendar_id}")
     def delete(self, request):
-        """Remove a calendar from a user's list."""
+        """
+        Remove a calendar from a user's list.
+
+        :type request: messages.CALENDAR_ID_RESOURCE
+        """
         user_id = authutils.require_user_id()
 
         cal_id = request.calendar_id

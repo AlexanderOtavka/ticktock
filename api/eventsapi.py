@@ -1,6 +1,4 @@
 """API for managing events."""
-__author__ = "Alexander Otavka"
-__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 import endpoints
 from google.appengine.ext import ndb
@@ -12,6 +10,9 @@ import models
 import authutils
 import gapiutils
 import searchutils
+
+__author__ = "Alexander Otavka"
+__copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 @ticktock_api.api_class(resource_name="events",
@@ -28,6 +29,8 @@ class EventsAPI(remote.Service):
 
         If no calendar is given, events from all of the user's calendars will
         be shown.
+
+        :type request: messages.EVENT_SEARCH_RESOURCE
         """
         user_id = authutils.require_user_id()
 
@@ -103,6 +106,8 @@ class EventsAPI(remote.Service):
 
         Only Event.hidden and Event.starred can be changed.  An event cannot be
         starred if it is hidden.
+
+        :type request: messages.EVENT_PATCH_RESOURCE
         """
         user_id = authutils.require_user_id()
 
@@ -148,7 +153,11 @@ class EventsAPI(remote.Service):
     @endpoints.method(messages.EVENT_ID_RESOURCE, messages.EventProperties,
                       http_method="DELETE", path="{event_id}")
     def reset(self, request):
-        """Remove data saved for an event."""
+        """
+        Remove data saved for an event.
+
+        :type request: messages.EVENT_ID_RESOURCE
+        """
         user_id = authutils.require_user_id()
 
         user_key = models.get_user_key(user_id)
