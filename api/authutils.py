@@ -8,7 +8,7 @@ from oauth2client import client
 from httplib2 import Http
 from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
 from oauth2client.client import Credentials
-from auth_util import get_google_plus_user_id as get_user_id
+from auth_util import get_google_plus_user_id
 
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
@@ -18,6 +18,15 @@ CALENDAR_API_NAME = "calendar"
 CALENDAR_API_VERSION = "v3"
 
 SERVICE_ACCOUNT_SCOPES = "https://www.googleapis.com/auth/calendar"
+
+
+def get_user_id():
+    """
+    Return the current user's google plus id.
+
+    :rtype: unicode
+    """
+    return get_google_plus_user_id()
 
 
 def require_user_id():
