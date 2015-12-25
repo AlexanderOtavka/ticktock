@@ -1,5 +1,7 @@
 """API for managing events."""
 
+import logging
+
 import endpoints
 from google.appengine.ext import ndb
 from protorpc import remote
@@ -53,9 +55,7 @@ class EventsAPI(remote.Service):
         cal_key = ndb.Key(models.Calendar, request.calendarId,
                           parent=user_key)
         if cal_key.get() is None:
-            raise endpoints.NotFoundException(
-                    strings.ERROR_CALENDAR_NOT_FOUND.format(
-                            calendar_id=request.calendarId))
+            raise endpoints.NotFoundException()
         for event in events:
             event_key = ndb.Key(models.Event, event.eventId, parent=cal_key)
             event_entity = event_key.get()
@@ -121,8 +121,18 @@ class EventsAPI(remote.Service):
                         event.starred = True
                         event.hidden = False
                         events.append(event)
+                    except endpoints.NotFoundException:
+                        logging.info(strings.LOGGING_DELETE_UNBOUND_EVENT
+                                     .format(user_id=user_id,
+                                             calendar_id=request.calendarId,
+                                             event_id=request.eventId))
+                        starred_key.delete()
                     except gapiutils.OldEventError:
-                        continue
+                        logging.info(strings.LOGGING_DELETE_OLD_EVENT
+                                     .format(user_id=user_id,
+                                             calendar_id=request.calendarId,
+                                             event_id=request.eventId))
+                        starred_key.delete()
 
         # Sort and search
         search = request.search
@@ -134,29 +144,58 @@ class EventsAPI(remote.Service):
         return messages.EventCollection(items=events)
 
     @staticmethod
-    def get_event_entity(calendar_id, event_id):
+    def get_event_entity(user_id, calendar_id, event_id):
         """
         Retrieve or create an event entity from calendar and event ids.
 
+        :type user_id: unicode
         :type calendar_id: str
         :type event_id: str
         :rtype: models.Event
         """
-        user_id = authutils.require_user_id()
-
         # Get ndb key for calendar
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, calendar_id, parent=user_key)
         if cal_key.get() is None:
-            raise endpoints.NotFoundException(
-                    strings.ERROR_CALENDAR_NOT_FOUND.format(
-                            calendar_id=calendar_id))
+            raise endpoints.NotFoundException()
 
         # Get or create entity from calendar key and event id
         entity = ndb.Key(models.Event, event_id, parent=cal_key).get()
         if entity is None:
             entity = models.Event(id=event_id, parent=cal_key)
         return entity
+
+    @endpoints.method(messages.EVENT_ID_RESOURCE, messages.EventProperties,
+                      http_method="GET", path="{eventId}")
+    def get(self, request):
+        """
+        Get an individual event's data.
+
+        :type request: messages.CALENDAR_ID_RESOURCE
+        """
+        user_id = authutils.require_user_id()
+
+        service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                        authutils.CALENDAR_API_VERSION)
+        event = gapiutils.get_event(service, request.calendarId,
+                                    request.eventId)
+
+        user_key = models.get_user_key(user_id)
+        cal_key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
+        if cal_key.get() is None:
+            raise endpoints.NotFoundException()
+        entity = ndb.Key(models.Event, request.eventId, parent=cal_key).get()
+
+        if entity is not None:
+            event.hidden = entity.hidden
+            event.starred = entity.starred
+
+        if event.hidden is None:
+            event.hidden = False
+        if event.starred is None:
+            event.starred = False
+
+        return event
 
     @endpoints.method(messages.EVENT_WRITE_RESOURCE,
                       messages.EventWriteProperties,
@@ -170,7 +209,10 @@ class EventsAPI(remote.Service):
 
         :type request: messages.EVENT_WRITE_RESOURCE
         """
-        entity = self.get_event_entity(request.calendarId, request.eventId)
+        user_id = authutils.require_user_id()
+
+        entity = self.get_event_entity(user_id, request.calendarId,
+                                       request.eventId)
 
         # Set properties on the entity from the request
         if request.hidden is not None:
@@ -197,7 +239,10 @@ class EventsAPI(remote.Service):
 
         :type request: messages.EVENT_WRITE_RESOURCE
         """
-        entity = self.get_event_entity(request.calendarId, request.eventId)
+        user_id = authutils.require_user_id()
+
+        entity = self.get_event_entity(user_id, request.calendarId,
+                                       request.eventId)
 
         # Set properties on the entity from the request, or if the request is
         # null, delete the entity.

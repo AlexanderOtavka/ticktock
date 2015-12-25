@@ -76,15 +76,14 @@ class CalendarsAPI(remote.Service):
         return messages.CalendarCollection(items=chosen_calendars)
 
     @staticmethod
-    def get_calendar_entity(calendar_id):
+    def get_calendar_entity(user_id, calendar_id):
         """
         Retrieve or create a calendar entity from a calendar id.
 
+        :type user_id: unicode
         :type calendar_id: str
         :rtype: models.Calendar
         """
-        user_id = authutils.require_user_id()
-
         # Get the ndb entity
         user_key = models.get_user_key(user_id)
         entity = ndb.Key(models.Calendar, calendar_id,
@@ -92,6 +91,33 @@ class CalendarsAPI(remote.Service):
         if entity is None:
             entity = models.Calendar(id=calendar_id, parent=user_key)
         return entity
+
+    @endpoints.method(messages.CALENDAR_ID_RESOURCE,
+                      messages.CalendarProperties,
+                      http_method="GET", path="{calendarId}")
+    def get(self, request):
+        """
+        Get an individual calendar's data.
+
+        :type request: messages.CALENDAR_ID_RESOURCE
+        """
+        user_id = authutils.require_user_id()
+
+        service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                        authutils.CALENDAR_API_VERSION)
+        calendar = gapiutils.get_calendar(service, request.calendarId)
+
+        user_key = models.get_user_key(user_id)
+        entity = ndb.Key(models.Calendar, request.calendarId,
+                         parent=user_key).get()
+        if entity is None:
+            raise endpoints.NotFoundException()
+
+        calendar.hidden = entity.hidden
+        if calendar.hidden is None:
+            calendar.hidden = False
+
+        return calendar
 
     @endpoints.method(messages.CALENDAR_WRITE_RESOURCE,
                       messages.CalendarWriteProperties,
@@ -102,7 +128,9 @@ class CalendarsAPI(remote.Service):
 
         :type request: messages.CALENDAR_WRITE_RESOURCE
         """
-        entity = self.get_calendar_entity(request.calendarId)
+        user_id = authutils.require_user_id()
+
+        entity = self.get_calendar_entity(user_id, request.calendarId)
 
         # Set properties from request on the entity
         if request.hidden is not None:
@@ -120,7 +148,9 @@ class CalendarsAPI(remote.Service):
 
         :type request: messages.CALENDAR_WRITE_RESOURCE
         """
-        entity = CalendarsAPI.get_calendar_entity(request.calendarId)
+        user_id = authutils.require_user_id()
+
+        entity = self.get_calendar_entity(user_id, request.calendarId)
 
         # Set properties from request on the entity
         entity.hidden = request.hidden
@@ -141,9 +171,7 @@ class CalendarsAPI(remote.Service):
         user_key = models.get_user_key(user_id)
         key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
         if key.get() is None:
-            raise endpoints.NotFoundException(
-                    strings.ERROR_CALENDAR_NOT_FOUND.format(
-                            calendar_id=request.calendarId))
+            raise endpoints.NotFoundException()
         key.delete()
 
         # Does not delete the calendar's events' data, just in case the user

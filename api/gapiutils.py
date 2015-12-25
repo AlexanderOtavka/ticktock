@@ -36,10 +36,11 @@ def get_calendars(service):
 
     while True:
         try:
-            api_query_result = service.calendarList().list(
+            query = service.calendarList().list(
                 fields=LIST_FIELDS.format(CALENDAR_FIELDS),
                 pageToken=page_token
-            ).execute()
+            )
+            result = query.execute()
         except HttpError as e:
             if e.resp.status == 404:
                 raise NotFoundException()
@@ -53,16 +54,53 @@ def get_calendars(service):
                 calendarId=item["id"],
                 name=item["summary"],
                 color=item["backgroundColor"],
-                hidden=False
+                hidden=None
             )
-            for item in api_query_result["items"]
+            for item in result["items"]
         ]
 
-        page_token = api_query_result.get("nextPageToken")
+        page_token = result.get("nextPageToken")
         if not page_token:
             break
 
     return calendars
+
+
+def get_calendar(service, cal_id, validation_only=False):
+    """
+    Get a specific event by ID.
+
+    :param service: Calendar resource object.
+    :type cal_id: str
+    :type validation_only: bool
+    :rtype: messages.CalendarProperties
+    :raise ForbiddenException: API request failed with status 403.
+    :raise NotFoundException: API request failed with status 404.
+    :raise HttpError: Other API request failure.
+    """
+    try:
+        query = service.calendarList().get(
+            fields="kind" if validation_only else CALENDAR_FIELDS,
+            calendarId=cal_id
+        )
+        result = query.execute()
+    except HttpError as e:
+        if e.resp.status == 404:
+            raise NotFoundException()
+        elif e.resp.status == 403:
+            raise ForbiddenException()
+        else:
+            raise
+
+    if validation_only:
+        return
+
+    return messages.CalendarProperties(
+        calendarId=result["id"],
+        name=result["summary"],
+        color=result["backgroundColor"],
+        hidden=None
+    )
 
 
 def datetime_from_string(string):
@@ -103,7 +141,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
     events = []
     now = datetime.utcnow().isoformat() + "Z"
     try:
-        result = service.events().list(
+        query = service.events().list(
             fields=LIST_FIELDS.format(EVENT_FIELDS),
             calendarId=cal_id,
             pageToken=page_token,
@@ -112,7 +150,8 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
             timeZone=time_zone,
             singleEvents=True,
             orderBy="startTime"
-        ).execute()
+        )
+        result = query.execute()
     except HttpError as e:
         if e.resp.status == 404:
             raise NotFoundException()
@@ -180,12 +219,13 @@ def get_event(service, cal_id, event_id, time_zone="UTC",
     :raise HttpError: Other API request failure.
     """
     try:
-        result = service.events().get(
+        query = service.events().get(
             fields="end" if validation_only else EVENT_FIELDS,
             calendarId=cal_id,
             eventId=event_id,
             timeZone=time_zone
-        ).execute()
+        )
+        result = query.execute()
     except HttpError as e:
         if e.resp.status == httplib.NOT_FOUND:
             raise NotFoundException()

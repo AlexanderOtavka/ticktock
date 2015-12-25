@@ -108,11 +108,13 @@ class EventWriteProperties(messages.Message):
     settings = messages.MessageField(EventSettings, 3)
 
 EVENT_ID_RESOURCE = endpoints.ResourceContainer(
-        message_types.VoidMessage,
-        eventId=messages.StringField(1, variant=messages.Variant.STRING,
-                                     required=True),
-        calendarId=messages.StringField(2, variant=messages.Variant.STRING,
-                                        required=True))
+    message_types.VoidMessage,
+    timeZone=messages.StringField(1, variant=messages.Variant.STRING),
+    eventId=messages.StringField(2, variant=messages.Variant.STRING,
+                                 required=True),
+    calendarId=messages.StringField(3, variant=messages.Variant.STRING,
+                                    required=True)
+)
 EVENT_WRITE_RESOURCE = endpoints.ResourceContainer(
         EventWriteProperties,
         eventId=messages.StringField(4, variant=messages.Variant.STRING,
@@ -138,7 +140,7 @@ _SEARCH_QUERY_FIELDS = dict(
 EVENT_SEARCH_RESOURCE = endpoints.ResourceContainer(
         message_types.VoidMessage,
         # TODO: implement timezones.
-        timezone=messages.StringField(3, variant=messages.Variant.STRING),
+        timeZone=messages.StringField(3, variant=messages.Variant.STRING),
         pageToken=messages.StringField(4, variant=messages.Variant.STRING),
         calendarId=messages.StringField(5, variant=messages.Variant.STRING,
                                         required=True),

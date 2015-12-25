@@ -5,10 +5,6 @@ from __future__ import division, print_function
 __author__ = "Zander Otavka"
 
 
-ERROR_CALENDAR_NOT_FOUND = \
-    "No calendar with calendarId = '{calendar_id}' in user's list."
-
-
 LOGGING_DELETE_UNBOUND_CALENDAR = \
     "Deleted: unbound Calendar entity with calendar_id = '{calendar_id}' " \
     "and user_id = '{user_id}'."
