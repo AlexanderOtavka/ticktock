@@ -1,5 +1,6 @@
 """Tools for getting data from the Google Calendar API."""
 
+import httplib
 from datetime import datetime
 
 from endpoints import NotFoundException, ForbiddenException
@@ -12,7 +13,7 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
 CALENDAR_FIELDS = "id,summary,backgroundColor"
-EVENT_FIELDS = "id,recurringEventId,summary,start,end"
+EVENT_FIELDS = "id,recurringEventId,summary,start,end,htmlLink"
 LIST_FIELDS = "nextPageToken,items({})"
 
 
@@ -28,6 +29,7 @@ def get_calendars(service):
     :rtype: list[messages.CalendarProperties]
     :raise ForbiddenException: API request failed with status 403.
     :raise NotFoundException: API request failed with status 404.
+    :raise HttpError: Other API request failure.
     """
     page_token = None
     calendars = []
@@ -48,7 +50,7 @@ def get_calendars(service):
 
         calendars += [
             messages.CalendarProperties(
-                calendar_id=item["id"],
+                calendarId=item["id"],
                 name=item["summary"],
                 color=item["backgroundColor"],
                 hidden=False
@@ -96,6 +98,7 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
     :rtype: list[messages.EventProperties]
     :raise ForbiddenException: API request failed with status 403.
     :raise NotFoundException: API request failed with status 404.
+    :raise HttpError: Other API request failure.
     """
     events = []
     now = datetime.utcnow().isoformat() + "Z"
@@ -107,7 +110,8 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
             maxResults=10,
             timeMin=now,
             timeZone=time_zone,
-            singleEvents=True
+            singleEvents=True,
+            orderBy="startTime"
         ).execute()
     except HttpError as e:
         if e.resp.status == 404:
@@ -118,42 +122,49 @@ def get_events(service, cal_id, page_token=None, time_zone="UTC"):
             raise
 
     for item in result["items"]:
-        recurrence_id = None
         if "recurringEventId" in item:
             recurrence_id = item["recurringEventId"]
+        else:
+            recurrence_id = None
 
-        name = "(Untitled Event)"
         if "summary" in item:
             name = item["summary"]
+        else:
+            name = None
 
+        assert "start" in item
         start = item["start"]
         if "dateTime" in start:
             start_date = datetime_from_string(start["dateTime"])
         else:
             start_date = datetime_from_date_string(start["date"])
 
+        assert "end" in item
         end = item["end"]
         if "dateTime" in end:
             end_date = datetime_from_string(end["dateTime"])
         else:
             end_date = datetime_from_date_string(end["date"])
 
+        assert "id" in item
         event = messages.EventProperties(
-            event_id=item["id"],
-            calendar_id=cal_id,
+            eventId=item["id"],
+            calendarId=cal_id,
             name=name,
-            start_date=start_date,
-            end_date=end_date,
-            hidden=False,
-            starred=False,
-            recurrence_id=recurrence_id
+            startDate=start_date,
+            endDate=end_date,
+            hidden=None,
+            starred=None,
+            link=item["htmlLink"],
+            recurrenceId=recurrence_id
         )
         events.append(event)
 
     return events
 
 
-def get_event(service, cal_id, event_id, time_zone="UTC"):
+def get_event(service, cal_id, event_id, time_zone="UTC",
+              validation_only=False):
     """
     Get a specific event by ID.
 
@@ -161,31 +172,27 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
     :type cal_id: str
     :type event_id: str
     :type time_zone: str
+    :type validation_only: bool
     :rtype: messages.EventProperties
     :raise OldEventError: The requested event takes place in the past.
     :raise ForbiddenException: API request failed with status 403.
     :raise NotFoundException: API request failed with status 404.
+    :raise HttpError: Other API request failure.
     """
     try:
         result = service.events().get(
-            fields=EVENT_FIELDS,
+            fields="end" if validation_only else EVENT_FIELDS,
             calendarId=cal_id,
             eventId=event_id,
             timeZone=time_zone
         ).execute()
     except HttpError as e:
-        if e.resp.status == 404:
+        if e.resp.status == httplib.NOT_FOUND:
             raise NotFoundException()
-        elif e.resp.status == 403:
+        elif e.resp.status == httplib.FORBIDDEN:
             raise ForbiddenException()
         else:
             raise
-
-    start = result["start"]
-    if "dateTime" in start:
-        start_date = datetime_from_string(start["dateTime"])
-    else:
-        start_date = datetime_from_date_string(start["date"])
 
     end = result["end"]
     if "dateTime" in end:
@@ -197,12 +204,33 @@ def get_event(service, cal_id, event_id, time_zone="UTC"):
     if end_date < now:
         raise OldEventError("Event \"{}\" ended in the past.".format(event_id))
 
+    if validation_only:
+        return
+
+    if "recurringEventId" in result:
+        recurrence_id = result["recurringEventId"]
+    else:
+        recurrence_id = None
+
+    if "summary" in result:
+        name = result["summary"]
+    else:
+        name = None
+
+    start = result["start"]
+    if "dateTime" in start:
+        start_date = datetime_from_string(start["dateTime"])
+    else:
+        start_date = datetime_from_date_string(start["date"])
+
     return messages.EventProperties(
-        event_id=event_id,
-        calendar_id=cal_id,
-        name=result["summary"],
-        start_date=start_date,
-        end_date=end_date,
-        hidden=False,
-        starred=False
+        eventId=event_id,
+        calendarId=cal_id,
+        name=name,
+        startDate=start_date,
+        endDate=end_date,
+        hidden=None,
+        starred=None,
+        link=result["htmlLink"],
+        recurrenceId=recurrence_id
     )

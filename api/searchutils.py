@@ -65,7 +65,7 @@ def event_starred(e):
 
 
 def event_start_date(e):
-    return e.start_date
+    return e.startDate
 
 
 def event_kw_score(kw, narrow):

@@ -19,6 +19,8 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 class PublicAPI(remote.Service):
     """Access and manage public calendars."""
 
+    # TODO: add method for adding public calendars
+
     @endpoints.method(messages.CALENDAR_SEARCH_RESOURCE,
                       messages.CalendarCollection,
                       name="calendars.list",
@@ -50,7 +52,7 @@ class PublicAPI(remote.Service):
     @endpoints.method(messages.EVENT_SEARCH_RESOURCE,
                       messages.EventCollection,
                       name="events.list",
-                      http_method="GET", path="calendars/{calendar_id}/events")
+                      http_method="GET", path="calendars/{calendarId}/events")
     def events_list(self, request):
         """
         Get a list of events for a given public calendar.
@@ -62,7 +64,7 @@ class PublicAPI(remote.Service):
             authutils.CALENDAR_API_VERSION,
             AppAssertionCredentials(authutils.SERVICE_ACCOUNT_SCOPES)
         )
-        events = gapiutils.get_events(service, request.calendar_id)
+        events = gapiutils.get_events(service, request.calendarId)
 
         # Sort and search
         search = request.search
