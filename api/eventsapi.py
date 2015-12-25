@@ -143,28 +143,6 @@ class EventsAPI(remote.Service):
 
         return messages.EventCollection(items=events)
 
-    @staticmethod
-    def get_event_entity(user_id, calendar_id, event_id):
-        """
-        Retrieve or create an event entity from calendar and event ids.
-
-        :type user_id: unicode
-        :type calendar_id: str
-        :type event_id: str
-        :rtype: models.Event
-        """
-        # Get ndb key for calendar
-        user_key = models.get_user_key(user_id)
-        cal_key = ndb.Key(models.Calendar, calendar_id, parent=user_key)
-        if cal_key.get() is None:
-            raise endpoints.NotFoundException()
-
-        # Get or create entity from calendar key and event id
-        entity = ndb.Key(models.Event, event_id, parent=cal_key).get()
-        if entity is None:
-            entity = models.Event(id=event_id, parent=cal_key)
-        return entity
-
     @endpoints.method(messages.EVENT_ID_RESOURCE, messages.EventProperties,
                       http_method="GET", path="{eventId}")
     def get(self, request):
@@ -196,6 +174,37 @@ class EventsAPI(remote.Service):
             event.starred = False
 
         return event
+
+    @staticmethod
+    def get_event_entity(user_id, calendar_id, event_id):
+        """
+        Retrieve or create an event entity from calendar and event ids.
+
+        :type user_id: unicode
+        :type calendar_id: str
+        :type event_id: str
+        :rtype: models.Event
+        """
+        # Validate event's existence
+        service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                        authutils.CALENDAR_API_VERSION)
+        try:
+            gapiutils.get_event(service, calendar_id, event_id,
+                                validation_only=True)
+        except gapiutils.OldEventError:
+            raise endpoints.ForbiddenException()
+
+        # Get ndb key for calendar
+        user_key = models.get_user_key(user_id)
+        cal_key = ndb.Key(models.Calendar, calendar_id, parent=user_key)
+        if cal_key.get() is None:
+            raise endpoints.NotFoundException()
+
+        # Get or create entity from calendar key and event id
+        entity = ndb.Key(models.Event, event_id, parent=cal_key).get()
+        if entity is None:
+            entity = models.Event(id=event_id, parent=cal_key)
+        return entity
 
     @endpoints.method(messages.EVENT_WRITE_RESOURCE,
                       messages.EventWriteProperties,

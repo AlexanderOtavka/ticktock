@@ -75,23 +75,6 @@ class CalendarsAPI(remote.Service):
 
         return messages.CalendarCollection(items=chosen_calendars)
 
-    @staticmethod
-    def get_calendar_entity(user_id, calendar_id):
-        """
-        Retrieve or create a calendar entity from a calendar id.
-
-        :type user_id: unicode
-        :type calendar_id: str
-        :rtype: models.Calendar
-        """
-        # Get the ndb entity
-        user_key = models.get_user_key(user_id)
-        entity = ndb.Key(models.Calendar, calendar_id,
-                         parent=user_key).get()
-        if entity is None:
-            entity = models.Calendar(id=calendar_id, parent=user_key)
-        return entity
-
     @endpoints.method(messages.CALENDAR_ID_RESOURCE,
                       messages.CalendarProperties,
                       http_method="GET", path="{calendarId}")
@@ -118,6 +101,28 @@ class CalendarsAPI(remote.Service):
             calendar.hidden = False
 
         return calendar
+
+    @staticmethod
+    def get_calendar_entity(user_id, calendar_id):
+        """
+        Retrieve or create a calendar entity from a calendar id.
+
+        :type user_id: unicode
+        :type calendar_id: str
+        :rtype: models.Calendar
+        """
+        # Validate calendar's existence
+        service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                        authutils.CALENDAR_API_VERSION)
+        gapiutils.get_calendar(service, calendar_id, validation_only=True)
+
+        # Get or create the ndb entity
+        user_key = models.get_user_key(user_id)
+        entity = ndb.Key(models.Calendar, calendar_id,
+                         parent=user_key).get()
+        if entity is None:
+            entity = models.Calendar(id=calendar_id, parent=user_key)
+        return entity
 
     @endpoints.method(messages.CALENDAR_WRITE_RESOURCE,
                       messages.CalendarWriteProperties,
@@ -168,6 +173,13 @@ class CalendarsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        # Validate calendar's existence
+        service = authutils.get_service(authutils.CALENDAR_API_NAME,
+                                        authutils.CALENDAR_API_VERSION)
+        gapiutils.get_calendar(service, request.calendarId,
+                               validation_only=True)
+
+        # Get key from request.calendarId and delete it.
         user_key = models.get_user_key(user_id)
         key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
         if key.get() is None:
