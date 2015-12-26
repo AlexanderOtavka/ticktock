@@ -64,7 +64,8 @@ class PublicAPI(remote.Service):
             authutils.CALENDAR_API_VERSION,
             AppAssertionCredentials(authutils.SERVICE_ACCOUNT_SCOPES)
         )
-        events = gapiutils.get_events(service, request.calendarId)
+        events = gapiutils.get_events(service, request.calendarId,
+                                      request.timeZone, request.pageToken)
 
         # Sort and search
         search = request.search

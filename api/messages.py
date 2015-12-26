@@ -139,7 +139,6 @@ _SEARCH_QUERY_FIELDS = dict(
         hidden=messages.BooleanField(2, variant=messages.Variant.BOOL))
 EVENT_SEARCH_RESOURCE = endpoints.ResourceContainer(
         message_types.VoidMessage,
-        # TODO: implement timezones.
         timeZone=messages.StringField(3, variant=messages.Variant.STRING),
         pageToken=messages.StringField(4, variant=messages.Variant.STRING),
         calendarId=messages.StringField(5, variant=messages.Variant.STRING,

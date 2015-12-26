@@ -189,6 +189,7 @@ class CalendarsAPI(remote.Service):
         # Does not delete the calendar's events' data, just in case the user
         # wants to undo, they can re-add the calendar, and have all of their
         # starred and hidden events remain.  I'm still not sure if that's the
-        # best behavior, but I'm going to err on the side of least destruction.
+        # best behavior, but I'm going to err on the side of least destruction,
+        # when it comes to data loss.
 
         return message_types.VoidMessage()

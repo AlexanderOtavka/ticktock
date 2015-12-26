@@ -47,7 +47,8 @@ class EventsAPI(remote.Service):
         # while len(events) < page_size and next_page_token:
 
         # Get event list from the google api
-        events = gapiutils.get_events(service, request.calendarId)
+        events = gapiutils.get_events(service, request.calendarId,
+                                      request.pageToken, request.timeZone)
 
         # Update event list with fields stored in the datastore
         recurring_events = {}
@@ -117,7 +118,7 @@ class EventsAPI(remote.Service):
                     try:
                         event = gapiutils.get_event(
                             service, starred_key.parent().string_id(),
-                            entity_id)
+                            entity_id, request.timeZone)
                         event.starred = True
                         event.hidden = False
                         events.append(event)
@@ -155,8 +156,11 @@ class EventsAPI(remote.Service):
 
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
-        event = gapiutils.get_event(service, request.calendarId,
-                                    request.eventId)
+        try:
+            event = gapiutils.get_event(service, request.calendarId,
+                                        request.eventId, request.timeZone)
+        except gapiutils.OldEventError:
+            raise endpoints.ForbiddenException()
 
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
@@ -189,7 +193,7 @@ class EventsAPI(remote.Service):
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
         try:
-            gapiutils.get_event(service, calendar_id, event_id,
+            gapiutils.get_event(service, calendar_id, event_id, "UTC",
                                 validation_only=True)
         except gapiutils.OldEventError:
             raise endpoints.ForbiddenException()

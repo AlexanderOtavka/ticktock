@@ -8,8 +8,9 @@
       <sourceFolder url="file:///Applications/GAE Launcher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine/lib/protorpc-1.0" isTestSource="false" />
     </content>
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/libs/appengine-picturesque-python" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libs/picturesque" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libs/google-api-python-client" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libs/pytz" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
