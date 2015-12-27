@@ -65,6 +65,7 @@ class EventSettings(messages.Message):
     """
     # TODO: implement settings for events
     countToStart = messages.BooleanField(1, default=True)
+    # TODO: take into account endTimeUnspecified = true
     countToEnd = messages.BooleanField(2, default=False)
 
 
