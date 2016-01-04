@@ -68,6 +68,10 @@ def event_start_date(e):
     return e.startDate
 
 
+def event_name(e):
+    return e.name
+
+
 def event_kw_score(kw, narrow):
     return lambda e: _get_event_kw_score(e, kw, narrow)
 
@@ -81,11 +85,12 @@ def calendar_alpha_score(c):
 
 
 def event_chronological_order():
-    return [event_starred, event_start_date]
+    return [event_starred, event_start_date, event_name]
 
 
 def event_kw_chron_order(kw, narrow):
-    return [event_starred, event_kw_score(kw, narrow), event_start_date]
+    return [event_starred, event_kw_score(kw, narrow), event_start_date,
+            event_name]
 
 
 def calendar_kw_alpha_order(kw, narrow):
