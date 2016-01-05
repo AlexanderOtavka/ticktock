@@ -24,11 +24,6 @@ def logging_delete_unbound_event(event_id, calendar_id, user_id):
             .format(event_id, calendar_id, user_id))
 
 
-def logging_delete_old_event(event_id, calendar_id, user_id):
-    return ("Deleted: old Event entity with event_id = '{}' and calendar_id = "
-            "'{}' and user_id = '{}'.".format(event_id, calendar_id, user_id))
-
-
-def logging_garbage_collection_summary(old, unbound, total):
-    return ("Deleted {} old and {} unbound entities ({} total)."
-            .format(old, unbound, total))
+def logging_garbage_collection_summary(unbound):
+    return ("Deleted {} unbound entities."
+            .format(unbound))

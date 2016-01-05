@@ -53,10 +53,7 @@ class EventsAPI(remote.Service):
                         event_id=starred_key.string_id()))
                 starred_key.delete()
             except gapiutils.OldEventError:
-                logging.info(strings.logging_delete_old_event(
-                        user_id=user_id, calendar_id=calendar_id,
-                        event_id=starred_key.string_id()))
-                starred_key.delete()
+                pass
         return events
 
     @staticmethod
