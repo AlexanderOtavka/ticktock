@@ -73,6 +73,9 @@ def event_alpha_score(e):
 
 
 def event_id_score(e):
+    # ID sorting will always return the same order, but the order is
+    # meaningless so it should always be last to solve conflicts between
+    # otherwise identical events.
     return e.eventId
 
 
@@ -88,6 +91,13 @@ def calendar_alpha_score(c):
     return c.name
 
 
+def calendar_id_score(c):
+    # ID sorting will always return the same order, but the order is
+    # meaningless so it should always be last to solve conflicts between
+    # otherwise identical calendars.
+    return c.calendarId
+
+
 def event_chronological_order():
     return [event_starred, event_start_date, event_alpha_score, event_id_score]
 
@@ -98,11 +108,12 @@ def event_kw_chron_order(kw, narrow):
 
 
 def calendar_kw_alpha_order(kw, narrow):
-    return [calendar_kw_score(kw, narrow), calendar_alpha_score]
+    return [calendar_kw_score(kw, narrow), calendar_alpha_score,
+            calendar_id_score]
 
 
 def calendar_alpha_order():
-    return [calendar_alpha_score]
+    return [calendar_alpha_score, calendar_id_score]
 
 
 def search(search_list, order):
