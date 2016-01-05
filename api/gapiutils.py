@@ -33,7 +33,7 @@ HTTP_ERRORS = {
 }
 
 
-class OldEventError(Exception):
+class OldEventError(api_exceptions.ForbiddenException):
     pass
 
 

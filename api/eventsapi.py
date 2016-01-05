@@ -173,12 +173,8 @@ class EventsAPI(remote.Service):
 
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
-        try:
-            event = gapiutils.get_event(service, request.calendarId,
-                                        request.eventId, request.timeZone)
-        except gapiutils.OldEventError:
-            raise endpoints.ForbiddenException(
-                    strings.error_old_event(event_id=request.eventId))
+        event = gapiutils.get_event(service, request.calendarId,
+                                    request.eventId, request.timeZone)
 
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
@@ -212,12 +208,8 @@ class EventsAPI(remote.Service):
         # Validate event's existence
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
-        try:
-            gapiutils.get_event(service, calendar_id, event_id, "UTC",
-                                validation_only=True)
-        except gapiutils.OldEventError:
-            raise endpoints.ForbiddenException(
-                    strings.error_old_event(event_id=event_id))
+        gapiutils.get_event(service, calendar_id, event_id, "UTC",
+                            validation_only=True)
 
         # Get ndb key for calendar
         user_key = models.get_user_key(user_id)
