@@ -1,5 +1,7 @@
 """The endpoints server."""
 
+from __future__ import division, print_function
+
 import webapp2
 
 __author__ = "Alexander Otavka"

@@ -1,5 +1,7 @@
 """API for managing events."""
 
+from __future__ import division, print_function
+
 import logging
 
 import endpoints
@@ -112,13 +114,6 @@ class EventsAPI(remote.Service):
             chosen.append(event)
         return chosen
 
-    @staticmethod
-    def sort_and_search(events, search):
-        if search:
-            return searchutils.event_keyword_chron_search(events, search)
-        else:
-            return searchutils.event_chron_sort(events)
-
     @endpoints.method(messages.EVENT_SEARCH_RESOURCE, messages.EventCollection,
                       http_method="GET", path="/calendars/{calendarId}/events")
     def list(self, request):
@@ -184,25 +179,44 @@ class EventsAPI(remote.Service):
         else:
             extra_starred_ids = []
 
-        # Initial sort and search, before checking the length
-        events = self.sort_and_search(starred_events, request.search)
+        events = starred_events[:]
         """:type: list[messages.EventProperties]"""
+
+        if request.search:
+            # Initial search, before checking the length
+            events = searchutils.event_keyword_search(events, request.search)
 
         events += cached_events
 
-        # TODO: make this a for loop to 10, and last add search/sort to it
-        if len(events) < request.maxResults:
+        # TODO: handle excluded recurring events better
+        for _ in range(10):
+            if len(events) >= request.maxResults:
+                break
+
             # Get event list from the google api
             api_events, gapi_next_page_token = gapiutils.get_events(
                     service, request.calendarId, request.timeZone,
                     gapi_next_page_token, request.maxResults)
 
-            events += self.filter_and_update_events(
+            api_events = self.filter_and_update_events(
                     api_events, starred_event_ids, calendar_key, request.hidden)
 
-        # Sort and search again after adding api events
-        events = self.sort_and_search(events, request.search)
-        # TODO: if gapi_next_page_token is None: break
+            if request.search:
+                # Search again after adding more api events
+                api_events = searchutils.event_keyword_search(api_events,
+                                                              request.search)
+
+            events += api_events
+
+            if gapi_next_page_token is None:
+                break
+
+        # Do a final sort after adding all api events
+        if request.search:
+            events = searchutils.event_keyword_chron_sort(events,
+                                                          request.search)
+        else:
+            events = searchutils.event_chron_sort(events)
 
         if len(events) >= request.maxResults:
             # Save extra for later

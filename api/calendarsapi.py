@@ -1,5 +1,7 @@
 """API for managing calendars."""
 
+from __future__ import division, print_function
+
 import logging
 
 import endpoints

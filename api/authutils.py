@@ -6,6 +6,8 @@ https://github.com/GoogleCloudPlatform/appengine-picturesque-python, and is
 subject to copyright by Google.
 """
 
+from __future__ import division, print_function
+
 import os
 import json
 

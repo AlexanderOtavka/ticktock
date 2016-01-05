@@ -1,5 +1,7 @@
 """Tools for getting data from the Google Calendar API."""
 
+from __future__ import division, print_function
+
 import httplib
 from datetime import datetime, tzinfo
 

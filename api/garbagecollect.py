@@ -1,5 +1,7 @@
 """Clear out old or unbound datastore entities."""
 
+from __future__ import division, print_function
+
 import logging
 
 from google.appengine.ext import ndb

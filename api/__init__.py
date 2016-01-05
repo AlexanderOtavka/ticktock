@@ -1,5 +1,7 @@
 """The endpoints server."""
 
+from __future__ import division, print_function
+
 import endpoints
 
 from calendarsapi import CalendarsAPI

@@ -1,5 +1,7 @@
 """TickTock API definition."""
 
+from __future__ import division, print_function
+
 import endpoints
 
 __author__ = "Alexander Otavka"

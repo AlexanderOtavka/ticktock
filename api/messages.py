@@ -1,5 +1,7 @@
 """Endpoints messages."""
 
+from __future__ import division, print_function
+
 from datetime import datetime
 
 from protorpc import messages, message_types

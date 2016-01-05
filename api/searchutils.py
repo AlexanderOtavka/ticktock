@@ -1,5 +1,7 @@
 """Tools to help with searching and sorting API data."""
 
+from __future__ import division, print_function
+
 from messages import EventProperties, CalendarProperties
 
 __author__ = "Alexander Otavka"
@@ -12,31 +14,31 @@ class NullSearchError(Exception):
                 "Insufficient matches found for data item.")
 
 
-def _get_event_kw_score(event, keywords, narrow=False):
+def _get_event_kw_score(event, keywords, narrow):
     """
     Get a relevance score for an event based on keyword matches.
 
-    :param EventProperties event: Event to be scored.
-    :param str keywords: Search terms separated by spaces.
-    :param bool narrow:
-        If true, throw NullSearchError for insufficient keyword matches.
-
+    :type event: EventProperties
+    :type keywords: str
+    :param bool narrow: If true, throw NullSearchError for insufficient keyword
+                        matches.
     :rtype: float
-    :raise NullSearchError:
-        If narrow=True and insufficient keyword matches are found.
+    :raise NullSearchError: If narrow is True and insufficient keyword matches
+                            are found.
     """
-    event_string_data = event.name
+    # TODO: make search algorithm less bad
+    event_string_data = event.name.lower()
     search_set = set(keywords.split())
     matches = 0.0
     for keyword in search_set:
-        if keyword in event_string_data:
+        if keyword.lower() in event_string_data:
             matches += 1.0
-    if narrow and matches < len(search_set) // 2:
+    if narrow and (not matches or matches < len(search_set) // 2):
         raise NullSearchError()
     return matches
 
 
-def _get_calendar_kw_score(calendar, keywords, narrow=False):
+def _get_calendar_kw_score(calendar, keywords, narrow):
     """
     Get a relevance score for a calendar based on keyword matches.
 
@@ -98,24 +100,6 @@ def calendar_id_score(c):
     return c.calendarId
 
 
-def event_chronological_order():
-    return [event_starred, event_start_date, event_alpha_score, event_id_score]
-
-
-def event_kw_chron_order(kw, narrow):
-    return [event_starred, event_kw_score(kw, narrow), event_start_date,
-            event_alpha_score, event_id_score]
-
-
-def calendar_kw_alpha_order(kw, narrow):
-    return [calendar_kw_score(kw, narrow), calendar_alpha_score,
-            calendar_id_score]
-
-
-def calendar_alpha_order():
-    return [calendar_alpha_score, calendar_id_score]
-
-
 def search(search_list, order):
     """
     Search and sort search_list based on tuple of order functions.
@@ -134,46 +118,64 @@ def search(search_list, order):
         except NullSearchError:
             continue
     sorted_list = sorted(sorted_list)
-    return list(zip(*sorted_list)[-1])
+    if sorted_list:
+        return list(zip(*sorted_list)[-1])
+    else:
+        return []
 
 
-def event_keyword_chron_search(event_list, keywords):
+def event_keyword_search(event_list, keywords):
     """
-    Convenience function, search with event_kw_chron_order.
+    Search exclusively by keyword order, and narrow results.
 
     :type event_list: list[EventProperties]
     :type keywords: str
     :rtype: list[EventProperties]
     """
-    return search(event_list, event_kw_chron_order(keywords, True))
+    return search(event_list, [event_kw_score(keywords, True)])
+
+
+def event_keyword_chron_sort(event_list, keywords):
+    """
+    Sort by keyword matches, then by start date, putting starred first.
+
+    :type event_list: list[EventProperties]
+    :type keywords: str
+    :rtype: list[EventProperties]
+    """
+    return search(event_list, [event_starred, event_kw_score(keywords, False),
+                               event_start_date, event_alpha_score,
+                               event_id_score])
 
 
 def event_chron_sort(event_list):
     """
-    Convenience function, search with event_chronological_order.
+    Sort events in chronological order, starred first.
 
     :type event_list: list[EventProperties]
     :rtype: list[EventProperties]
     """
-    return search(event_list, event_chronological_order())
+    return search(event_list, [event_starred, event_start_date,
+                               event_alpha_score, event_id_score])
 
 
 def calendar_keyword_alpha_search(calendar_list, keywords):
     """
-    Convenience function, search with calendar_kw_alpha_order.
+    Search and narrow by keyword matches, then alphabetical order.
 
     :type calendar_list: list[CalendarProperties]
     :type keywords: str
     :rtype: list[CalendarProperties]
     """
-    return search(calendar_list, calendar_kw_alpha_order(keywords, True))
+    return search(calendar_list, [calendar_kw_score(keywords, True),
+                                  calendar_alpha_score, calendar_id_score])
 
 
 def calendar_alpha_sort(calendar_list):
     """
-    Convenience function, search with calendar_alpha_order.
+    Sort calendars in alphabetical order.
 
     :type calendar_list: list[CalendarProperties]
     :rtype: list[CalendarProperties]
     """
-    return search(calendar_list, calendar_alpha_order())
+    return search(calendar_list, [calendar_alpha_score, calendar_id_score])

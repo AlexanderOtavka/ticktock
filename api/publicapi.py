@@ -1,5 +1,7 @@
 """API for accessing public calendars and events."""
 
+from __future__ import division, print_function
+
 import endpoints
 from protorpc import remote
 from oauth2client.appengine import AppAssertionCredentials
@@ -64,13 +66,15 @@ class PublicAPI(remote.Service):
             authutils.CALENDAR_API_VERSION,
             AppAssertionCredentials(authutils.SERVICE_ACCOUNT_SCOPES)
         )
-        events = gapiutils.get_events(service, request.calendarId,
-                                      request.timeZone, request.pageToken)
+        events, next_page_token = gapiutils.get_events(
+                service, request.calendarId, request.timeZone,
+                request.pageToken, request.maxResults)
 
         # Sort and search
         search = request.search
         if search:
-            events = searchutils.event_keyword_chron_search(events, search)
+            events = searchutils.event_keyword_search(events, search)
+            events = searchutils.event_keyword_chron_sort(events, search)
         else:
             events = searchutils.event_chron_sort(events)
 
