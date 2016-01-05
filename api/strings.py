@@ -5,6 +5,9 @@ from __future__ import division, print_function
 __author__ = "Zander Otavka"
 
 
+ERROR_INVALID_VALUE = "Invalid Value."
+
+
 def error_old_event(event_id):
     return "Event with id '{}' ended in the past.".format(event_id)
 

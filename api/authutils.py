@@ -30,8 +30,6 @@ SERVICE_ACCOUNT_SCOPES = "https://www.googleapis.com/auth/calendar"
 
 
 _SAVED_TOKEN_DICT = {}
-# noinspection PyProtectedMember
-TOKENINFO_URL_PREFIX = users_id_token._TOKENINFO_URL + '?access_token='
 
 
 def get_user_id():
@@ -172,11 +170,14 @@ def _patched_urlfetch(url, *args, **kwargs):
     result = _original_fetch(url, *args, **kwargs)
     # Only a bare call with nothing but a URL will be cached
     if not (args or kwargs):
+        # noinspection PyProtectedMember
+        tokeninfo_url_prefix = users_id_token._TOKENINFO_URL + '?access_token='
+
         # In reality we should use urlparse.parse_qs to determine
         # this value, but we rely a bit here on the underlying
         # implementation in users_id_token.py.
-        if url.startswith(TOKENINFO_URL_PREFIX):
-            token = url.split(TOKENINFO_URL_PREFIX, 1)[1]
+        if url.startswith(tokeninfo_url_prefix):
+            token = url.split(tokeninfo_url_prefix, 1)[1]
             _SAVED_TOKEN_DICT[token] = result
 
     return result

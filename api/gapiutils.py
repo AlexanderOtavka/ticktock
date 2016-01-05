@@ -4,7 +4,7 @@ import httplib
 from datetime import datetime, tzinfo
 
 from endpoints import api_exceptions
-from apiclient.errors import HttpError
+from googleapiclient.errors import HttpError
 import pytz
 
 import messages
@@ -112,7 +112,14 @@ def get_calendar(service, cal_id, validation_only=False):
     )
 
 
-def get_calendar_timezone(service, cal_id):
+def get_calendar_time_zone(service, cal_id):
+    """
+    Get string time zone of calendar.
+
+    :param service: Calendar resource object.
+    :type cal_id: str
+    :rtype: str
+    """
     return _execute_query(service.calendarList().get(
         fields="timeZone",
         calendarId=cal_id
@@ -158,7 +165,7 @@ def get_events(service, cal_id, time_zone, page_token, page_max):
     :type time_zone: str
     :type page_token: str
     :type page_max: int
-    :rtype: list[messages.EventProperties]
+    :rtype: (list[messages.EventProperties], str)
     """
     events = []
     result = _execute_query(service.events().list(
@@ -214,7 +221,7 @@ def get_events(service, cal_id, time_zone, page_token, page_max):
         )
         events.append(event)
 
-    return events
+    return events, result["nextPageToken"]
 
 
 def get_event(service, cal_id, event_id, time_zone, validation_only=False):
@@ -257,7 +264,7 @@ def get_event(service, cal_id, event_id, time_zone, validation_only=False):
         tzinfo_object = pytz.timezone(time_zone or instances["timeZone"])
     else:
         tzinfo_object = pytz.timezone(time_zone or
-                                      get_calendar_timezone(service, cal_id))
+                                      get_calendar_time_zone(service, cal_id))
 
     assert "end" in result
     end = result["end"]
@@ -266,7 +273,7 @@ def get_event(service, cal_id, event_id, time_zone, validation_only=False):
     else:
         end_date = datetime_from_date_string(end["date"], tzinfo_object)
 
-    assert end_date < now if "instances" in locals() else True
+    assert end_date >= now if "instances" in locals() else True
     if end_date < now:
         raise OldEventError(strings.error_old_event(event_id))
 

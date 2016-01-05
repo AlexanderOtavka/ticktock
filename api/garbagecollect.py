@@ -20,6 +20,7 @@ class GarbageCollector(webapp2.RequestHandler):
     """Respond to chron job by ensuring the event database is clean."""
 
     def get(self):
+        # TODO: implement some kind of expiration for EventCacheGroups
         unbound_count = 0
         for user_entity in models.get_user_query().iter(keys_only=True):
             user_id = user_entity.key.string_id()

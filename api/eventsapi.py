@@ -5,6 +5,7 @@ import logging
 import endpoints
 from google.appengine.ext import ndb
 from protorpc import remote
+import basehash
 
 from ticktockapi import ticktock_api
 import messages
@@ -18,6 +19,9 @@ __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
+BASE58 = basehash.base58()
+
+
 @ticktock_api.api_class(resource_name="events",
                         path="calendars/{calendarId}/events",
                         auth_level=endpoints.AUTH_LEVEL.REQUIRED)
@@ -27,14 +31,15 @@ class EventsAPI(remote.Service):
     @staticmethod
     def get_starred(calendar_key, service, time_zone):
         """
-        Get an array of all starred events in given calendar.
+        Get an array of all starred events in given calendar and the ids.
 
         :type calendar_key: ndb.Key
         :param service: Calendar resource object.
         :type time_zone: str
-        :rtype: list[messages.EventProperties]
+        :rtype: (list[messages.EventProperties], list[str])
         """
         events = []
+        ids = []
         user_id = calendar_key.parent().string_id()
         calendar_id = calendar_key.string_id()
         starred = True
@@ -47,6 +52,7 @@ class EventsAPI(remote.Service):
                 event.starred = True
                 event.hidden = False
                 events.append(event)
+                ids.append(starred_key.string_id())
             except endpoints.NotFoundException:
                 logging.info(strings.logging_delete_unbound_event(
                         user_id=user_id, calendar_id=calendar_id,
@@ -54,25 +60,25 @@ class EventsAPI(remote.Service):
                 starred_key.delete()
             except gapiutils.OldEventError:
                 pass
-        return events
+        return events, ids
 
     @staticmethod
-    def filter_and_update_events(unfiltered_events, starred_events,
+    def filter_and_update_events(unfiltered_events, starred_event_ids,
                                  calendar_key, request_hidden):
         """
         Update and prune event list with fields stored in the datastore.
 
         :type unfiltered_events: list[messages.EventProperties]
-        :type starred_events: list[messages.EventProperties]
+        :type starred_event_ids: list[str]
         :type calendar_key: ndb.Key
         :type request_hidden: bool
         :rtype: list[messages.EventProperties]
         """
         chosen = []
         for event in unfiltered_events:
-            for starred_event in starred_events:
-                if (starred_event.eventId == event.eventId or
-                        starred_event.eventId == event.recurrenceId):
+            for starred_event_id in starred_event_ids:
+                if (starred_event_id == event.eventId or
+                        starred_event_id == event.recurrenceId):
                     event.starred = True
                     break
             else:
@@ -106,6 +112,13 @@ class EventsAPI(remote.Service):
             chosen.append(event)
         return chosen
 
+    @staticmethod
+    def sort_and_search(events, search):
+        if search:
+            return searchutils.event_keyword_chron_search(events, search)
+        else:
+            return searchutils.event_chron_sort(events)
+
     @endpoints.method(messages.EVENT_SEARCH_RESOURCE, messages.EventCollection,
                       http_method="GET", path="/calendars/{calendarId}/events")
     def list(self, request):
@@ -120,9 +133,20 @@ class EventsAPI(remote.Service):
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
 
-        # TODO: implement paging
+        if not request.timeZone:
+            request.timeZone = gapiutils.get_calendar_time_zone(
+                    service, request.calendarId)
+        if request.pageToken:
+            request.pageToken = BASE58.decode(request.pageToken)
 
-        events = []
+        starred_events = []
+        """:type: list[messages.EventProperties]"""
+
+        cached_events = []
+        """:type: list[messages.EventProperties]"""
+
+        starred_event_ids = []
+        """:type: list[str]"""
 
         calendar_key = ndb.Key(models.Calendar, request.calendarId,
                                parent=user_key)
@@ -131,35 +155,93 @@ class EventsAPI(remote.Service):
                     strings.error_calendar_not_added(
                             calendar_id=request.calendarId))
 
-        # Insert any starred events not included if hidden = False or None.
-        if not request.hidden:
-            starred_events = self.get_starred(calendar_key, service,
-                                              request.timeZone)
-            events += starred_events
-        else:
-            starred_events = []
+        if request.pageToken:
+            # Grab the cache for given page token
+            cache = ndb.Key(models.EventCacheGroup, request.pageToken,
+                            parent=user_key).get()
+            """:type: models.EventCacheGroup"""
 
-        page_size = 10
-        # TODO: add this after paging as part of said recursion
-        # next_page_token = request.pageToken
-        # while len(events) < page_size and next_page_token:
-        if len(events) < page_size:
+            if (cache is None or cache.sequence_hash !=
+                    models.EventCacheGroup.get_sequence_hash(request)):
+                raise endpoints.BadRequestException(
+                        strings.ERROR_INVALID_VALUE)
+
+            gapi_next_page_token = cache.next_page_token
+            for event_model in cache.items:
+                cached_events.append(event_model.to_message(request.timeZone))
+        else:
+            gapi_next_page_token = None
+
+            # Insert any starred events not included if hidden = False or None.
+            if not request.hidden:
+                starred_events, starred_event_ids = self.get_starred(
+                        calendar_key, service, request.timeZone)
+
+        if len(starred_event_ids) > request.maxResults:
+            starred_event_ids, extra_starred_ids = (
+                    starred_event_ids[:request.maxResults],
+                    starred_event_ids[request.maxResults:])
+        else:
+            extra_starred_ids = []
+
+        # Initial sort and search, before checking the length
+        events = self.sort_and_search(starred_events, request.search)
+        """:type: list[messages.EventProperties]"""
+
+        events += cached_events
+
+        # TODO: make this a for loop to 10, and last add search/sort to it
+        if len(events) < request.maxResults:
             # Get event list from the google api
-            api_events = gapiutils.get_events(service, request.calendarId,
-                                              request.timeZone,
-                                              request.pageToken, page_size)
+            api_events, gapi_next_page_token = gapiutils.get_events(
+                    service, request.calendarId, request.timeZone,
+                    gapi_next_page_token, request.maxResults)
 
             events += self.filter_and_update_events(
-                    api_events, starred_events, calendar_key, request.hidden)
+                    api_events, starred_event_ids, calendar_key, request.hidden)
 
-        # Sort and search
-        search = request.search
-        if search:
-            events = searchutils.event_keyword_chron_search(events, search)
+        # Sort and search again after adding api events
+        events = self.sort_and_search(events, request.search)
+        # TODO: if gapi_next_page_token is None: break
+
+        if len(events) >= request.maxResults:
+            # Save extra for later
+            events, extra = (events[:request.maxResults],
+                             events[request.maxResults:])
+
+            # Make a new cache object
+            new_cache = models.EventCacheGroup(
+                next_page_token=gapi_next_page_token,
+                extra_starred_ids=extra_starred_ids,
+                parent=user_key
+            )
+            assert new_cache.items == []
+            for extra_event in extra:
+                new_cache.items.append(
+                        models.EventCache.from_message(extra_event))
+            new_cache.generate_hashes(request)
+
+            # Check for duplicates, save new_cache if not
+            query = models.EventCacheGroup.query(
+                models.EventCacheGroup.unique_hash == new_cache.unique_hash,
+                ancestor=user_key
+            )
+            assert len(query.fetch()) <= 1
+            for key in query.iter(keys_only=True):
+                cache_key = key
+                break
+            else:
+                cache_key = None
+            if cache_key is None:
+                cache_key = new_cache.put()
+            next_page_token = BASE58.encode(cache_key.integer_id())
         else:
-            events = searchutils.event_chron_sort(events)
+            next_page_token = None
 
-        return messages.EventCollection(items=events)
+        return messages.EventCollection(
+            items=events,
+            nextPageToken=next_page_token
+        )
 
     @endpoints.method(messages.EVENT_ID_RESOURCE, messages.EventProperties,
                       http_method="GET", path="{eventId}")

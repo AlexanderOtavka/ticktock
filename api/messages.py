@@ -35,13 +35,15 @@ class CalendarWriteProperties(messages.Message):
     hidden = messages.BooleanField(1)
 
 CALENDAR_ID_RESOURCE = endpoints.ResourceContainer(
-        message_types.VoidMessage,
-        calendarId=messages.StringField(1, variant=messages.Variant.STRING,
-                                        required=True))
+    message_types.VoidMessage,
+    calendarId=messages.StringField(1, variant=messages.Variant.STRING,
+                                    required=True)
+)
 CALENDAR_WRITE_RESOURCE = endpoints.ResourceContainer(
-        CalendarWriteProperties,
-        calendarId=messages.StringField(2, variant=messages.Variant.STRING,
-                                        required=True))
+    CalendarWriteProperties,
+    calendarId=messages.StringField(2, variant=messages.Variant.STRING,
+                                    required=True)
+)
 
 
 class CalendarCollection(messages.Message):
@@ -117,11 +119,12 @@ EVENT_ID_RESOURCE = endpoints.ResourceContainer(
                                     required=True)
 )
 EVENT_WRITE_RESOURCE = endpoints.ResourceContainer(
-        EventWriteProperties,
-        eventId=messages.StringField(4, variant=messages.Variant.STRING,
-                                     required=True),
-        calendarId=messages.StringField(5, variant=messages.Variant.STRING,
-                                        required=True))
+    EventWriteProperties,
+    eventId=messages.StringField(4, variant=messages.Variant.STRING,
+                                 required=True),
+    calendarId=messages.StringField(5, variant=messages.Variant.STRING,
+                                    required=True)
+)
 
 
 class EventCollection(messages.Message):
@@ -136,15 +139,20 @@ class EventCollection(messages.Message):
 
 
 _SEARCH_QUERY_FIELDS = dict(
-        search=messages.StringField(1, variant=messages.Variant.STRING),
-        hidden=messages.BooleanField(2, variant=messages.Variant.BOOL))
+    search=messages.StringField(1, variant=messages.Variant.STRING),
+    hidden=messages.BooleanField(2, variant=messages.Variant.BOOL)
+)
 EVENT_SEARCH_RESOURCE = endpoints.ResourceContainer(
-        message_types.VoidMessage,
-        timeZone=messages.StringField(3, variant=messages.Variant.STRING),
-        pageToken=messages.StringField(4, variant=messages.Variant.STRING),
-        calendarId=messages.StringField(5, variant=messages.Variant.STRING,
-                                        required=True),
-        **_SEARCH_QUERY_FIELDS)
+    message_types.VoidMessage,
+    timeZone=messages.StringField(3, variant=messages.Variant.STRING),
+    maxResults=messages.IntegerField(4, variant=messages.Variant.UINT32,
+                                     default=10),
+    pageToken=messages.StringField(5, variant=messages.Variant.STRING),
+    calendarId=messages.StringField(6, variant=messages.Variant.STRING,
+                                    required=True),
+    **_SEARCH_QUERY_FIELDS
+)
 CALENDAR_SEARCH_RESOURCE = endpoints.ResourceContainer(
-        message_types.VoidMessage,
-        **_SEARCH_QUERY_FIELDS)
+    message_types.VoidMessage,
+    **_SEARCH_QUERY_FIELDS
+)
