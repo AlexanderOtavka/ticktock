@@ -1,10 +1,4 @@
-import os
-import sys
+from google.appengine.ext import vendor
 
-LIBS = [
-    os.path.join(os.path.dirname(__file__), 'libs/google-api-python-client'),
-    os.path.join(os.path.dirname(__file__), 'libs/picturesque'),
-    os.path.join(os.path.dirname(__file__), 'libs/pytz'),
-]
-
-sys.path += LIBS
+# Add any libraries installed in the "lib" folder.
+vendor.add('lib')
