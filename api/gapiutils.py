@@ -3,11 +3,12 @@
 import httplib
 from datetime import datetime, tzinfo
 
-from endpoints import NotFoundException, ForbiddenException
+from endpoints import api_exceptions
 from apiclient.errors import HttpError
 import pytz
 
 import messages
+import strings
 
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
@@ -15,11 +16,41 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 CALENDAR_FIELDS = "id,summary,backgroundColor"
 EVENT_FIELDS = "id,recurringEventId,summary,start,end,htmlLink"
-LIST_FIELDS = "nextPageToken,timeZone,items({})"
+CALENDAR_LIST_FIELDS = "nextPageToken,items({})".format(CALENDAR_FIELDS)
+EVENT_LIST_FIELDS = "nextPageToken,timeZone,items({})".format(EVENT_FIELDS)
+
+HTTP_ERRORS = {
+    httplib.BAD_REQUEST: api_exceptions.BadRequestException,
+    httplib.UNAUTHORIZED: api_exceptions.UnauthorizedException,
+    httplib.FORBIDDEN: api_exceptions.ForbiddenException,
+    httplib.NOT_FOUND: api_exceptions.NotFoundException,
+    httplib.CONFLICT: api_exceptions.ConflictException,
+    httplib.GONE: api_exceptions.GoneException,
+    httplib.PRECONDITION_FAILED: api_exceptions.PreconditionFailedException,
+    httplib.REQUEST_ENTITY_TOO_LARGE:
+        api_exceptions.RequestEntityTooLargeException,
+    httplib.INTERNAL_SERVER_ERROR: api_exceptions.InternalServerErrorException
+}
 
 
 class OldEventError(Exception):
     pass
+
+
+def _execute_query(query):
+    """
+    Execute the query, and raise any errors properly.
+
+    :param query: API query.
+    """
+    try:
+        return query.execute()
+    except HttpError as e:
+        if e.resp.status in HTTP_ERRORS:
+            raise HTTP_ERRORS[e.resp.status]
+        else:
+            assert (e.resp.status // 100) in (4, 5)
+            raise HTTP_ERRORS[e.resp.status // 100]
 
 
 def get_calendars(service):
@@ -28,27 +59,15 @@ def get_calendars(service):
 
     :param service: Calendar resource object.
     :rtype: list[messages.CalendarProperties]
-    :raise ForbiddenException: API request failed with status 403.
-    :raise NotFoundException: API request failed with status 404.
-    :raise HttpError: Other API request failure.
     """
     page_token = None
     calendars = []
 
     while True:
-        try:
-            query = service.calendarList().list(
-                fields=LIST_FIELDS.format(CALENDAR_FIELDS),
-                pageToken=page_token
-            )
-            result = query.execute()
-        except HttpError as e:
-            if e.resp.status == 404:
-                raise NotFoundException()
-            elif e.resp.status == 403:
-                raise ForbiddenException()
-            else:
-                raise
+        result = _execute_query(service.calendarList().list(
+            fields=CALENDAR_LIST_FIELDS,
+            pageToken=page_token
+        ))
 
         calendars += [
             messages.CalendarProperties(
@@ -67,30 +86,6 @@ def get_calendars(service):
     return calendars
 
 
-def _get_calendar_data(service, cal_id, fields):
-    """
-    Send off a query for a calendar's data.
-
-    :param service: Calendar resource object.
-    :type cal_id: str
-    :type fields: str
-    :return: Result of the calendarList.get API query.
-    """
-    try:
-        query = service.calendarList().get(
-            fields=fields,
-            calendarId=cal_id
-        )
-        return query.execute()
-    except HttpError as e:
-        if e.resp.status == 404:
-            raise NotFoundException()
-        elif e.resp.status == 403:
-            raise ForbiddenException()
-        else:
-            raise
-
-
 def get_calendar(service, cal_id, validation_only=False):
     """
     Get a specific event by ID.
@@ -99,12 +94,12 @@ def get_calendar(service, cal_id, validation_only=False):
     :type cal_id: str
     :type validation_only: bool
     :rtype: messages.CalendarProperties
-    :raise ForbiddenException: API request failed with status 403.
-    :raise NotFoundException: API request failed with status 404.
-    :raise HttpError: Other API request failure.
     """
     fields = "kind" if validation_only else CALENDAR_FIELDS
-    result = _get_calendar_data(service, cal_id, fields)
+    result = _execute_query(service.calendarList().get(
+        fields=fields,
+        calendarId=cal_id
+    ))
 
     if validation_only:
         return
@@ -118,7 +113,10 @@ def get_calendar(service, cal_id, validation_only=False):
 
 
 def get_calendar_timezone(service, cal_id):
-    return _get_calendar_data(service, cal_id, "timeZone")["timeZone"]
+    return _execute_query(service.calendarList().get(
+        fields="timeZone",
+        calendarId=cal_id
+    ))["timeZone"]
 
 
 def datetime_from_string(string, time_zone):
@@ -151,7 +149,7 @@ def datetime_from_date_string(string, time_zone):
     return datetime_object
 
 
-def get_events(service, cal_id, time_zone, page_token):
+def get_events(service, cal_id, time_zone, page_token, page_max):
     """
     Return a list of events for a given calendar.
 
@@ -159,32 +157,20 @@ def get_events(service, cal_id, time_zone, page_token):
     :type cal_id: str
     :type time_zone: str
     :type page_token: str
+    :type page_max: int
     :rtype: list[messages.EventProperties]
-    :raise ForbiddenException: API request failed with status 403.
-    :raise NotFoundException: API request failed with status 404.
-    :raise HttpError: Other API request failure.
     """
     events = []
-    now = pytz.utc.localize(datetime.utcnow()).isoformat()
-    try:
-        query = service.events().list(
-            fields=LIST_FIELDS.format(EVENT_FIELDS),
-            calendarId=cal_id,
-            pageToken=page_token,
-            maxResults=10,
-            timeMin=now,
-            timeZone=time_zone,
-            singleEvents=True,
-            orderBy="startTime"
-        )
-        result = query.execute()
-    except HttpError as e:
-        if e.resp.status == 404:
-            raise NotFoundException()
-        elif e.resp.status == 403:
-            raise ForbiddenException()
-        else:
-            raise
+    result = _execute_query(service.events().list(
+        fields=EVENT_LIST_FIELDS,
+        calendarId=cal_id,
+        pageToken=page_token,
+        maxResults=page_max,
+        timeMin=pytz.utc.localize(datetime.utcnow()).isoformat(),
+        timeZone=time_zone,
+        singleEvents=True,
+        orderBy="startTime"
+    ))
 
     tzinfo_object = pytz.timezone(time_zone or result["timeZone"])
 
@@ -242,28 +228,36 @@ def get_event(service, cal_id, event_id, time_zone, validation_only=False):
     :type validation_only: bool
     :rtype: messages.EventProperties
     :raise OldEventError: The requested event takes place in the past.
-    :raise ForbiddenException: API request failed with status 403.
-    :raise NotFoundException: API request failed with status 404.
-    :raise HttpError: Other API request failure.
     """
-    try:
-        query = service.events().get(
-            fields="end" if validation_only else EVENT_FIELDS,
+    result = _execute_query(service.events().get(
+        fields=("end,recurrence" if validation_only
+                else EVENT_FIELDS + ",recurrence"),
+        calendarId=cal_id,
+        eventId=event_id,
+        timeZone=time_zone
+    ))
+
+    now = pytz.utc.localize(datetime.utcnow())
+
+    if "recurrence" in result:
+        instances = _execute_query(service.events().instances(
+            fields=("timeZone,items(end)" if validation_only else
+                    EVENT_LIST_FIELDS),
             calendarId=cal_id,
             eventId=event_id,
-            timeZone=time_zone
-        )
-        result = query.execute()
-    except HttpError as e:
-        if e.resp.status == httplib.NOT_FOUND:
-            raise NotFoundException()
-        elif e.resp.status == httplib.FORBIDDEN:
-            raise ForbiddenException()
-        else:
-            raise
+            timeZone=time_zone,
+            timeMin=now.isoformat(),
+            maxResults=1
+        ))
 
-    tzinfo_object = pytz.timezone(time_zone or
-                                  get_calendar_timezone(service, cal_id))
+        if len(instances["items"]):
+            result = instances["items"][0]
+        else:
+            raise OldEventError(strings.error_old_event(event_id))
+        tzinfo_object = pytz.timezone(time_zone or instances["timeZone"])
+    else:
+        tzinfo_object = pytz.timezone(time_zone or
+                                      get_calendar_timezone(service, cal_id))
 
     assert "end" in result
     end = result["end"]
@@ -272,9 +266,9 @@ def get_event(service, cal_id, event_id, time_zone, validation_only=False):
     else:
         end_date = datetime_from_date_string(end["date"], tzinfo_object)
 
-    now = pytz.utc.localize(datetime.utcnow())
+    assert end_date < now if "instances" in locals() else True
     if end_date < now:
-        raise OldEventError("Event \"{}\" ended in the past.".format(event_id))
+        raise OldEventError(strings.error_old_event(event_id))
 
     if validation_only:
         return
@@ -296,7 +290,7 @@ def get_event(service, cal_id, event_id, time_zone, validation_only=False):
         start_date = datetime_from_date_string(start["date"], tzinfo_object)
 
     return messages.EventProperties(
-        eventId=event_id,
+        eventId=result["id"],
         calendarId=cal_id,
         name=name,
         startDate=start_date,

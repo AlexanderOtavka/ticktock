@@ -60,9 +60,8 @@ class CalendarsAPI(remote.Service):
                     chosen_calendars.append(cal)
                     break
             else:
-                logging.info(strings.LOGGING_DELETE_UNBOUND_CALENDAR
-                             .format(calendar_id=entity.key.string_id(),
-                                     user_id=user_id))
+                logging.info(strings.logging_delete_unbound_calendar(
+                        calendar_id=entity.key.string_id(), user_id=user_id))
                 entity.key.delete()
 
         # Sort and search
@@ -94,7 +93,9 @@ class CalendarsAPI(remote.Service):
         entity = ndb.Key(models.Calendar, request.calendarId,
                          parent=user_key).get()
         if entity is None:
-            raise endpoints.NotFoundException()
+            raise endpoints.NotFoundException(
+                    strings.error_calendar_not_added(
+                            calendar_id=request.calendarId))
 
         calendar.hidden = entity.hidden
         if calendar.hidden is None:
@@ -183,7 +184,9 @@ class CalendarsAPI(remote.Service):
         user_key = models.get_user_key(user_id)
         key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
         if key.get() is None:
-            raise endpoints.NotFoundException()
+            raise endpoints.NotFoundException(
+                    strings.error_calendar_not_added(
+                            calendar_id=request.calendarId))
         key.delete()
 
         # Does not delete the calendar's events' data, just in case the user

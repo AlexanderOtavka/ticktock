@@ -24,6 +24,91 @@ __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 class EventsAPI(remote.Service):
     """Manage events."""
 
+    @staticmethod
+    def get_starred(calendar_key, service, time_zone):
+        """
+        Get an array of all starred events in given calendar.
+
+        :type calendar_key: ndb.Key
+        :param service: Calendar resource object.
+        :type time_zone: str
+        :rtype: list[messages.EventProperties]
+        """
+        events = []
+        user_id = calendar_key.parent().string_id()
+        calendar_id = calendar_key.string_id()
+        starred = True
+        starred_query = models.Event.query(models.Event.starred == starred,
+                                           ancestor=calendar_key)
+        for starred_key in starred_query.iter(keys_only=True):
+            try:
+                event = gapiutils.get_event(service, calendar_id,
+                                            starred_key.string_id(), time_zone)
+                event.starred = True
+                event.hidden = False
+                events.append(event)
+            except endpoints.NotFoundException:
+                logging.info(strings.logging_delete_unbound_event(
+                        user_id=user_id, calendar_id=calendar_id,
+                        event_id=starred_key.string_id()))
+                starred_key.delete()
+            except gapiutils.OldEventError:
+                logging.info(strings.logging_delete_old_event(
+                        user_id=user_id, calendar_id=calendar_id,
+                        event_id=starred_key.string_id()))
+                starred_key.delete()
+        return events
+
+    @staticmethod
+    def filter_and_update_events(unfiltered_events, starred_events,
+                                 calendar_key, request_hidden):
+        """
+        Update and prune event list with fields stored in the datastore.
+
+        :type unfiltered_events: list[messages.EventProperties]
+        :type starred_events: list[messages.EventProperties]
+        :type calendar_key: ndb.Key
+        :type request_hidden: bool
+        :rtype: list[messages.EventProperties]
+        """
+        chosen = []
+        for event in unfiltered_events:
+            for starred_event in starred_events:
+                if (starred_event.eventId == event.eventId or
+                        starred_event.eventId == event.recurrenceId):
+                    event.starred = True
+                    break
+            else:
+                event.starred = False
+
+            if event.starred:
+                # Essentially deletes the event, since it is not added to
+                # chosen.
+                continue
+
+            entity = ndb.Key(models.Event, event.eventId,
+                             parent=calendar_key).get()
+
+            if entity is not None:
+                event.hidden = entity.hidden
+
+            if event.hidden is None and event.recurrenceId is not None:
+                recurrence_entity = ndb.Key(models.Event, event.recurrenceId,
+                                            parent=calendar_key).get()
+                if recurrence_entity is not None:
+                    event.hidden = recurrence_entity.hidden
+
+            if event.hidden is None:
+                event.hidden = False
+
+            if request_hidden is not None and event.hidden != request_hidden:
+                # Essentially deletes the event, since it is not added to
+                # chosen.
+                continue
+
+            chosen.append(event)
+        return chosen
+
     @endpoints.method(messages.EVENT_SEARCH_RESOURCE, messages.EventCollection,
                       http_method="GET", path="/calendars/{calendarId}/events")
     def list(self, request):
@@ -39,101 +124,36 @@ class EventsAPI(remote.Service):
                                         authutils.CALENDAR_API_VERSION)
 
         # TODO: implement paging
-        # get all the data for forever, then cache the extra in the datastore
 
-        # TODO: add this after paging as part of said recursion
-        # page_size = 10
-        # events = []
-        # while len(events) < page_size and next_page_token:
+        events = []
 
-        # Get event list from the google api
-        events = gapiutils.get_events(service, request.calendarId,
-                                      request.pageToken, request.timeZone)
+        calendar_key = ndb.Key(models.Calendar, request.calendarId,
+                               parent=user_key)
+        if calendar_key.get() is None:
+            raise endpoints.NotFoundException(
+                    strings.error_calendar_not_added(
+                            calendar_id=request.calendarId))
 
-        # Update event list with fields stored in the datastore
-        recurring_events = {}
-        chosen_events = []
-        cal_key = ndb.Key(models.Calendar, request.calendarId,
-                          parent=user_key)
-        if cal_key.get() is None:
-            raise endpoints.NotFoundException()
-        for event in events:
-            event_key = ndb.Key(models.Event, event.eventId, parent=cal_key)
-            event_entity = event_key.get()
-
-            if event_entity is not None:
-                event.hidden = event_entity.hidden
-                event.starred = event_entity.starred
-
-            recur_id = event.recurrenceId
-            if recur_id is not None:
-                saved = recur_id in recurring_events
-                if saved:
-                    recurrence_entity = recurring_events[recur_id]
-                else:
-                    recurrence_entity = ndb.Key(models.Event, recur_id,
-                                                parent=cal_key).get()
-                    recurring_events[recur_id] = recurrence_entity
-                if recurrence_entity is not None:
-                    if event.hidden is None:
-                        event.hidden = recurrence_entity.hidden
-                    if event.starred is None and recurrence_entity.starred:
-                        # Only ever show one iteration of a starred recurring
-                        # event, unless an individual iteration is starred
-                        if saved:
-                            # Essentially deletes the event, since it is not
-                            # added to chosen_events.
-                            continue
-                        else:
-                            event.starred = True
-
-            if event.hidden is None:
-                event.hidden = False
-            if event.starred is None:
-                event.starred = False
-
-            if request.hidden is not None and event.hidden != request.hidden:
-                # Essentially deletes the event, since it is not added to
-                # chosen_events.
-                continue
-
-            chosen_events.append(event)
-
-        events = chosen_events
-
-        # TODO: if len(events) < page size: recurse and get part of next page
-
-        # This will go before the other logic, and be cached.
         # Insert any starred events not included if hidden = False or None.
         if not request.hidden:
-            starred = True
-            starred_query = models.Event.query(models.Event.starred == starred,
-                                               ancestor=cal_key)
-            for starred_key in starred_query.iter(keys_only=True):
-                entity_id = starred_key.string_id()
-                for event in events:
-                    if event.eventId == entity_id:
-                        break
-                else:
-                    try:
-                        event = gapiutils.get_event(
-                            service, starred_key.parent().string_id(),
-                            entity_id, request.timeZone)
-                        event.starred = True
-                        event.hidden = False
-                        events.append(event)
-                    except endpoints.NotFoundException:
-                        logging.info(strings.LOGGING_DELETE_UNBOUND_EVENT
-                                     .format(user_id=user_id,
-                                             calendar_id=request.calendarId,
-                                             event_id=request.eventId))
-                        starred_key.delete()
-                    except gapiutils.OldEventError:
-                        logging.info(strings.LOGGING_DELETE_OLD_EVENT
-                                     .format(user_id=user_id,
-                                             calendar_id=request.calendarId,
-                                             event_id=request.eventId))
-                        starred_key.delete()
+            starred_events = self.get_starred(calendar_key, service,
+                                              request.timeZone)
+            events += starred_events
+        else:
+            starred_events = []
+
+        page_size = 10
+        # TODO: add this after paging as part of said recursion
+        # next_page_token = request.pageToken
+        # while len(events) < page_size and next_page_token:
+        if len(events) < page_size:
+            # Get event list from the google api
+            api_events = gapiutils.get_events(service, request.calendarId,
+                                              request.timeZone,
+                                              request.pageToken, page_size)
+
+            events += self.filter_and_update_events(
+                    api_events, starred_events, calendar_key, request.hidden)
 
         # Sort and search
         search = request.search
@@ -150,7 +170,7 @@ class EventsAPI(remote.Service):
         """
         Get an individual event's data.
 
-        :type request: messages.CALENDAR_ID_RESOURCE
+        :type request: messages.EVENT_ID_RESOURCE
         """
         user_id = authutils.require_user_id()
 
@@ -160,12 +180,15 @@ class EventsAPI(remote.Service):
             event = gapiutils.get_event(service, request.calendarId,
                                         request.eventId, request.timeZone)
         except gapiutils.OldEventError:
-            raise endpoints.ForbiddenException()
+            raise endpoints.ForbiddenException(
+                    strings.error_old_event(event_id=request.eventId))
 
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
         if cal_key.get() is None:
-            raise endpoints.NotFoundException()
+            raise endpoints.NotFoundException(
+                    strings.error_calendar_not_added(
+                            calendar_id=request.calendarId))
         entity = ndb.Key(models.Event, request.eventId, parent=cal_key).get()
 
         if entity is not None:
@@ -196,13 +219,15 @@ class EventsAPI(remote.Service):
             gapiutils.get_event(service, calendar_id, event_id, "UTC",
                                 validation_only=True)
         except gapiutils.OldEventError:
-            raise endpoints.ForbiddenException()
+            raise endpoints.ForbiddenException(
+                    strings.error_old_event(event_id=event_id))
 
         # Get ndb key for calendar
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, calendar_id, parent=user_key)
         if cal_key.get() is None:
-            raise endpoints.NotFoundException()
+            raise endpoints.NotFoundException(
+                    strings.error_calendar_not_added(calendar_id=calendar_id))
 
         # Get or create entity from calendar key and event id
         entity = ndb.Key(models.Event, event_id, parent=cal_key).get()
