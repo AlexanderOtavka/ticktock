@@ -61,5 +61,10 @@ target/
 .idea/tasks.xml
 .idea/shelf/
 
-# Pem key for accessing service account
-service-account-secret-key.pem
+# .pem key file needed for accessing service account.  Ignore all .pem files so
+# no one accidentally uploads the service account secret key, if they give it
+# the wrong name.
+*.pem
+
+# .p12 files from which .pem can be generated.
+*.p12
