@@ -84,19 +84,20 @@ def get_user_credentials():
 
     :rtype: client.AccessTokenCredentials
     """
-    if "HTTP_AUTHORIZATION" in os.environ and "HTTP_USER_AGENT" in os.environ:
+    assert get_user_id() is not None
+    store = StorageByKeyName(CredentialsNDBModel, get_user_id(),
+                             "credentials")
+    credentials = store.get()
+
+    if (credentials is None and "HTTP_AUTHORIZATION" in os.environ and
+            "HTTP_USER_AGENT" in os.environ):
         tokentype, token = os.environ["HTTP_AUTHORIZATION"].split(" ")
         user_agent = os.environ["HTTP_USER_AGENT"]
         credentials = client.AccessTokenCredentials(token, user_agent)
 
-        assert get_user_id() is not None
-        store = StorageByKeyName(CredentialsNDBModel, get_user_id(),
-                                 "credentials")
         store.put(credentials)
 
-        return credentials
-    else:
-        return None
+    return credentials
 
 
 def get_service(api_name, api_version, credentials=None):
