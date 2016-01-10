@@ -14,7 +14,8 @@ SCOPES = [
     "https://www.googleapis.com/auth/plus.me",
     "https://www.googleapis.com/auth/calendar.readonly"
 ]
-WEB_CLIENT_ID = ""
+WEB_CLIENT_ID = "208366307202-00824keo9p663g1uhkd8misc52e1c5pa.apps." \
+                "googleusercontent.com"
 ANDROID_CLIENT_ID = ""
 ANDROID_AUDIENCE = ANDROID_CLIENT_ID
 IOS_CLIENT_ID = ""
