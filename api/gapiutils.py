@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 import httplib
+import logging
 from datetime import datetime, tzinfo
 
 from endpoints import api_exceptions
@@ -48,6 +49,7 @@ def _execute_query(query):
     try:
         return query.execute()
     except HttpError as e:
+        logging.error(e)
         if e.resp.status in HTTP_ERRORS:
             raise HTTP_ERRORS[e.resp.status]
         else:
