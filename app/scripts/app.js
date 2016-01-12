@@ -1,4 +1,3 @@
-/* globals gapi */
 /*
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -118,18 +117,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   var loadAllEvents = function() {
     app.events = [];
+    var addEvents = function(resp) {
+      if (resp.code) {
+        console.log('ERROR');
+      } else {
+        app.events.push(resp.items || []);
+      }
+    };
+
     for (var i = 0; i < app.calendars.length; i++) {
       app.$.ticktockApi.api.events.list({
           calendarId: app.calendars[i].calendarId,
           hidden: false,
           maxResults: 10
-        }).execute(function(resp) {
-          if (resp.code) {
-            console.log('ERROR');
-          } else {
-            app.events.push(resp.items || []);
-          }
-        });
+        }).execute(addEvents);
     }
   };
 
