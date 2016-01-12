@@ -22,20 +22,32 @@ handlers:
 - url: /
   static_files: dist/index.html
   upload: dist/index\.html
-
 - url: /
   static_dir: dist
 
 
 skip_files:
+
+# Defaults
 - ^(.*/)?#.*#$
 - ^(.*/)?.*~$
 - ^(.*/)?.*\.py[co]$
 - ^(.*/)?.*/RCS/.*$
 - ^(.*/)?\..*$
+
+# Private Key Files
+- ^(.*/)?.*\.pem$
+- ^(.*/)?.*\.p12$
+
+# Dev Extras
 - ^node_modules/.*$
 - ^bower_components/.*$
 - ^app/.*$
+- ^package\.json$
+- ^bower\.json$
+- ^gulpfile\.js$
+- ^wct\.conf\.js$
+- ^requirements\.txt$
 
 
 libraries:
