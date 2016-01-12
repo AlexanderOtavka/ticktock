@@ -5,6 +5,9 @@
       <w>datastore</w>
       <w>memcache</w>
       <w>otavka</w>
+      <w>tokeninfo</w>
+      <w>tzinfo</w>
+      <w>urlfetch</w>
     </words>
   </dictionary>
 </component>

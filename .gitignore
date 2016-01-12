@@ -68,3 +68,11 @@ target/
 
 # .p12 files from which .pem can be generated.
 *.p12
+
+# Web app libs
+node_modules
+bower_components
+
+# Web app build output
+dist
+.tmp

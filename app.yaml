@@ -1,7 +1,7 @@
 application: dhsdev-ticktock
 
-# Version 0.1.1
-version: v0-1-1
+# Version 0.2.0
+version: v0-2-0
 api_version: 1
 runtime: python27
 threadsafe: true
@@ -18,9 +18,24 @@ handlers:
   script: api.garbagecollect.collectors
   login: admin
 
-# API explorer redirect
+# Web App
 - url: /
-  script: api.explorer_redirect
+  static_files: dist/index.html
+  upload: dist/index\.html
+
+- url: /
+  static_dir: dist
+
+
+skip_files:
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*/RCS/.*$
+- ^(.*/)?\..*$
+- ^(.*/)?node_modules/.*$
+- ^(.*/)?bower_components/.*$
+- ^(.*/)?app/.*$
 
 
 libraries:

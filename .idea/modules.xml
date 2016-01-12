@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ticktock-api.iml" filepath="$PROJECT_DIR$/.idea/ticktock-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/ticktock.iml" filepath="$PROJECT_DIR$/.idea/ticktock.iml" />
     </modules>
   </component>
 </project>

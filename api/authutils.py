@@ -78,6 +78,21 @@ def require_user_id():
     return current_user_id
 
 
+def _get_cred_store(user_id):
+    """
+    Get storage object for a user's credentials.
+
+    :type user_id: unicode
+    :rtype: StorageByKeyName
+    """
+    return StorageByKeyName(CredentialsNDBModel, user_id, "credentials")
+
+
+def clear_stored_user_credentials():
+    assert get_user_id() is not None
+    _get_cred_store(get_user_id()).delete()
+
+
 def get_user_credentials():
     """
     Get oauth2 credentials from the endpoints environment.
@@ -85,13 +100,12 @@ def get_user_credentials():
     :rtype: client.AccessTokenCredentials
     """
     assert get_user_id() is not None
-    store = StorageByKeyName(CredentialsNDBModel, get_user_id(),
-                             "credentials")
+    store = _get_cred_store(get_user_id())
     credentials = store.get()
 
     if (credentials is None and "HTTP_AUTHORIZATION" in os.environ and
             "HTTP_USER_AGENT" in os.environ):
-        tokentype, token = os.environ["HTTP_AUTHORIZATION"].split(" ")
+        token_type, token = os.environ["HTTP_AUTHORIZATION"].split(" ")
         user_agent = os.environ["HTTP_USER_AGENT"]
         credentials = client.AccessTokenCredentials(token, user_agent)
 
