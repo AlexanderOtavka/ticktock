@@ -1,0 +1,143 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../ticktock-icons/ticktock-icons.html">
+
+<dom-module id="event-card">
+  <template>
+    <style>
+      :host {
+        display: block;
+        border-bottom: 1px solid rgba(0, 0, 0, 0);
+      }
+
+      paper-material {
+        padding: 0;
+        background-color: white;
+        cursor: default;
+      }
+
+      #calIconWrapper {
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        margin: 16px;
+      }
+
+      #calIcon {
+        margin: 8px;
+        --iron-icon-width: 16px;
+        --iron-icon-height: 16px;
+      }
+
+      #name {
+        margin: 8px;
+      }
+
+      .outer-spacer {
+        height: 16px;
+      }
+
+      iron-icon {
+        color: white;
+      }
+
+      paper-icon-button {
+        margin: 8px;
+        color: #757575;
+      }
+
+      paper-icon-button.starred {
+        color: #f8bb03;
+      }
+    </style>
+
+    <iron-collapse opened="[[data.opened]]">
+      <div class="outer-spacer"></div>
+    </iron-collapse>
+
+    <paper-material id="material" elevation="[[_getElevation(data.opened)]]" animated>
+      <div id="toolbar" class="horizontal center layout">
+        <div id="calIconWrapper" style$="background-color: [[data.color]];">
+          <iron-icon id="calIcon" icon="ticktock:calendar-blank"></iron-icon>
+        </div>
+        <div id="name">{{data.name}}</div>
+
+        <span class="flex"></span>
+
+        <paper-icon-button
+          icon="icons:star"
+          class$="[[_getStarredClass(data.starred)]]"
+          on-tap="toggleStar">
+        </paper-icon-button>
+        <paper-icon-button
+          icon="icons:more-vert">
+        </paper-icon-button>
+      </div>
+
+      <iron-collapse id="collapse" opened="[[data.opened]]">
+        Timer goes here...
+      </iron-collapse>
+    </paper-material>
+
+    <iron-collapse opened="[[data.opened]]">
+      <div class="outer-spacer"></div>
+    </iron-collapse>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'event-card',
+
+      properties: {
+        data: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      listeners: {
+        'material.tap': 'toggleExpand'
+      },
+
+      toggleExpand: function() {
+        this.set('data.opened', !this.data.opened);
+      },
+
+      toggleStar: function(event) {
+        this.set('data.starred', !this.data.starred);
+        this.fire('event-star-toggled', {
+          eventId: this.data.eventId,
+          calendarId: this.data.calendarId,
+          starred: this.data.starred
+        });
+        event.stopPropagation();
+      },
+
+      _getElevation: function(opened) {
+        return opened ? 2 : 1;
+      },
+
+      _getStarredClass: function(starred) {
+        return starred ? 'starred' : '';
+      }
+    });
+  })();
+  </script>
+</dom-module>
