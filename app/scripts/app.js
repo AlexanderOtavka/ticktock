@@ -23,8 +23,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // ];
 
   app.apiRoot = '//' + window.location.host + '/_ah/api';
+  app.dataLoaded = false;
 
   app.calendars = [];
+  app.selectedCalendar = '';
 
   var getCalendarById = function(calendarId) {
     for (var i = 0; i < app.calendars.length; i++) {
@@ -35,17 +37,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return null;
   };
 
-  app.getSelectedCalendarName = function(selectedCalendar) {
-    var DEFAULT_CALENDAR_NAME = 'All Calendars';
+  app.getSelectedCalendarName = function(selectedCalendar, dataLoaded) {
+    if (!dataLoaded) {
+      return '';
+    }
+
+    var ALL_CALENDARS = 'All Calendars';
+
     if (!selectedCalendar) {
-      return DEFAULT_CALENDAR_NAME;
+      return ALL_CALENDARS;
     } else {
       var calendar = getCalendarById(selectedCalendar);
-      return calendar ? calendar.name : DEFAULT_CALENDAR_NAME;
+      return calendar ? calendar.name : ALL_CALENDARS;
     }
   };
 
-  app.getEvents = function(selectedCalendar) {
+  app.getEvents = function(selectedCalendar, dataLoaded) {
+    if (!dataLoaded) {
+      return [];
+    }
+
     if (!selectedCalendar) {
       var events = [];
       for (var i = 0; i < app.calendars.length; i++) {
@@ -114,7 +125,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     document.getElementById('mainContainer').scrollTop = 0;
   };
 
-  app.onTicktockApiLoaded = function() {
+  app.onTicktockdataLoaded = function() {
     signin(true);
   };
 
@@ -160,7 +171,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     app.calendars[0].events = EXAMPLE_EVENTS;
     app.allEvents = EXAMPLE_EVENTS;
 
-    app.selectedCalendar = null;
+    app.dataLoaded = true;
 
     // app.allEvents = [];
     // var addEvents = function(calendar) {

@@ -43,6 +43,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     /* paper-menu */
     --paper-menu-background-color: #fff;
     --menu-link-color: #111111;
+
+    --paper-menu-selected-item: {
+      background-color: #f6f6f6;
+      font-weight: inherit;
+    };
+
+    --paper-menu-focused-item-after: {
+      background-color: rgba(0, 0, 0, 0);
+    };
   }
 
   /* General styles */
@@ -66,13 +75,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     background: white;
   }
 
-  paper-menu iron-icon {
+  paper-menu calendar-icon {
     margin-right: 33px;
-    opacity: 0.54;
   }
 
   .paper-menu > .iron-selected {
-    color: var(--default-primary-color);
   }
 
   paper-menu a {

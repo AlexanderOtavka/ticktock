@@ -16,6 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../ticktock-icons/ticktock-icons.html">
+<link rel="import" href="../calendar-icon/calendar-icon.html">
 
 <dom-module id="event-card">
   <template>
@@ -31,17 +32,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         cursor: default;
       }
 
-      #calIconWrapper {
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
+      calendar-icon {
         margin: 16px;
-      }
-
-      #calIcon {
-        margin: 8px;
-        --iron-icon-width: 16px;
-        --iron-icon-height: 16px;
       }
 
       #name {
@@ -50,10 +42,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       .outer-spacer {
         height: 16px;
-      }
-
-      iron-icon {
-        color: white;
       }
 
       paper-icon-button {
@@ -72,9 +60,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <paper-material id="material" elevation="[[_getElevation(data.opened)]]" animated>
       <div id="toolbar" class="horizontal center layout">
-        <div id="calIconWrapper" style$="background-color: [[data.color]];">
-          <iron-icon id="calIcon" icon="ticktock:calendar-blank"></iron-icon>
-        </div>
+        <calendar-icon color="[[data.color]]"></calendar-icon>
         <div id="name">{{data.name}}</div>
 
         <span class="flex"></span>

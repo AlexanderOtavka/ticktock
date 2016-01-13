@@ -67,21 +67,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Drawer Scroll Header Panel -->
       <paper-scroll-header-panel drawer fixed>
         <!-- Drawer Content -->
-        <paper-menu class="list" attr-for-selected="data-route" selected="[[route]]">
-          <a data-route="home" href="/" on-click="onDataRouteClick">
-            <iron-icon icon="home"></iron-icon>
-            <span>Home</span>
+        <paper-menu
+            class="list"
+            attr-for-selected="data-route"
+            selected="[[route]]">
+          <a data-route="eventsList:" href="/" on-click="onDataRouteClick">
+            <calendar-icon
+              color="#e91e63"
+              icon="ticktock:calendar-multiple">
+            </calendar-icon>
+            <span>All Calendars</span>
           </a>
 
-          <a data-route="users" href="/users" on-click="onDataRouteClick">
-            <iron-icon icon="info"></iron-icon>
-            <span>Users</span>
-          </a>
-
-          <a data-route="contact" href="/contact" on-click="onDataRouteClick">
-            <iron-icon icon="mail"></iron-icon>
-            <span>Contact</span>
-          </a>
+          <template is="dom-repeat" items="[[calendars]]">
+            <a
+                data-route$="eventsList:[[item.calendarId]]"
+                href="/calendars/[[item.calendarId]]"
+                on-click="onDataRouteClick">
+              <calendar-icon color="[[item.color]]"></calendar-icon>
+              <span>{{item.name}}</span>
+            </a>
+          </template>
         </paper-menu>
       </paper-scroll-header-panel>
 
@@ -104,7 +110,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <!-- Application sub title -->
           <div class="bottom bottom-container center horizontal layout">
             <div class="bottom-title paper-font-subhead">
-              {{getSelectedCalendarName(selectedCalendar)}}
+              {{getSelectedCalendarName(selectedCalendar, dataLoaded)}}
             </div>
           </div>
 
@@ -117,9 +123,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <!-- Main Content -->
         <div class="content">
-          <iron-pages attr-for-selected="data-route" selected="{{route}}">
+          <iron-pages attr-for-selected="page-name" selected="{{page}}">
 
-            <section data-route="home">
+            <section page-name="eventsList">
               <paper-button
                   id="signinButton"
                   on-click="showSigninPopup"
@@ -128,33 +134,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 Sign In
               </paper-button>
 
-              <template is="dom-repeat" items="{{getEvents(selectedCalendar)}}">
+              <template
+                  is="dom-repeat"
+                  items="{{getEvents(selectedCalendar, dataLoaded)}}">
                 <event-card data="{{item}}"></event-card>
               </template>
-            </section>
-
-            <section data-route="users">
-              <paper-material elevation="1">
-                <h2 class="page-title">Users</h2>
-                <p>This is the users section</p>
-                <a href="/users/Rob">Rob</a>
-              </paper-material>
-            </section>
-
-            <section data-route="user-info">
-              <paper-material elevation="1">
-                <h2 class="page-title">
-                User:<span>{{params.name}}</span>
-                </h2>
-                <div>This is <span>{{params.name}}</span>'s section</div>
-              </paper-material>
-            </section>
-
-            <section data-route="contact">
-              <paper-material elevation="1">
-                <h2 class="page-title">Contact</h2>
-                <p>This is the contact section</p>
-              </paper-material>
             </section>
 
           </iron-pages>
@@ -167,7 +151,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       api-root="{{apiRoot}}"
       name="ticktock"
       version="v1"
-      on-google-api-load="onTicktockApiLoaded">
+      on-google-api-load="onTicktockdataLoaded">
     </google-client-loader>
 
     <google-client-loader

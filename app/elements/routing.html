@@ -22,22 +22,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       next();
     }
 
+    var eventsList = function(selectedCalendar) {
+      var PAGE_NAME = 'eventsList';
+      app.page = PAGE_NAME;
+      app.route = PAGE_NAME + ':' + selectedCalendar;
+      app.selectedCalendar = selectedCalendar;
+    }
+
     // Routes
     page('/', scrollToTop, function() {
-      app.route = 'home';
+      eventsList('');
     });
 
-    page('/users', scrollToTop, function() {
-      app.route = 'users';
-    });
-
-    page('/users/:name', scrollToTop, function(data) {
-      app.route = 'user-info';
-      app.params = data.params;
-    });
-
-    page('/contact', scrollToTop, function() {
-      app.route = 'contact';
+    page('/calendars/:calendarId', scrollToTop, function(data) {
+      eventsList(data.params.calendarId);
+      console.log(app.selectedCalendar);
     });
 
     // add #! before urls
