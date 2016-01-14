@@ -15,8 +15,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../ticktock-icons/ticktock-icons.html">
 <link rel="import" href="../calendar-icon/calendar-icon.html">
+<link rel="import" href="../dropdown-menu/dropdown-menu.html">
 
 <dom-module id="event-card">
   <template>
@@ -26,10 +29,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         border-bottom: 1px solid rgba(0, 0, 0, 0);
       }
 
-      paper-material {
+      #material {
         padding: 0;
         background-color: white;
         cursor: default;
+      }
+
+      .dropdown-content {
+        @apply(--shadow-elevation-3dp);
+        background-color: white;
+        border-radius: 2px;
       }
 
       calendar-icon {
@@ -44,6 +53,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         height: 16px;
       }
 
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
       paper-icon-button {
         margin: 8px;
         color: #757575;
@@ -52,13 +66,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       paper-icon-button.starred {
         color: #f8bb03;
       }
+
+      paper-item {
+        cursor: pointer;
+      }
+
+      paper-item iron-icon {
+        color: #666;
+      }
+
+      paper-item iron-icon.right {
+        margin-left: 12px;
+      }
     </style>
 
     <iron-collapse opened="[[data.opened]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
 
-    <paper-material id="material" elevation="[[_getElevation(data.opened)]]" animated>
+    <paper-material
+        id="material"
+        elevation="[[_getElevation(data.opened)]]"
+        on-tap="toggleExpand"
+        animated>
       <div id="toolbar" class="horizontal center layout">
         <calendar-icon color="[[data.color]]"></calendar-icon>
         <div id="name">{{data.name}}</div>
@@ -71,10 +101,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           class$="[[_getStarredClass(data.starred)]]"
           on-tap="toggleStar">
         </paper-icon-button>
-        <paper-icon-button
-          icon="icons:more-vert">
-        </paper-icon-button>
-        <!-- TODO: add "more" dropdown -->
+
+        <dropdown-menu horizontal-offset="8" vertical-offset="8">
+          <paper-icon-button
+            icon="icons:more-vert"
+            class="dropdown-trigger">
+          </paper-icon-button>
+
+          <div class="dropdown-content">
+            <paper-item on-tap="toggleHide">
+              <div>{{_getHideButtonText(data.hidden)}}</div>
+            </paper-item>
+
+            <a href="[[data.link]]" target="_blank">
+              <paper-item on-tap="_noPropagation">
+                <div>Open in Google Calendar</div>
+                <iron-icon class="right" icon="icons:open-in-new"></iron-icon>
+              </paper-item>
+            </a>
+          </div>
+        </dropdown-menu>
       </div>
 
       <iron-collapse id="collapse" opened="[[data.opened]]">
@@ -101,21 +147,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
-      listeners: {
-        'material.tap': 'toggleExpand'
-      },
-
       toggleExpand: function() {
         this.set('data.opened', !this.data.opened);
+        if (this.data.opened) {
+          this.fire('event-opened', {
+            eventId: this.data.eventId,
+            calendarId: this.data.calendarId
+          });
+        }
       },
 
       toggleStar: function(event) {
         this.set('data.starred', !this.data.starred);
-        this.fire('event-star-toggled', {
+        this.fire('event-star-set', {
           eventId: this.data.eventId,
           calendarId: this.data.calendarId,
           starred: this.data.starred
         });
+        event.stopPropagation();
+      },
+
+      toggleHide: function(event) {
+        this.set('data.hidden', !this.data.hidden);
+        this.fire('event-hide-set', {
+          eventId: this.data.eventId,
+          calendarId: this.data.calendarId,
+          hidden: this.data.hidden
+        });
+        event.stopPropagation();
+      },
+
+      _noPropagation: function(event) {
         event.stopPropagation();
       },
 
@@ -125,6 +187,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _getStarredClass: function(starred) {
         return starred ? 'starred' : '';
+      },
+
+      _getHideButtonText: function(hidden) {
+        return hidden ? 'Unhide' : 'Hide';
       }
     });
   })();
