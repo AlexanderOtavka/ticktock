@@ -17,7 +17,7 @@ from google.appengine.api import urlfetch
 from googleapiclient.discovery import build
 from oauth2client import client
 from httplib2 import Http
-from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
+# from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
 from oauth2client.client import Credentials
 
 
@@ -78,19 +78,19 @@ def require_user_id():
     return current_user_id
 
 
-def _get_cred_store(user_id):
-    """
-    Get storage object for a user's credentials.
+# def _get_cred_store(user_id):
+#     """
+#     Get storage object for a user's credentials.
+#
+#     :type user_id: unicode
+#     :rtype: StorageByKeyName
+#     """
+#     return StorageByKeyName(CredentialsNDBModel, user_id, "credentials")
 
-    :type user_id: unicode
-    :rtype: StorageByKeyName
-    """
-    return StorageByKeyName(CredentialsNDBModel, user_id, "credentials")
 
-
-def clear_stored_user_credentials():
-    assert get_user_id() is not None
-    _get_cred_store(get_user_id()).delete()
+# def clear_stored_user_credentials():
+#     assert get_user_id() is not None
+#     _get_cred_store(get_user_id()).delete()
 
 
 def get_user_credentials():
@@ -100,8 +100,9 @@ def get_user_credentials():
     :rtype: client.AccessTokenCredentials
     """
     assert get_user_id() is not None
-    store = _get_cred_store(get_user_id())
-    credentials = store.get()
+    # store = _get_cred_store(get_user_id())
+    # credentials = store.get()
+    credentials = None
 
     if (credentials is None and "HTTP_AUTHORIZATION" in os.environ and
             "HTTP_USER_AGENT" in os.environ):
@@ -109,7 +110,7 @@ def get_user_credentials():
         user_agent = os.environ["HTTP_USER_AGENT"]
         credentials = client.AccessTokenCredentials(token, user_agent)
 
-        store.put(credentials)
+        # store.put(credentials)
 
     return credentials
 

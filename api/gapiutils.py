@@ -13,7 +13,6 @@ from oauth2client.client import AccessTokenCredentialsError
 
 import messages
 import strings
-import authutils
 
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
@@ -58,7 +57,7 @@ def _execute_query(query):
             assert (e.resp.status // 100) in (4, 5)
             raise HTTP_ERRORS[e.resp.status // 100]
     except AccessTokenCredentialsError:
-        authutils.clear_stored_user_credentials()
+        # authutils.clear_stored_user_credentials()
         raise api_exceptions.UnauthorizedException("Access token expired or "
                                                    "invalid.")
 
