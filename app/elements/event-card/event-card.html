@@ -49,6 +49,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 8px;
       }
 
+      #miniTimer {
+        color: #757575;
+        font-weight: 300;
+        font-size: .8rem;
+      }
+
       .outer-spacer {
         height: 16px;
       }
@@ -80,25 +86,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <iron-collapse opened="[[data.opened]]">
+    <iron-collapse opened="[[opened]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
 
     <paper-material
         id="material"
-        elevation="[[_getElevation(data.opened)]]"
+        elevation="[[_getElevation(opened)]]"
         on-tap="toggleExpand"
         animated>
       <div id="toolbar" class="horizontal center layout">
-        <calendar-icon color="[[data.color]]"></calendar-icon>
-        <div id="name">{{data.name}}</div>
-        <!-- TODO: add mini timer -->
+        <calendar-icon color="[[color]]"></calendar-icon>
+        <div id="name" class="vertical left layout">
+          <span>{{name}}</span>
+          <span id="miniTimer" hidden="[[opened]]">
+            {{_getMajorDurationSegment(duration)}}
+          </span>
+        </div>
 
         <span class="flex"></span>
 
         <paper-icon-button
           icon="icons:star"
-          class$="[[_getStarredClass(data.starred)]]"
+          class$="[[_getStarredClass(starred)]]"
           on-tap="toggleStar">
         </paper-icon-button>
 
@@ -110,10 +120,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <div class="dropdown-content">
             <paper-item on-tap="toggleHide">
-              <div>{{_getHideButtonText(data.hidden)}}</div>
+              <div>{{_getHideButtonText(hidden)}}</div>
             </paper-item>
 
-            <a href="[[data.link]]" target="_blank">
+            <a href="[[link]]" target="_blank">
               <paper-item on-tap="_noPropagation">
                 <div>Open in Google Calendar</div>
                 <iron-icon class="right" icon="icons:open-in-new"></iron-icon>
@@ -123,13 +133,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </dropdown-menu>
       </div>
 
-      <iron-collapse id="collapse" opened="[[data.opened]]">
+      <iron-collapse id="collapse" opened="[[opened]]">
         Timer goes here...
         <!-- TODO: add circle timer -->
       </iron-collapse>
     </paper-material>
 
-    <iron-collapse opened="[[data.opened]]">
+    <iron-collapse opened="[[opened]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
   </template>
@@ -137,43 +147,86 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   (function() {
     'use strict';
 
+    var S_IN_SECOND = 1;
+    var S_IN_MINUTE = S_IN_SECOND * 60;
+    var S_IN_HOUR = S_IN_MINUTE * 60;
+    var S_IN_DAY = S_IN_HOUR * 24;
+    var S_IN_MONTH = S_IN_DAY * 30;
+    var S_IN_YEAR = S_IN_DAY * 365;
+
+    var CONVERSION_FACTORS = [
+      S_IN_YEAR,
+      S_IN_MONTH,
+      S_IN_DAY,
+      S_IN_HOUR,
+      S_IN_MINUTE,
+      S_IN_SECOND
+    ];
+
+    var units = {};
+    units[S_IN_SECOND] = 'Second';
+    units[S_IN_MINUTE] = 'Minute';
+    units[S_IN_HOUR] = 'Hour';
+    units[S_IN_DAY] = 'Day';
+    units[S_IN_MONTH] = 'Month';
+    units[S_IN_YEAR] = 'Year';
+
+    var getDurationSegments = function(seconds, multiple) {
+      multiple = (multiple === undefined) ? true : multiple;
+      var segments = [];
+      for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
+        var number = Math.floor(seconds / CONVERSION_FACTORS[i]);
+        if (number) {
+          var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
+          if (number > 1) {
+            segment += 's';
+          }
+          if (!multiple) {
+            return segment;
+          } else {
+            segments.push(segment);
+          }
+        }
+      }
+      return segments;
+    };
+
     Polymer({
       is: 'event-card',
 
       properties: {
-        data: {
-          type: Object,
-          notify: true
+        eventId: String,
+        calendarId: String,
+        name: String,
+        color: String,
+        opened: Boolean,
+        startDuration: Number,
+        endDuration: Number,
+        starred: Boolean,
+        hidden: Boolean,
+        link: String,
+        recurrenceId: String,
+
+        duration: {
+          type: Number,
+          computed: '_getDuration(startDuration, endDuration)'
         }
       },
 
+      observers: [
+      ],
+
       toggleExpand: function() {
-        this.set('data.opened', !this.data.opened);
-        if (this.data.opened) {
-          this.fire('event-opened', {
-            eventId: this.data.eventId,
-            calendarId: this.data.calendarId
-          });
-        }
+        this.opened = !this.opened;
       },
 
       toggleStar: function(event) {
-        this.set('data.starred', !this.data.starred);
-        this.fire('event-star-set', {
-          eventId: this.data.eventId,
-          calendarId: this.data.calendarId,
-          starred: this.data.starred
-        });
+        this.starred = !this.starred;
         event.stopPropagation();
       },
 
       toggleHide: function(event) {
-        this.set('data.hidden', !this.data.hidden);
-        this.fire('event-hide-set', {
-          eventId: this.data.eventId,
-          calendarId: this.data.calendarId,
-          hidden: this.data.hidden
-        });
+        this.hidden = !this.hidden;
         event.stopPropagation();
       },
 
@@ -191,6 +244,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _getHideButtonText: function(hidden) {
         return hidden ? 'Unhide' : 'Hide';
+      },
+
+      _getDuration: function(startDuration, endDuration) {
+        return startDuration || endDuration;
+      },
+
+      _getMajorDurationSegment: function(duration) {
+        return getDurationSegments(duration, false);
+      },
+
+      _getMinorDurationSegments: function(duration) {
+        return getDurationSegments(duration).slice(1);
       }
     });
   })();

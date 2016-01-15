@@ -23,9 +23,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // ];
 
   app.apiRoot = '//' + window.location.host + '/_ah/api';
-  app.dataLoaded = false;
 
   app.calendars = [];
+  app.listedEvents = [];
   app.selectedCalendar = '';
 
   var getCalendarById = function(calendarId) {
@@ -37,11 +37,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return null;
   };
 
-  app.getSelectedCalendarName = function(selectedCalendar, dataLoaded) {
-    if (!dataLoaded) {
-      return '';
-    }
-
+  app.getSelectedCalendarName = function(selectedCalendar) {
     var ALL_CALENDARS = 'All Calendars';
 
     if (!selectedCalendar) {
@@ -52,20 +48,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
-  app.getEvents = function(selectedCalendar, dataLoaded) {
-    if (!dataLoaded) {
-      return [];
-    }
-
-    if (!selectedCalendar) {
+  app.updateListedEvents = function() {
+    console.log('UPDATE LISTED EVENTS');
+    if (!app.selectedCalendar) {
       var events = [];
       for (var i = 0; i < app.calendars.length; i++) {
         events = events.concat(app.calendars[i].events);
       }
-      return events;
+      app.listedEvents = events;
     } else {
-      var calendar = getCalendarById(selectedCalendar);
-      return calendar ? calendar.events : [];
+      var calendar = getCalendarById(app.selectedCalendar);
+      app.listedEvents = calendar ? calendar.events : [];
+    }
+    app.$.eventsListTemplate.render();
+    console.log(app.listedEvents);
+  };
+
+  var deleteEvent = function(eventId, calendarId) {
+    var calendar = getCalendarById(calendarId);
+    if (calendar) {
+      for (var i = 0; i < calendar.events.length; i++) {
+        if (calendar.events[i].eventId === eventId) {
+          return calendar.events.splice(i, 1);
+        }
+      }
     }
   };
 
@@ -80,6 +86,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // have resolved and content has been stamped to the page
   app.addEventListener('dom-change', function() {
     console.log('Our app is ready to rock!');
+
+    // Calculate durations
+    setInterval(function() {
+      var now = Date.now();
+      var needsUpdate = false;
+      for (var i = 0; i < app.listedEvents.length; i++) {
+        var eventStart = Date.parse(app.listedEvents[i].startDate);
+        var timeToStart = Math.floor((eventStart - now) / 1000);
+        var timeToEnd = 0;
+
+        if (timeToStart < 0) {
+          timeToStart = 0;
+          var eventEnd = Date.parse(app.listedEvents[i].endDate);
+          timeToEnd = Math.floor((eventEnd - now) / 1000);
+
+          if (timeToEnd < 0) {
+            deleteEvent(app.listedEvents[i].eventId,
+                        app.listedEvents[i].calendarId);
+            needsUpdate = true;
+          }
+        }
+
+        app.set(['listedEvents', i, 'startDuration'], timeToStart);
+        app.set(['listedEvents', i, 'endDuration'], timeToEnd);
+      }
+      if (needsUpdate) {
+        app.updateListedEvents();
+      }
+    }, 1000);
   });
 
   // See https://github.com/Polymer/polymer/issues/1381
@@ -125,7 +160,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     document.getElementById('mainContainer').scrollTop = 0;
   };
 
-  app.onTicktockdataLoaded = function() {
+  app.onTicktockDataLoaded = function() {
     signin(true);
   };
 
@@ -163,7 +198,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   var loadAllEvents = function() {
-    var EXAMPLE_EVENTS = [{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-14T00:00:00-08:00','eventId':'f2inmdp5vsplf0i6o7331s2etk','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=ZjJpbm1kcDV2c3BsZjBpNm83MzMxczJldGsgb241MjkydG5xZ2NrYm5mZXR2NGU3dHBqbm9AZw&ctz=America/Los_Angeles','name':'Starred all day','starred':true,'startDate':'2016-01-13T00:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-14T00:00:00-08:00','eventId':'8une1glii8bbbuntveru3ohcv4','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=OHVuZTFnbGlpOGJiYnVudHZlcnUzb2hjdjQgb241MjkydG5xZ2NrYm5mZXR2NGU3dHBqbm9AZw&ctz=America/Los_Angeles','name':'Unstarred','starred':false,'startDate':'2016-01-13T00:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-18T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160118T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…hUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-01-18T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-25T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160125T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…VUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-01-25T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-01T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160201T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…FUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-01T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-08T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160208T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…hUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-08T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-15T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160215T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…VUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-15T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-22T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160222T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…JUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-22T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-29T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160229T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…lUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-29T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-03-07T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160307T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…dUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-03-07T10:00:00-08:00','color':'#a47ae2'}];
+    var EXAMPLE_EVENTS = [{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-14T00:00:00-08:00','eventId':'f2inmdp5vsplf0i6o7331s2etk','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=ZjJpbm1kcDV2c3BsZjBpNm83MzMxczJldGsgb241MjkydG5xZ2NrYm5mZXR2NGU3dHBqbm9AZw&ctz=America/Los_Angeles','name':'Starred all day','starred':true,'startDate':'2016-01-13T00:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-16T00:00:00-08:00','eventId':'8une1glii8bbbuntveru3ohcv4','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=OHVuZTFnbGlpOGJiYnVudHZlcnUzb2hjdjQgb241MjkydG5xZ2NrYm5mZXR2NGU3dHBqbm9AZw&ctz=America/Los_Angeles','name':'Unstarred','starred':false,'startDate':'2016-01-13T00:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-18T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160118T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…hUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-01-18T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-25T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160125T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…VUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-01-25T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-01T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160201T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…FUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-01T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-08T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160208T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…hUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-08T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-15T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160215T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…VUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-15T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-22T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160222T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…JUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-22T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-29T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160229T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…lUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-29T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-03-07T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160307T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…dUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-03-07T10:00:00-08:00','color':'#a47ae2'}];
     for (var i in EXAMPLE_EVENTS) {
       EXAMPLE_EVENTS[i].opened = false;
     }
@@ -171,7 +206,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     app.calendars[0].events = EXAMPLE_EVENTS;
     app.allEvents = EXAMPLE_EVENTS;
 
-    app.dataLoaded = true;
+    app.updateListedEvents();
 
     // app.allEvents = [];
     // var addEvents = function(calendar) {

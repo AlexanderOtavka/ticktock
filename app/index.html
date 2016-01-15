@@ -113,7 +113,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <!-- Application sub title -->
           <div class="bottom bottom-container center horizontal layout">
             <div class="bottom-title paper-font-subhead">
-              {{getSelectedCalendarName(selectedCalendar, dataLoaded)}}
+              {{getSelectedCalendarName(selectedCalendar)}}
             </div>
           </div>
 
@@ -139,8 +139,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
               <template
                   is="dom-repeat"
-                  items="{{getEvents(selectedCalendar, dataLoaded)}}">
-                <event-card data="{{item}}"></event-card>
+                  id="eventsListTemplate"
+                  items="{{listedEvents}}">
+                <event-card
+                  event-id="{{item.eventId}}"
+                  calendar-id="{{item.calendarId}}"
+                  name="{{item.name}}"
+                  color="{{item.color}}"
+                  opened="{{item.opened}}"
+                  start-duration="{{item.startDuration}}"
+                  end-duration="{{item.endDuration}}"
+                  starred="{{item.starred}}"
+                  hidden="{{item.hidden}}"
+                  link="{{item.link}}"
+                  recurrence-id="{{item.recurrenceId}}">
+                </event-card>
               </template>
             </section>
 
@@ -154,7 +167,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       api-root="{{apiRoot}}"
       name="ticktock"
       version="v1"
-      on-google-api-load="onTicktockdataLoaded">
+      on-google-api-load="onTicktockDataLoaded">
     </google-client-loader>
 
     <google-client-loader
