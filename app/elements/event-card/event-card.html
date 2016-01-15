@@ -34,7 +34,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 0;
         background-color: white;
         cursor: default;
-        max-width: 500px;
+        max-width: 600px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -103,20 +103,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         text-shadow: none;
         color: #757575;
         font-weight: 300;
-        max-width: 50%;
+        width: 100%;
         text-align: center;
+        height: 100%;
       }
 
       #majorDurationSegment {
         font-size: 3rem;
+        /*height: 54%;*/
       }
 
       #minorDurationSegmentsWrapper {
         font-size: 1rem;
         text-align: center;
+        width: 60%;
+        /*padding: 0 20%;*/
+        /*height: 46%;*/
       }
 
-      #minorDurationSegmentsWrapper span {
+      #minorDurationSegmentsWrapper div {
+        display: inline-block;
         margin: 0 2px;
       }
     </style>
@@ -173,15 +179,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             stroke-width="15"
             value="[[duration]]"
             max="[[_getMajorDurationMax(duration)]]">
-          <div id="bubbleContent">
-            <div id="majorDurationSegment">
+          <div id="bubbleContent" class="vertical center-center layout">
+            <div
+                id="majorDurationSegment"
+                class="vertical end-justified layout">
               [[_getMajorDurationSegment(duration)]]
             </div>
             <div id="minorDurationSegmentsWrapper">
               <template
                   is="dom-repeat"
                   items="[[_getMinorDurationSegments(duration)]]">
-                <span>[[item]]</span>
+                <div>[[item]]</div>
               </template>
             </div>
           </div>
@@ -233,9 +241,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           console.log(seconds);
         }
         number = Math.floor(seconds / CONVERSION_FACTORS[i]);
-        if (number) {
+        if (number || i === CONVERSION_FACTORS.length - 1) {
           var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
-          if (number > 1) {
+          if (number != 1) {
             segment += 's';
           }
           if (!multiple) {
