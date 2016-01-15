@@ -53,7 +53,7 @@ class CalendarsAPI(remote.Service):
             if entity is not None:
                 calendar.hidden = entity.hidden
             if calendar.hidden is None:
-                calendar.hidden = True
+                calendar.hidden = False
 
             if request.hidden is not None:
                 if calendar.hidden != request.hidden:
