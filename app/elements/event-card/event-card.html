@@ -17,6 +17,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../../bower_components/paper-styles/shadow.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/progress-bubble/progress-bubble.html">
 <link rel="import" href="../ticktock-icons/ticktock-icons.html">
 <link rel="import" href="../calendar-icon/calendar-icon.html">
 <link rel="import" href="../dropdown-menu/dropdown-menu.html">
@@ -33,6 +34,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 0;
         background-color: white;
         cursor: default;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       .dropdown-content {
@@ -84,6 +88,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       paper-item iron-icon.right {
         margin-left: 12px;
       }
+
+      progress-bubble {
+        --progress-bubble-stroke-color: #e91e63;
+        --progress-bubble-bg-stroke-color: #d5d5d5;
+        --progress-bubble-background: transparent;
+        --progress-bubble-reflection-display: none;
+        width: 300px;
+        height: 300px;
+        margin-bottom: 32px;
+      }
+
+      #bubbleContent {
+        text-shadow: none;
+        color: #757575;
+        font-weight: 300;
+        max-width: 50%;
+        text-align: center;
+      }
+
+      #majorDurationSegment {
+        font-size: 3rem;
+      }
+
+      #minorDurationSegmentsWrapper {
+        font-size: 1rem;
+        text-align: center;
+      }
+
+      #minorDurationSegmentsWrapper span {
+        margin: 0 2px;
+      }
     </style>
 
     <iron-collapse opened="[[opened]]">
@@ -133,9 +168,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </dropdown-menu>
       </div>
 
-      <iron-collapse id="collapse" opened="[[opened]]">
-        Timer goes here...
-        <!-- TODO: add circle timer -->
+      <iron-collapse id="collapse" opened="[[opened]]" class="vertical center layout">
+        <progress-bubble
+            stroke-width="15"
+            value="[[duration]]"
+            max="[[_getMajorDurationMax(duration)]]">
+          <div id="bubbleContent">
+            <div id="majorDurationSegment">
+              [[_getMajorDurationSegment(duration)]]
+            </div>
+            <div id="minorDurationSegmentsWrapper">
+              <template
+                  is="dom-repeat"
+                  items="[[_getMinorDurationSegments(duration)]]">
+                <span>[[item]]</span>
+              </template>
+            </div>
+          </div>
+        </progress-bubble>
       </iron-collapse>
     </paper-material>
 
@@ -162,6 +212,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       S_IN_MINUTE,
       S_IN_SECOND
     ];
+    var MAX_CONVERSION_FACTOR = S_IN_YEAR * 10;
 
     var units = {};
     units[S_IN_SECOND] = 'Second';
@@ -174,8 +225,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var getDurationSegments = function(seconds, multiple) {
       multiple = (multiple === undefined) ? true : multiple;
       var segments = [];
+      var number;
       for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
-        var number = Math.floor(seconds / CONVERSION_FACTORS[i]);
+        if (number) {
+          console.log(seconds);
+          seconds = seconds % (CONVERSION_FACTORS[i - 1] || MAX_CONVERSION_FACTOR);
+          console.log(seconds);
+        }
+        number = Math.floor(seconds / CONVERSION_FACTORS[i]);
         if (number) {
           var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
           if (number > 1) {
@@ -188,7 +245,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         }
       }
+      console.log(segments);
       return segments;
+    };
+
+    var getMajorDurationMax = function(seconds) {
+      var max;
+      for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
+        var number = Math.floor(seconds / CONVERSION_FACTORS[i]);
+        if (number) {
+          return max || MAX_CONVERSION_FACTOR;
+        } else {
+          max = CONVERSION_FACTORS[i];
+        }
+      }
+      return 1;
     };
 
     Polymer({
@@ -252,6 +323,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _getMajorDurationSegment: function(duration) {
         return getDurationSegments(duration, false);
+      },
+
+      _getMajorDurationMax: function(duration) {
+        return getMajorDurationMax(duration);
       },
 
       _getMinorDurationSegments: function(duration) {
