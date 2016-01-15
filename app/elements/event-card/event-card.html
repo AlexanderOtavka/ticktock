@@ -69,8 +69,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       paper-icon-button {
-        margin: 8px;
         color: #757575;
+      }
+
+      #toolbar paper-icon-button:last-child {
+        margin-right: 8px;
       }
 
       paper-icon-button.starred {
@@ -236,14 +239,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var number;
       for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
         if (number) {
-          console.log(seconds);
           seconds = seconds % (CONVERSION_FACTORS[i - 1] || MAX_CONVERSION_FACTOR);
-          console.log(seconds);
         }
         number = Math.floor(seconds / CONVERSION_FACTORS[i]);
         if (number || i === CONVERSION_FACTORS.length - 1) {
           var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
-          if (number != 1) {
+          if (number !== 1) {
             segment += 's';
           }
           if (!multiple) {
@@ -253,7 +254,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         }
       }
-      console.log(segments);
       return segments;
     };
 
@@ -278,13 +278,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         calendarId: String,
         name: String,
         color: String,
-        opened: Boolean,
+        opened: {
+          type: Boolean,
+          notify: true
+        },
         startDuration: Number,
         endDuration: Number,
         starred: Boolean,
         hidden: Boolean,
         link: String,
         recurrenceId: String,
+        deleted: Boolean,
 
         duration: {
           type: Number,
@@ -293,6 +297,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       observers: [
+        '_onDelete(deleted)'
       ],
 
       toggleExpand: function() {
@@ -311,6 +316,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _noPropagation: function(event) {
         event.stopPropagation();
+      },
+
+      _onDelete: function(deleted) {
+        if (!deleted) {
+          return;
+        }
+
+        var collapsers = Polymer.dom(this.root)
+            .querySelectorAll('iron-collapse');
+        for (var i = 0; i < collapsers.length; i++) {
+          collapsers[i].noAnimation = true;
+          collapsers[i].hide();
+          collapsers[i].noAnimation = false;
+        }
       },
 
       _getElevation: function(opened) {

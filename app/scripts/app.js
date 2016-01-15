@@ -28,13 +28,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.listedEvents = [];
   app.selectedCalendar = '';
 
-  var getCalendarById = function(calendarId) {
+  var getCalendarIndexById = function(calendarId) {
     for (var i = 0; i < app.calendars.length; i++) {
       if (app.calendars[i].calendarId === calendarId) {
-        return app.calendars[i];
+        return i;
       }
     }
     return null;
+  };
+
+  var getCalendarById = function(calendarId) {
+    return app.calendars[getCalendarIndexById(calendarId)];
   };
 
   app.getSelectedCalendarName = function(selectedCalendar) {
@@ -102,6 +106,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           timeToEnd = Math.floor((eventEnd - now) / 1000);
 
           if (timeToEnd < 0) {
+            if (app.listedEvents[i].opened) {
+              app.set(['listedEvents', i + 1, 'opened'], true);
+            }
             deleteEvent(app.listedEvents[i].eventId,
                         app.listedEvents[i].calendarId);
             needsUpdate = true;
@@ -116,6 +123,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     }, 1000);
   });
+
+  app.eventOpenedToggled = function(event) {
+    if (event.detail.value) {
+      for (var i = 0; i < app.listedEvents.length; i++) {
+        if (app.listedEvents[i].opened &&
+            app.listedEvents[i].eventId !== event.srcElement.eventId) {
+          app.set(['listedEvents', i, 'opened'], false);
+        }
+      }
+      // TODO: scroll to the top of this element after it expands
+    }
+  };
 
   // See https://github.com/Polymer/polymer/issues/1381
   window.addEventListener('WebComponentsReady', function() {

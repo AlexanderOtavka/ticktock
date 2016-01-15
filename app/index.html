@@ -152,7 +152,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   starred="{{item.starred}}"
                   hidden="{{item.hidden}}"
                   link="{{item.link}}"
-                  recurrence-id="{{item.recurrenceId}}">
+                  recurrence-id="{{item.recurrenceId}}"
+                  deleted="{{item.deleted}}"
+                  on-opened-changed="eventOpenedToggled">
                 </event-card>
               </template>
             </section>
