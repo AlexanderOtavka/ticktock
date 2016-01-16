@@ -101,9 +101,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return a.localeCompare(b);
   };
 
-  app.sortedEvents = function(listedEvents) {
+  var sortedEvents = function(events) {
     // Sort order: starred, duration, alphabetical, id
-    return listedEvents.sort(function(a, b) {
+    return events.sort(function(a, b) {
       if (a.starred !== b.starred) {
         return compareBools(a.starred, b.starred);
       }
@@ -121,6 +121,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     });
   };
 
+  var prunedEvents = function(events, keep) {
+    var pruned = [];
+    for (var i = 0; i < events.length; i++) {
+      if (keep(events[i])) {
+        pruned.push(events[i]);
+      }
+    }
+    return pruned;
+  };
+
   app.updateListedEvents = function() {
     var events = [];
     if (!app.selectedCalendar) {
@@ -131,8 +141,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var calendar = getCalendarById(app.selectedCalendar);
       events = calendar ? calendar.events.slice() : [];
     }
+    events = sortedEvents(prunedEvents(events, function(event) {
+      return !event.hidden;
+    }));
     runWithoutAnimation(function() {
-      app.listedEvents = app.sortedEvents(events);
+      app.listedEvents = events;
     });
   };
 
