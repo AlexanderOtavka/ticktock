@@ -68,10 +68,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <paper-scroll-header-panel drawer fixed>
         <!-- Drawer Content -->
         <paper-menu
+            id="drawerMenu"
             class="list"
             selectable="a,paper-item"
             attr-for-selected="data-route"
             selected="[[route]]">
+          <div id="userBar" class$="horizontal center layout [[signedOutClass(userInfo.signedOut)]]">
+            <div class="fit horizontal center layout">
+              <paper-spinner active="[[userInfo.loading]]"></paper-spinner>
+            </div>
+            <iron-image src="[[userInfo.picture]]" preload sizing="cover"></iron-image>
+            <span id="userName">[[userInfo.given_name]]</span>
+          </div>
+
           <a data-route="eventsList:" href="/" on-click="onDataRouteClick">
             <calendar-icon
               color="#e91e63"
@@ -95,7 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               id="showHiddenCalendars"
               on-tap="toggleHiddenCalendars"
               hidden="[[noHiddenCalendars(calendars)]]"
-              class$="[[bottomBorderClass(showHiddenCalendars)]]">
+              class$="[[bottomBorderClass(showHiddenCalendars)]] vertical center-center layout">
             {{hiddenCalendarToggleText(showHiddenCalendars)}}
           </div>
           <template is="dom-repeat" items="[[filterHidden(calendars, showHiddenCalendars)]]">
@@ -140,13 +149,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <iron-pages attr-for-selected="page-name" selected="{{page}}">
 
             <section page-name="eventsList">
-              <paper-button
-                  id="signinButton"
-                  on-click="showSigninPopup"
-                  raised
-                  hidden>
-                Sign In
-              </paper-button>
+              <div class="fit" on-tap="closeAllEvents"></div>
+              
+              <div class="vertical center layout">
+                <paper-button
+                    id="signinButton"
+                    on-click="showSigninPopup"
+                    hidden="[[!userInfo.signedOut]]"
+                    raised>
+                  Sign In
+                </paper-button>
+              </div>
 
               <template
                   is="dom-repeat"
@@ -180,13 +193,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       api-root="{{apiRoot}}"
       name="ticktock"
       version="v1"
-      on-google-api-load="onTicktockDataLoaded">
+      on-google-api-load="onAPILoaded">
     </google-client-loader>
 
     <google-client-loader
-      id="calendarApi"
-      name="calendar"
-      version="v3">
+      id="oauth2Api"
+      name="oauth2"
+      version="v2"
+      on-google-api-load="onAPILoaded">
     </google-client-loader>
 
     <!-- SW Stuff -->

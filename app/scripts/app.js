@@ -24,10 +24,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.apiRoot = '//' + window.location.host + '/_ah/api';
 
+  var SIGNED_OUT_USER_INFO = {
+    given_name: 'Sign In with Google',
+    picture: '/images/google-logo.svg',
+    loading: false,
+    signedOut: true
+  };
+  var LOADING_USER_INFO = {
+    given_name: 'Loading...',
+    picture: '',
+    loading: true,
+    signedOut: false
+  };
+  app.userInfo = LOADING_USER_INFO;
+
   app.calendars = [];
   app.listedEvents = [];
   app.selectedCalendar = '';
   app.showHiddenCalendars = false;
+
+  app.signedOutClass = function(signedOut) {
+    return signedOut ? 'signed-out' : '';
+  };
 
   var getCalendarIndexById = function(calendarId) {
     for (var i = 0; i < app.calendars.length; i++) {
@@ -145,6 +163,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
+  app.closeAllEvents = function() {
+    for (var i = 0; i < app.listedEvents.length; i++) {
+      if (app.listedEvents[i].opened) {
+        app.set(['listedEvents', i, 'opened'], false);
+        return;
+      }
+    }
+  };
+
   // See https://github.com/Polymer/polymer/issues/1381
   window.addEventListener('WebComponentsReady', function() {
     // imports are loaded and elements have been registered
@@ -217,8 +244,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     document.getElementById('mainContainer').scrollTop = 0;
   };
 
-  app.onTicktockDataLoaded = function() {
-    signin(true);
+  app.onAPILoaded = function() {
+    if (app.$.ticktockApi.api && app.$.oauth2Api.api) {
+      signin(true);
+    }
   };
 
   app.showSigninPopup = function() {
@@ -230,20 +259,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     //   {client_id: CLIENT_ID, scope: SCOPES, immediate: mode}, // jshint ignore:line
     //   loadCalendars);
     console.log('signin mode = ' + mode);
-    loadCalendars();
-    app.$.signinButton.setAttribute('hidden', '');
+    app.$.userBar.removeEventListener('tap', app.showSigninPopup);
+    (function() {
+      getProfileInfo(mode);
+      loadCalendars();
+    })();
+  };
+
+  var getProfileInfo = function(mode) {
+    var EXAMPLE_PROFILE_INFO = {
+      'id': '104276020854823045712',
+      'email': 'zotavka@gmail.com',
+      'verified_email': true,
+      'name': 'Zander Otavka',
+      'given_name': 'Zander',
+      'family_name': 'Otavka',
+      'link': 'https://plus.google.com/104276020854823045712',
+      'picture': 'https://lh4.googleusercontent.com/-CmWsvY70cjE/AAAAAAAAAAI/AAAAAAAADio/jahTG8VV1ek/photo.jpg',
+      'locale': 'en'
+    };
+    EXAMPLE_PROFILE_INFO.loading = false;
+    if (mode) {
+      app.userInfo = SIGNED_OUT_USER_INFO;
+    } else {
+      app.userInfo = EXAMPLE_PROFILE_INFO;
+    }
+
+    if (app.userInfo.signedOut) {
+      app.$.userBar.addEventListener('tap', app.showSigninPopup);
+    }
   };
 
   var loadCalendars = function() {
     var EXAMPLE_CALENDARS = [{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','color':'#a47ae2','hidden':false,'name':'TickTock Test'},{'calendarId':'zotavka@gmail.com','color':'#34a864','hidden':true,'name':'Zander'}];
-    app.calendars = EXAMPLE_CALENDARS;
+    if (!app.userInfo.signedOut) {
+      app.calendars = EXAMPLE_CALENDARS;
+    }
     app.checkSelectedCalendar();
     loadAllEvents();
     // app.$.ticktockApi.api.calendars.list({
     //   }).execute(function(resp) {
     //     console.log(resp);
     //     if (resp.code && resp.code === 401) {
-    //       app.$.signinButton.removeAttribute('hidden');
     //       console.log('UNAUTHORIZED');
     //     } else if (resp.code) {
     //       console.log('ERROR');
@@ -260,9 +317,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       EXAMPLE_EVENTS[i].opened = false;
     }
     EXAMPLE_EVENTS[0].opened = true;
-    app.calendars[0].events = EXAMPLE_EVENTS;
-    app.calendars[1].events = [];
-    app.allEvents = EXAMPLE_EVENTS;
+    if (!app.userInfo.signedOut) {
+      app.calendars[0].events = EXAMPLE_EVENTS;
+      app.calendars[1].events = [];
+    }
 
     app.updateListedEvents();
     updateDurations();
