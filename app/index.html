@@ -16,7 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="Polymer Starter Kit" />
-  <title>Polymer Starter Kit</title>
+  <title>TickTock</title>
   <!-- Place favicon.ico in the `app/` directory -->
 
   <!-- Chrome for Android theme color -->
@@ -74,11 +74,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="data-route"
             selected="[[route]]">
           <div id="userBar" class$="horizontal center layout [[signedOutClass(userInfo.signedOut)]]">
+            <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
+            <span id="userName">[[userInfo.given_name]]</span>
+            
             <div class="fit horizontal center layout">
               <paper-spinner active="[[userInfo.loading]]"></paper-spinner>
             </div>
-            <iron-image src="[[userInfo.picture]]" preload sizing="cover"></iron-image>
-            <span id="userName">[[userInfo.given_name]]</span>
           </div>
 
           <a data-route="eventsList:" href="/" on-click="onDataRouteClick">
@@ -150,14 +151,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             <section page-name="eventsList">
               <div class="fit" on-tap="closeAllEvents"></div>
-              
+
               <div class="vertical center layout">
                 <paper-button
                     id="signinButton"
                     on-click="showSigninPopup"
                     hidden="[[!userInfo.signedOut]]"
                     raised>
-                  Sign In
+                  Sign In with Google
                 </paper-button>
               </div>
 
