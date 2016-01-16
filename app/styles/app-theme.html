@@ -129,6 +129,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     transform-origin: left center;
   }
 
+  #showHiddenCalendars {
+    @apply(--layout-vertical);
+    @apply(--layout-center-center);
+    font-size: .8rem;
+    text-transform: uppercase;
+    padding: 0;
+    height: 48px;
+    cursor: pointer;
+    border-top: 1px solid #d5d5d5;
+  }
+
+  #showHiddenCalendars:active {
+    background: #e4e4e4;
+  }
+
+  #showHiddenCalendars.border-bottom {
+    border-bottom: 1px solid #d5d5d5;
+  }
+
   /* Breakpoints */
 
   /* Small */

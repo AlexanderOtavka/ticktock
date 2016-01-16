@@ -69,6 +69,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!-- Drawer Content -->
         <paper-menu
             class="list"
+            selectable="a,paper-item"
             attr-for-selected="data-route"
             selected="[[route]]">
           <a data-route="eventsList:" href="/" on-click="onDataRouteClick">
@@ -79,10 +80,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <span>All Calendars</span>
           </a>
 
-          <template is="dom-repeat" items="[[calendars]]">
+          <template is="dom-repeat" items="[[filterUnhidden(calendars)]]">
             <a
                 data-route$="eventsList:[[item.calendarId]]"
-                href="/calendars/[[item.calendarId]]"
+                href="/calendars/[[urlEncode(item.calendarId)]]"
                 on-click="onDataRouteClick">
               <calendar-icon color="[[item.color]]"></calendar-icon>
               <span>{{item.name}}</span>
@@ -90,7 +91,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </a>
           </template>
 
-          <!-- TODO: add "show hidden calendars" button -->
+          <div
+              id="showHiddenCalendars"
+              on-tap="toggleHiddenCalendars"
+              hidden="[[noHiddenCalendars(calendars)]]"
+              class$="[[bottomBorderClass(showHiddenCalendars)]]">
+            {{hiddenCalendarToggleText(showHiddenCalendars)}}
+          </div>
+          <template is="dom-repeat" items="[[filterHidden(calendars, showHiddenCalendars)]]">
+            <!-- TODO: abstract into calendar element -->
+            <a
+                data-route$="eventsList:[[item.calendarId]]"
+                href="/calendars/[[urlEncode(item.calendarId)]]"
+                on-click="onDataRouteClick">
+              <calendar-icon icon="ticktock:calendar-hidden" color="[[item.color]]" faded></calendar-icon>
+              <span>{{item.name}}</span>
+              <!-- TODO add "hide/unhide" button -->
+            </a>
+          </template>
         </paper-menu>
       </paper-scroll-header-panel>
 

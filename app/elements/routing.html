@@ -26,7 +26,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var PAGE_NAME = 'eventsList';
       app.page = PAGE_NAME;
       app.route = PAGE_NAME + ':' + selectedCalendar;
-      app.selectedCalendar = selectedCalendar;
+      app.selectedCalendar = app.urlDecode(selectedCalendar);
+      (app.checkSelectedCalendar || function() {})();
     };
 
     // Routes
