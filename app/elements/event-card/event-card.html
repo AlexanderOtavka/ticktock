@@ -121,7 +121,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <iron-collapse opened="[[opened]]" no-animation="[[noAnimation]]">
+    <iron-collapse
+        opened="[[_spacingTop(opened, index)]]"
+        no-animation="[[noAnimation]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
 
@@ -271,6 +273,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'event-card',
 
       properties: {
+        index: {
+          type: Number,
+          value: 1
+        },
         eventId: String,
         calendarId: String,
         name: String,
@@ -293,9 +299,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         noAnimation: Boolean
       },
 
-      observers: [
-      ],
-
       toggleExpand: function() {
         this.opened = !this.opened;
       },
@@ -308,6 +311,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       toggleHide: function(event) {
         this.hidden = !this.hidden;
         event.stopPropagation();
+      },
+
+      _spacingTop: function(opened, index) {
+        return opened && index;
       },
 
       _noPropagation: function(event) {
