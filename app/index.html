@@ -75,8 +75,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             selected="[[route]]">
           <div id="userBar" class$="horizontal center layout [[signedOutClass(userInfo.signedOut)]]">
             <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
-            <span id="userName">[[userInfo.given_name]]</span>
-            
+            <span id="userName">[[userInfo.name]]</span>
+
             <div class="fit horizontal center layout">
               <paper-spinner active="[[userInfo.loading]]"></paper-spinner>
             </div>
@@ -119,6 +119,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <!-- TODO add "hide/unhide" button -->
             </a>
           </template>
+
+          <!-- TODO: add feedback (google plus community or google form) -->
         </paper-menu>
       </paper-scroll-header-panel>
 
@@ -150,7 +152,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <iron-pages attr-for-selected="page-name" selected="{{page}}">
 
             <section page-name="eventsList">
-              <div class="fit" on-tap="closeAllEvents"></div>
+              <!-- <div class="fit" on-tap="closeAllEvents"></div> -->
 
               <div class="vertical center layout">
                 <paper-button
@@ -172,14 +174,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   name="{{item.name}}"
                   color="{{item.color}}"
                   opened="{{item.opened}}"
-                  start-duration="{{item.startDuration}}"
-                  end-duration="{{item.endDuration}}"
+                  duration="{{item.duration}}"
                   starred="{{item.starred}}"
                   hidden="{{item.hidden}}"
                   link="{{item.link}}"
                   recurrence-id="{{item.recurrenceId}}"
                   deleted="{{item.deleted}}"
-                  on-opened-changed="eventOpenedToggled">
+                  no-animation="[[noEventAnimations]]"
+                  on-opened-changed="eventOpenedToggled"
+                  on-starred-changed="eventStarredToggled"
+                  on-hidden-changed="eventHiddenToggled">
                 </event-card>
               </template>
             </section>

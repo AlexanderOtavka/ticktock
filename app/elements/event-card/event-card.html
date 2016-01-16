@@ -39,12 +39,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-right: auto;
       }
 
-      .dropdown-content {
-        @apply(--shadow-elevation-3dp);
-        background-color: white;
-        border-radius: 2px;
-      }
-
       calendar-icon {
         margin: 16px;
       }
@@ -127,7 +121,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <iron-collapse opened="[[opened]]">
+    <iron-collapse opened="[[opened]]" no-animation="[[noAnimation]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
 
@@ -174,7 +168,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </dropdown-menu>
       </div>
 
-      <iron-collapse id="collapse" opened="[[opened]]" class="vertical center layout">
+      <iron-collapse
+          id="collapse"
+          opened="[[opened]]"
+          class="vertical center layout"
+          no-animation="[[noAnimation]]">
         <progress-bubble
             stroke-width="15"
             value="[[duration]]"
@@ -197,7 +195,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </iron-collapse>
     </paper-material>
 
-    <iron-collapse opened="[[opened]]">
+    <iron-collapse opened="[[opened]]" no-animation="[[noAnimation]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
   </template>
@@ -279,22 +277,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: Boolean,
           notify: true
         },
-        startDuration: Number,
-        endDuration: Number,
-        starred: Boolean,
-        hidden: Boolean,
+        duration: Number,
+        starred: {
+          type: Boolean,
+          notify: true
+        },
+        hidden: {
+          type: Boolean,
+          notify: true
+        },
         link: String,
         recurrenceId: String,
-        deleted: Boolean,
-
-        duration: {
-          type: Number,
-          computed: '_getDuration(startDuration, endDuration)'
-        }
+        noAnimation: Boolean
       },
 
       observers: [
-        '_onDelete(deleted)'
       ],
 
       toggleExpand: function() {
@@ -315,20 +312,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         event.stopPropagation();
       },
 
-      _onDelete: function(deleted) {
-        if (!deleted) {
-          return;
-        }
-
-        var collapsers = Polymer.dom(this.root)
-            .querySelectorAll('iron-collapse');
-        for (var i = 0; i < collapsers.length; i++) {
-          collapsers[i].noAnimation = true;
-          collapsers[i].hide();
-          collapsers[i].noAnimation = false;
-        }
-      },
-
       _getElevation: function(opened) {
         return opened ? 2 : 1;
       },
@@ -339,10 +322,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _getHideButtonText: function(hidden) {
         return hidden ? 'Unhide' : 'Hide';
-      },
-
-      _getDuration: function(startDuration, endDuration) {
-        return startDuration || endDuration;
       },
 
       _getMajorDurationSegment: function(duration) {

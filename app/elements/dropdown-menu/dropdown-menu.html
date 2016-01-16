@@ -18,6 +18,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: inline-block;
       }
+
+      #dropdown > ::content .dropdown-content {
+        @apply(--shadow-elevation-3dp);
+        background-color: white;
+        border-radius: 2px;
+      }
     </style>
 
     <div on-tap="open">
