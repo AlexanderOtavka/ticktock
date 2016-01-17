@@ -63,6 +63,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return signedOut ? 'signed-out' : '';
   };
 
+  // TODO: replace for loops with forEach
+  // but profile both first, and choose the fastest
+
   var getCalendarIndexById = function(calendarId) {
     for (var i = 0; i < app.calendars.length; i++) {
       if (app.calendars[i].calendarId === calendarId) {
