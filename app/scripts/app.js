@@ -39,6 +39,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.userInfo = LOADING_USER_INFO;
 
   app.calendars = [];
+  app.hiddenCalendars = [];
+  app.unhiddenCalendars = [];
   app.listedEvents = [];
   app.selectedCalendar = '';
   app.showHiddenCalendars = false;
@@ -80,14 +82,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     } else {
       var calendar = getCalendarById(selectedCalendar);
       return calendar ? calendar.name : ALL_CALENDARS;
-    }
-  };
-
-  app.checkSelectedCalendar = function() {
-    if (app.calendars &&
-        !app.showHiddenCalendars &&
-        (getCalendarById(app.selectedCalendar) || {}).hidden) {
-      app.toggleHiddenCalendars();
     }
   };
 
@@ -258,46 +252,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     app.showHiddenCalendars = !app.showHiddenCalendars;
   };
 
-  var filter = function(list, name, value) {
-    var filtered = [];
-    for (var i = 0; i < list.length; i++) {
-      if (list[i][name] === value) {
-        filtered.push(list[i]);
+  app.updateCalendars = function() {
+    var hidden = [];
+    var unhidden = [];
+    for (var i = 0; i < app.calendars.length; i++) {
+      if (app.calendars[i].hidden) {
+        hidden.push(app.calendars[i]);
+        if (app.calendars[i].calendarId === app.selectedCalendar) {
+          app.showHiddenCalendars = true;
+        }
+      } else {
+        unhidden.push(app.calendars[i]);
       }
     }
-    return filtered;
+    app.hiddenCalendars = hidden;
+    app.unhiddenCalendars = unhidden;
   };
 
-  app.filterHidden = function(list, condition) {
-    if (condition !== undefined && !condition) {
-      return [];
-    }
-    return filter(list, 'hidden', true);
-  };
-
-  app.filterUnhidden = function(list, condition) {
-    if (condition !== undefined && !condition) {
-      return [];
-    }
-    return filter(list, 'hidden', false);
-  };
-
-  app.noHiddenCalendars = function(calendars) {
-    for (var i = 0; i < calendars.length; i++) {
-      if (calendars[i].hidden) {
-        return false;
-      }
-    }
-    return true;
+  app.arrayEmpty = function(array) {
+    console.log('array.length = ' + array.length);
+    return !Boolean(array.length);
+    // return false;
   };
 
   app.hiddenCalendarToggleText = function(showHiddenCalendars) {
     return showHiddenCalendars ? 'Hide Hidden Calendars' :
                                  'Show Hidden Calendars';
-  };
-
-  app.bottomBorderClass = function(condition) {
-    return condition ? 'border-bottom' : '';
   };
 
   app.urlEncode = function(string) {
@@ -365,7 +345,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     if (!app.userInfo.signedOut) {
       app.calendars = EXAMPLE_CALENDARS;
     }
-    app.checkSelectedCalendar();
+    app.updateCalendars();
     loadAllEvents();
     // app.$.ticktockApi.api.calendars.list({
     //   }).execute(function(resp) {

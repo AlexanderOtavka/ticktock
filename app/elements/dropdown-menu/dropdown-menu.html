@@ -37,7 +37,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         horizontal-offset="[[horizontalOffset]]"
         disabled="[[disabled]]"
         open-animation-config="[[openAnimationConfig]]"
-        close-animation-config="[[closeAnimationConfig]]">
+        close-animation-config="[[closeAnimationConfig]]"
+        opened="{{opened}}">
       <content select=".dropdown-content"></content>
     </iron-dropdown>
   </template>
@@ -50,15 +51,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           value: 'top'
         },
         verticalOffset: Number,
-
         horizontalAlign: {
           type: String,
           value: 'right'
         },
         horizontalOffset: Number,
-
         disabled: Boolean,
-
         openAnimationConfig: {
           type: Array,
           value: function() {
@@ -77,7 +75,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }];
           }
         },
-
         closeAnimationConfig: {
           type: Array,
           value: function() {
@@ -88,12 +85,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               }
             }];
           }
+        },
+        opened: {
+          type: Boolean,
+          notify: true
         }
       },
+
+      observers: [
+        '_updateClass(opened)'
+      ],
 
       open: function(event) {
         this.$.dropdown.open();
         event.stopPropagation();
+      },
+
+      _updateClass: function(opened) {
+        this.classList.toggle('opened', opened);
       }
     });
   </script>

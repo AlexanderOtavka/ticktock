@@ -27,8 +27,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       app.page = PAGE_NAME;
       app.route = PAGE_NAME + ':' + selectedCalendar;
       app.selectedCalendar = app.urlDecode(selectedCalendar);
-      (app.checkSelectedCalendar || function() {})();
       app.updateListedEvents();
+      app.updateCalendars();
     };
 
     // Routes
@@ -38,7 +38,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     page('/calendars/:calendarId', scrollToTop, function(data) {
       eventsList(data.params.calendarId);
-      console.log(app.selectedCalendar);
     });
 
     // add #! before urls

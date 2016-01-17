@@ -1,0 +1,122 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../calendar-icon/calendar-icon.html">
+<link rel="import" href="../dropdown-menu/dropdown-menu.html">
+
+<dom-module id="selectable-calendar">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .flex {
+        @apply(--layout-flex);
+      }
+
+      paper-icon-item {
+        font-size: var(--calendar-font-size);
+        padding-right: 2px;
+      }
+
+      paper-icon-button {
+        color: #999;
+      }
+
+      .hidden {
+        opacity: 0.7;
+      }
+
+      /*a dropdown-menu {
+        display: inline-block;
+      }*/
+
+      /*:host:not(.iron-selected) a:not(:hover) dropdown-menu:not(.opened) {
+        display: none;
+      }*/
+    </style>
+
+    <a href="[[href]]">
+      <paper-icon-item>
+        <calendar-icon
+          color="[[color]]"
+          icon="[[icon]]"
+          faded="[[calendarHidden]]"
+          item-icon>
+        </calendar-icon>
+        <span class$="[[_getHiddenClass(calendarHidden)]]">[[name]]</span>
+
+        <span class="flex"></span>
+
+        <dropdown-menu
+            horizontal-offset="2"
+            vertical-offset="2"
+            hidden="[[noMenu]]">
+          <paper-icon-button
+            icon="icons:more-vert"
+            class="dropdown-trigger">
+          </paper-icon-button>
+
+          <div class="dropdown-content">
+            <paper-item on-tap="toggleHide">
+              <div>[[_getHideButtonText(calendarHidden)]]</div>
+            </paper-item>
+          </div>
+        </dropdown-menu>
+      </paper-icon-item>
+    </a>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'selectable-calendar',
+
+      properties: {
+        href: String,
+        color: String,
+        icon: String,
+        name: String,
+        calendarHidden: {
+          type: Boolean,
+          notify: true
+        },
+        noMenu: Boolean
+      },
+
+      toggleHide: function(event) {
+        this.calendarHidden = !this.calendarHidden;
+        event.stopPropagation();
+      },
+
+      _getHideButtonText: function(calendarHidden) {
+        return calendarHidden ? 'Unhide' : 'Hide';
+      },
+
+      _getHiddenClass: function(calendarHidden) {
+        return calendarHidden ? 'hidden' : '';
+      }
+    });
+  })();
+  </script>
+</dom-module>

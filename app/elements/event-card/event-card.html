@@ -157,7 +157,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <div class="dropdown-content">
             <paper-item on-tap="toggleHide">
-              <div>{{_getHideButtonText(hidden)}}</div>
+              <div>{{_getHideButtonText(eventHidden)}}</div>
             </paper-item>
 
             <a href="[[link]]" target="_blank">
@@ -290,7 +290,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: Boolean,
           notify: true
         },
-        hidden: {
+        eventHidden: {
           type: Boolean,
           notify: true
         },
@@ -309,7 +309,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       toggleHide: function(event) {
-        this.hidden = !this.hidden;
+        this.eventHidden = !this.eventHidden;
         event.stopPropagation();
       },
 
@@ -329,8 +329,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return starred ? 'starred' : '';
       },
 
-      _getHideButtonText: function(hidden) {
-        return hidden ? 'Unhide' : 'Hide';
+      _getHideButtonText: function(eventHidden) {
+        return eventHidden ? 'Unhide' : 'Hide';
       },
 
       _getMajorDurationSegment: function(duration) {
