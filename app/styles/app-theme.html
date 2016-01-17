@@ -113,8 +113,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     background: white;
   }
 
-  #mainToolbar .app-name {
+  #mainToolbar {
+    --paper-toolbar-content: {
+      padding: 0 4px 0 8px;
+    };
+  }
+
+  #drawerToggle {
+    margin: 0;
+  }
+
+  #mainToolbar .view-name {
     margin: 8px;
+  }
+
+  #mainToolbar paper-icon-button:not(#drawerToggle):not(:last-child) {
+    margin-left: 4px;
+  }
+
+  #mainToolbar dropdown-menu paper-icon-button {
+    margin-left: 0;
+  }
+
+  #mainToolbar dropdown-menu .dropdown-content {
+    color: #111;
+    cursor: pointer;
   }
 
   #showHiddenCalendars {
@@ -177,6 +200,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     iron-pages {
       padding: 48px 62px;
+    }
+
+    #mainToolbar {
+      padding: 0 8px;
     }
 
   }

@@ -47,6 +47,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 8px;
       }
 
+      #name.event-hidden {
+        opacity: .5;
+      }
+
       #miniTimer {
         color: #757575;
         font-weight: 300;
@@ -133,8 +137,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         on-tap="toggleExpand"
         animated>
       <div id="toolbar" class="horizontal center layout">
-        <calendar-icon color="[[color]]"></calendar-icon>
-        <div id="name" class="vertical left layout">
+        <calendar-icon
+          color="[[color]]"
+          faded="[[eventHidden]]">
+        </calendar-icon>
+        <div id="name" class$="[[_getEventHiddenClass(eventHidden)]] vertical left layout">
           <span>{{name}}</span>
           <span id="miniTimer" hidden="[[opened]]">
             {{_getMajorDurationSegment(duration)}}
@@ -327,6 +334,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _getStarredClass: function(starred) {
         return starred ? 'starred' : '';
+      },
+
+      _getEventHiddenClass: function(eventHidden) {
+        return eventHidden ? 'event-hidden' : '';
       },
 
       _getHideButtonText: function(eventHidden) {

@@ -43,9 +43,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.unhiddenCalendars = [];
   app.listedEvents = [];
   app.selectedCalendar = '';
-  app.showHiddenCalendars = false;
-  app.noEventAnimations = false;
 
+  app.showHiddenCalendars = false;
+  app.showHiddenEvents = false;
+
+  app.noEventAnimations = false;
   var runWithoutAnimation = function(callback) {
     // TODO: de-hackify this
     app.noEventAnimations = true;
@@ -74,7 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return app.calendars[getCalendarIndexById(calendarId)];
   };
 
-  app.getSelectedCalendarName = function(selectedCalendar) {
+  app.getViewName = function(selectedCalendar) {
     var ALL_CALENDARS = 'All Calendars';
 
     if (!selectedCalendar) {
@@ -83,6 +85,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var calendar = getCalendarById(selectedCalendar);
       return calendar ? calendar.name : ALL_CALENDARS;
     }
+  };
+
+  app.toggleShowHiddenEvents = function() {
+    app.showHiddenEvents = !app.showHiddenEvents;
+    app.updateListedEvents();
+  };
+
+  app.hiddenEventsToggleText = function(showHiddenEvents) {
+    return showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events';
   };
 
   var compareBools = function(a, b) {
@@ -135,9 +146,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var calendar = getCalendarById(app.selectedCalendar);
       events = calendar ? calendar.events.slice() : [];
     }
-    events = sortedEvents(prunedEvents(events, function(event) {
-      return !event.hidden;
-    }));
+    if (!app.showHiddenEvents) {
+      events = prunedEvents(events, function(event) {
+        return !event.hidden;
+      });
+    }
+    events = sortedEvents(events);
     runWithoutAnimation(function() {
       app.listedEvents = events;
     });
@@ -270,7 +284,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.arrayEmpty = function(array) {
-    console.log('array.length = ' + array.length);
     return !Boolean(array.length);
     // return false;
   };

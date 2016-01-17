@@ -141,21 +141,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!-- Main Toolbar -->
         <paper-toolbar id="mainToolbar">
           <paper-icon-button
-            id="paperToggle"
+            id="drawerToggle"
             icon="menu"
             paper-drawer-toggle>
           </paper-icon-button>
 
           <!-- Application name -->
-          <div class="center horizontal layout">
-            <div class="app-name">TickTock</div>
-          </div>
-
-          <span class="flex"></span>
+          <div class="view-name title">[[getViewName(selectedCalendar)]]</div>
 
           <!-- Toolbar icons -->
           <paper-icon-button icon="refresh"></paper-icon-button>
           <paper-icon-button icon="search"></paper-icon-button>
+          <dropdown-menu horizontal-offset="0" vertical-offset="0">
+            <paper-icon-button
+              icon="icons:more-vert"
+              class="dropdown-trigger">
+            </paper-icon-button>
+
+            <div class="dropdown-content">
+              <paper-item on-tap="toggleShowHiddenEvents">
+                <div>[[hiddenEventsToggleText(showHiddenEvents)]]</div>
+              </paper-item>
+            </div>
+          </dropdown-menu>
         </paper-toolbar>
 
         <!-- Main Content -->
