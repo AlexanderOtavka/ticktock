@@ -13,30 +13,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <head>
   <meta charset="utf-8">
-  <meta name="description" content="">
+  <meta name="description" content="An app that counts down to upcoming events you care about.">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="generator" content="Polymer Starter Kit" />
+  <meta name="generator" content="TickTock" />
   <title>TickTock</title>
   <!-- Place favicon.ico in the `app/` directory -->
+  <link rel="icon" href="/favicon.ico?v=1">
 
   <!-- Chrome for Android theme color -->
-  <meta name="theme-color" content="#2E3AA1">
+  <meta name="theme-color" content="#E91E63">
 
   <!-- Web Application Manifest -->
   <link rel="manifest" href="manifest.json">
 
   <!-- Tile color for Win8 -->
-  <meta name="msapplication-TileColor" content="#3372DF">
+  <meta name="msapplication-TileColor" content="#E91E63">
 
   <!-- Add to homescreen for Chrome on Android -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="PSK">
+  <meta name="application-name" content="TickTock">
   <link rel="icon" sizes="192x192" href="images/touch/chrome-touch-icon-192x192.png">
 
   <!-- Add to homescreen for Safari on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Polymer Starter Kit">
+  <meta name="apple-mobile-web-app-title" content="TickTock">
   <link rel="apple-touch-icon" href="images/touch/apple-touch-icon.png">
 
   <!-- Tile icon for Win8 (144x144) -->
@@ -70,7 +71,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-menu
             id="drawerMenu"
             class="list"
-            selectable="section"
+            selectable="a"
             attr-for-selected="data-route"
             selected="[[route]]">
           <div id="userBar" class$="horizontal center layout [[signedOutClass(userInfo.signedOut)]]">
@@ -82,37 +83,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
           </div>
 
-          <section data-route="eventsList:">
-            <selectable-calendar
+          <a
               href="/"
               on-click="onDataRouteClick"
-              color="#e91e63"
+              data-route="eventsList:">
+            <selectable-calendar
+              color="#E91E63"
               icon="ticktock:calendar-multiple"
               name="All Calendars"
               no-menu>
             </selectable-calendar>
-          </section>
+          </a>
 
           <template is="dom-repeat" items="[[unhiddenCalendars]]">
-            <section data-route$="eventsList:[[item.calendarId]]">
-              <selectable-calendar
+            <a
                 href="/calendars/[[urlEncode(item.calendarId)]]"
                 on-click="onDataRouteClick"
+                data-route$="eventsList:[[item.calendarId]]">
+              <selectable-calendar
                 color="[[item.color]]"
                 name="[[item.name]]"
                 calendar-hidden="{{item.hidden}}"
                 on-calendar-hidden-changed="updateCalendars">
               </selectable-calendar>
-            </section>
+            </a>
           </template>
 
           <template
               is="dom-repeat"
               items="[[hiddenCalendars]]">
-            <section data-route$="eventsList:[[item.calendarId]]">
-              <selectable-calendar
+            <a
                 href="/calendars/[[urlEncode(item.calendarId)]]"
                 on-click="onDataRouteClick"
+                data-route$="eventsList:[[item.calendarId]]">
+              <selectable-calendar
                 icon="ticktock:calendar-hidden"
                 color="[[item.color]]"
                 name="[[item.name]]"
@@ -120,7 +124,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 hidden="[[!showHiddenCalendars]]"
                 on-calendar-hidden-changed="updateCalendars">
               </selectable-calendar>
-            </section>
+            </a>
           </template>
 
           <div
@@ -150,7 +154,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div class="view-name title">[[getViewName(selectedCalendar)]]</div>
 
           <!-- Toolbar icons -->
-          <paper-icon-button icon="refresh"></paper-icon-button>
+          <paper-icon-button
+            icon="refresh"
+            hidden="[[smallScreen]]">
+          </paper-icon-button>
           <paper-icon-button icon="search"></paper-icon-button>
           <dropdown-menu horizontal-offset="0" vertical-offset="0">
             <paper-icon-button
@@ -159,8 +166,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-icon-button>
 
             <div class="dropdown-content">
+              <paper-item hidden="[[!smallScreen]]">
+                Refresh
+              </paper-item>
               <paper-item on-tap="toggleShowHiddenEvents">
-                <div>[[hiddenEventsToggleText(showHiddenEvents)]]</div>
+                [[hiddenEventsToggleText(showHiddenEvents)]]
               </paper-item>
             </div>
           </dropdown-menu>
@@ -212,6 +222,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
       </paper-scroll-header-panel>
     </paper-drawer-panel>
+
+    <iron-media-query
+      query="max-width: 600px"
+      query-matches="{{smallScreen}}">
+    </iron-media-query>
 
     <google-client-loader
       id="ticktockApi"

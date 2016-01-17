@@ -97,7 +97,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       open: function(event) {
-        this.$.dropdown.open();
+        setTimeout((function() {
+          this.$.dropdown.open();
+        }).bind(this), 20);
         event.stopPropagation();
       },
 

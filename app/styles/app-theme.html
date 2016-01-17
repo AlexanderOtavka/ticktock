@@ -23,11 +23,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   :root {
     --dark-primary-color: #c2185b;
-    --default-primary-color: #e91e63;
+    --default-primary-color: #E91E63;
     --light-primary-color: #C5CAE9;
     --text-primary-color: #ffffff; /*text/icons*/
     --accent-color: #FF4081;
-    --primary-background-color: #c5cae9;
+    --primary-background-color: #F48FB1;
     --primary-text-color: #212121;
     --secondary-text-color: #727272;
     --disabled-text-color: #bdbdbd;
@@ -43,8 +43,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     /* paper-menu */
     --paper-menu-background-color: #fff;
     --paper-menu-selected-item: {
-      background-color: #f6f6f6;
-      font-weight: inherit;
+      font-weight: 400;
     };
     --paper-menu-focused-item-after: {
       background-color: rgba(0, 0, 0, 0);
@@ -61,7 +60,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   #drawerMenu paper-icon-item {
     --calendar-font-size: 14px;
     font-size: 14px;
+  }
+
+  #drawerMenu a {
+    text-decoration: none;
     color: #111;
+  }
+
+  #drawerMenu .iron-selected,
+  #drawerMenu .iron-selected selectable-calendar {
+    background-color: #f6f6f6;
   }
 
   #userBar {

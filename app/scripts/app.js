@@ -128,12 +128,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   var prunedEvents = function(events, keep) {
     var pruned = [];
-    for (var i = 0; i < events.length; i++) {
-      if (keep(events[i])) {
-        pruned.push(events[i]);
+    events.forEach(function(e) {
+      if (keep(e)) {
+        pruned.push(e);
       }
-    }
+    });
     return pruned;
+  };
+
+  var openOnlyOne = function(events) {
+    var foundOpened = false;
+    events.forEach(function(e) {
+      if (e.opened) {
+        if (foundOpened) {
+          e.opened = false;
+        } else {
+          foundOpened = true;
+        }
+      }
+    });
   };
 
   app.updateListedEvents = function() {
@@ -151,6 +164,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return !event.hidden;
       });
     }
+    openOnlyOne(events);
     events = sortedEvents(events);
     runWithoutAnimation(function() {
       app.listedEvents = events;
@@ -263,7 +277,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.toggleHiddenCalendars = function() {
-    app.showHiddenCalendars = !app.showHiddenCalendars;
+    setTimeout(function() {
+      app.showHiddenCalendars = !app.showHiddenCalendars;
+    }, 20);
   };
 
   app.updateCalendars = function() {

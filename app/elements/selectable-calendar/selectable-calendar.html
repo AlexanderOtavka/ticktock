@@ -24,11 +24,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
 
-      a {
-        text-decoration: none;
-        color: inherit;
-      }
-
       .flex {
         @apply(--layout-flex);
       }
@@ -36,6 +31,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       paper-icon-item {
         font-size: var(--calendar-font-size);
         padding-right: 2px;
+        --paper-item-focused-before: {
+          background-color: rgba(0, 0, 0, 0);
+        }
       }
 
       paper-icon-button {
@@ -55,35 +53,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }*/
     </style>
 
-    <a href="[[href]]">
-      <paper-icon-item>
-        <calendar-icon
-          color="[[color]]"
-          icon="[[icon]]"
-          faded="[[calendarHidden]]"
-          item-icon>
-        </calendar-icon>
-        <span class$="[[_getHiddenClass(calendarHidden)]]">[[name]]</span>
+    <paper-icon-item>
+      <calendar-icon
+        color="[[color]]"
+        icon="[[icon]]"
+        faded="[[calendarHidden]]"
+        item-icon>
+      </calendar-icon>
+      <span class$="[[_getHiddenClass(calendarHidden)]]">[[name]]</span>
 
-        <span class="flex"></span>
+      <span class="flex"></span>
 
-        <dropdown-menu
-            horizontal-offset="2"
-            vertical-offset="2"
-            hidden="[[noMenu]]">
-          <paper-icon-button
-            icon="icons:more-vert"
-            class="dropdown-trigger">
-          </paper-icon-button>
+      <dropdown-menu
+          horizontal-align="left"
+          horizontal-offset="0"
+          vertical-offset="0"
+          hidden="[[noMenu]]">
+        <paper-icon-button
+          icon="icons:more-vert"
+          class="dropdown-trigger">
+        </paper-icon-button>
 
-          <div class="dropdown-content">
-            <paper-item on-tap="toggleHide">
-              <div>[[_getHideButtonText(calendarHidden)]]</div>
-            </paper-item>
-          </div>
-        </dropdown-menu>
-      </paper-icon-item>
-    </a>
+        <div class="dropdown-content">
+          <paper-item on-tap="toggleHide">
+            <div>[[_getHideButtonText(calendarHidden)]]</div>
+          </paper-item>
+        </div>
+      </dropdown-menu>
+    </paper-icon-item>
   </template>
   <script>
   (function() {
@@ -93,7 +90,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'selectable-calendar',
 
       properties: {
-        href: String,
         color: String,
         icon: String,
         name: String,
@@ -102,6 +98,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           notify: true
         },
         noMenu: Boolean
+      },
+
+      attached: function() {
+        this.$$('dropdown-menu').onclick = function(event) {
+          event.stopPropagation();
+          return false;
+        };
       },
 
       toggleHide: function(event) {
