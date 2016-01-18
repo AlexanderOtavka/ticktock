@@ -99,8 +99,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <selectable-calendar
                 color="[[item.color]]"
                 name="[[item.name]]"
+                calendar-id="[[item.calendarId]]"
                 calendar-hidden="{{item.hidden}}"
-                on-calendar-hidden-changed="updateCalendars">
+                on-calendar-hidden-changed="calendarHiddenToggled">
               </selectable-calendar>
             </a>
           </template>
@@ -116,9 +117,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 icon="ticktock:calendar-hidden"
                 color="[[item.color]]"
                 name="[[item.name]]"
+                calendar-id="[[item.calendarId]]"
                 calendar-hidden="{{item.hidden}}"
                 hidden="[[!showHiddenCalendars]]"
-                on-calendar-hidden-changed="updateCalendars">
+                on-calendar-hidden-changed="calendarHiddenToggled">
               </selectable-calendar>
             </a>
           </template>
@@ -265,6 +267,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-toast id="error"
                  duration="6000"
                  text="An error occurred.">
+    </paper-toast>
+
+    <paper-toast id="networkError"
+                 duration="6000"
+                 text="There was a problem with the network.">
     </paper-toast>
 
     <!-- SW Stuff -->
