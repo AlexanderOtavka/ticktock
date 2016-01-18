@@ -2,6 +2,8 @@
 
 from __future__ import division, print_function
 
+import urllib2
+
 import endpoints
 from protorpc import remote
 from oauth2client.appengine import AppAssertionCredentials
@@ -61,6 +63,8 @@ class PublicAPI(remote.Service):
 
         :type request: messages.EVENT_SEARCH_RESOURCE
         """
+        request.calendarId = urllib2.unquote(request.calendarId)
+
         service = authutils.get_service(
             authutils.CALENDAR_API_NAME,
             authutils.CALENDAR_API_VERSION,

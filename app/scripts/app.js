@@ -475,7 +475,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     app.calendars.forEach(function(c) {
       app.$.ticktockApi.api.events.list({
-          calendarId: c.calendarId,
+          calendarId: encodeURIComponent(c.calendarId),
           hidden: false,
           maxResults: 10,
           timeZone: 'UTC'

@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 import logging
+import urllib2
 
 import endpoints
 from google.appengine.ext import ndb
@@ -21,14 +22,13 @@ __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
 
 
-BASE58 = basehash.base58()
-
-
 @ticktock_api.api_class(resource_name="events",
                         path="calendars/{calendarId}/events",
                         auth_level=endpoints.AUTH_LEVEL.REQUIRED)
 class EventsAPI(remote.Service):
     """Manage events."""
+
+    string_base = basehash.base62()
 
     @staticmethod
     def get_starred(calendar_key, service, time_zone):
@@ -124,6 +124,8 @@ class EventsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        request.calendarId = urllib2.unquote(request.calendarId)
+
         user_key = models.get_user_key(user_id)
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
@@ -132,7 +134,7 @@ class EventsAPI(remote.Service):
             request.timeZone = gapiutils.get_calendar_time_zone(
                     service, request.calendarId)
         if request.pageToken:
-            request.pageToken = BASE58.decode(request.pageToken)
+            request.pageToken = self.string_base.decode(request.pageToken)
 
         starred_events = []
         """:type: list[messages.EventProperties]"""
@@ -244,7 +246,7 @@ class EventsAPI(remote.Service):
                 cache_key = None
             if cache_key is None:
                 cache_key = new_cache.put()
-            next_page_token = BASE58.encode(cache_key.integer_id())
+            next_page_token = self.string_base.encode(cache_key.integer_id())
         else:
             next_page_token = None
 
@@ -262,6 +264,8 @@ class EventsAPI(remote.Service):
         :type request: messages.EVENT_ID_RESOURCE
         """
         user_id = authutils.require_user_id()
+
+        request.calendarId = urllib2.unquote(request.calendarId)
 
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
@@ -323,6 +327,8 @@ class EventsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        request.calendarId = urllib2.unquote(request.calendarId)
+
         entity = self.get_event_entity(user_id, request.calendarId,
                                        request.eventId)
 
@@ -352,6 +358,8 @@ class EventsAPI(remote.Service):
         :type request: messages.EVENT_WRITE_RESOURCE
         """
         user_id = authutils.require_user_id()
+
+        request.calendarId = urllib2.unquote(request.calendarId)
 
         entity = self.get_event_entity(user_id, request.calendarId,
                                        request.eventId)

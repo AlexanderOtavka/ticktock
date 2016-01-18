@@ -2,6 +2,8 @@
 
 from __future__ import division, print_function
 
+import urllib2
+
 import endpoints
 from google.appengine.ext import ndb
 from protorpc import remote
@@ -81,6 +83,9 @@ class CalendarsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        # TODO: document all instances of double url encoding calendar ids
+        request.calendarId = urllib2.unquote(request.calendarId)
+
         service = authutils.get_service(authutils.CALENDAR_API_NAME,
                                         authutils.CALENDAR_API_VERSION)
         calendar = gapiutils.get_calendar(service, request.calendarId)
@@ -134,6 +139,8 @@ class CalendarsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        request.calendarId = urllib2.unquote(request.calendarId)
+
         entity = self.get_calendar_entity(user_id, request.calendarId)
 
         # Set properties from request on the entity
@@ -154,6 +161,8 @@ class CalendarsAPI(remote.Service):
         """
         user_id = authutils.require_user_id()
 
+        request.calendarId = urllib2.unquote(request.calendarId)
+
         entity = self.get_calendar_entity(user_id, request.calendarId)
 
         # Set properties from request on the entity
@@ -172,6 +181,8 @@ class CalendarsAPI(remote.Service):
     #     :type request: messages.CALENDAR_ID_RESOURCE
     #     """
     #     user_id = authutils.require_user_id()
+    #
+    #     request.calendarId = urllib2.unquote(request.calendarId)
     #
     #     # Validate calendar's existence
     #     service = authutils.get_service(authutils.CALENDAR_API_NAME,
