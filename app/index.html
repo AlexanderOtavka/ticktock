@@ -129,7 +129,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <div
               id="showHiddenCalendars"
-              on-tap="toggleHiddenCalendars"
+              on-tap="toggleShowHiddenCalendars"
               hidden="[[arrayEmpty(hiddenCalendars)]]"
               class="vertical center-center layout">
             {{hiddenCalendarToggleText(showHiddenCalendars)}}
@@ -181,13 +181,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <iron-pages attr-for-selected="page-name" selected="{{page}}">
 
             <section page-name="eventsList">
-              <!-- <div class="fit" on-tap="closeAllEvents"></div> -->
-
-              <div class="vertical center layout">
+              <div
+                  id="signinButtonWrapper"
+                  hidden="[[!userInfo.signedOut]]"
+                  class="centered-content">
                 <paper-button
                     id="signinButton"
                     on-click="showSigninPopup"
-                    hidden="[[!userInfo.signedOut]]"
                     raised>
                   Sign In with Google
                 </paper-button>
@@ -216,6 +216,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   on-event-hidden-changed="eventHiddenToggled">
                 </event-card>
               </template>
+
+              <div
+                  id="spinnerWrapper"
+                  class="centered-content"
+                  hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, dataLoaded, calculatingListedCalendars)]]">
+                <paper-spinner active></paper-spinner>
+              </div>
+
+              <div
+                  class="centered-content"
+                  hidden="[[!calendarErrored(selectedCalendar, dataLoaded)]]">
+                Oops... this calendar could not be loaded :(
+              </div>
+
+              <div
+                  class="centered-content"
+                  hidden="[[!calendarEmpty(selectedCalendar, listedEvents, dataLoaded, calculatingListedCalendars)]]">
+                Looks like there's nothing here.
+              </div>
             </section>
 
           </iron-pages>
@@ -242,6 +261,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       version="v2"
       on-google-api-load="onAPILoaded">
     </google-client-loader>
+
+    <paper-toast id="error"
+                 duration="6000"
+                 text="An error occurred.">
+    </paper-toast>
 
     <!-- SW Stuff -->
     <paper-toast id="caching-complete"

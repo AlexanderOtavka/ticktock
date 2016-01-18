@@ -24,8 +24,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
 
-      .flex {
+      #name {
         @apply(--layout-flex);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       paper-icon-item {
@@ -60,9 +63,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         faded="[[calendarHidden]]"
         item-icon>
       </calendar-icon>
-      <span class$="[[_getHiddenClass(calendarHidden)]]">[[name]]</span>
-
-      <span class="flex"></span>
+      <span id="name" class$="[[_getHiddenClass(calendarHidden)]]">
+        [[name]]
+      </span>
 
       <dropdown-menu
           horizontal-align="left"

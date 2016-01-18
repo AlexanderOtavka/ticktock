@@ -15,13 +15,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // Learn more about auto-binding templates at http://goo.gl/Dx1u2g
   var app = document.querySelector('#app');
 
-  // var CLIENT_ID = '208366307202-00824keo9p663g1uhkd8misc52e1c5pa.apps.googleusercontent.com';
-  // var SCOPES = [
-  //   'https://www.googleapis.com/auth/userinfo.email',
-  //   'https://www.googleapis.com/auth/plus.me',
-  //   'https://www.googleapis.com/auth/calendar.readonly'
-  // ];
-
+  var CLIENT_ID = '208366307202-00824keo9p663g1uhkd8misc52e1c5pa.apps.googleusercontent.com';
+  var SCOPES = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/plus.me',
+    'https://www.googleapis.com/auth/calendar.readonly'
+  ];
   app.apiRoot = '//' + window.location.host + '/_ah/api';
 
   var SIGNED_OUT_USER_INFO = {
@@ -43,6 +42,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.unhiddenCalendars = [];
   app.listedEvents = [];
   app.selectedCalendar = '';
+  app.dataLoaded = false;
+  app.calculatingListedCalendars = false;
 
   app.showHiddenCalendars = false;
   app.showHiddenEvents = false;
@@ -92,7 +93,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.toggleShowHiddenEvents = function() {
     app.showHiddenEvents = !app.showHiddenEvents;
-    app.updateListedEvents();
+    app.updateListedEvents(false);
   };
 
   app.hiddenEventsToggleText = function(showHiddenEvents) {
@@ -139,7 +140,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return pruned;
   };
 
-  var openOnlyOne = function(events) {
+  var openOnlyOne = function(events, openTopEvent) {
+    if (!events.length) {
+      return;
+    }
     var foundOpened = false;
     events.forEach(function(e) {
       if (e.opened) {
@@ -150,13 +154,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
     });
+    if (openTopEvent && !foundOpened) {
+      events[0].opened = true;
+    }
   };
 
-  app.updateListedEvents = function() {
+  app.updateListedEvents = function(openTopEvent) {
+    app.calculatingListedCalendars = true;
     var events = [];
     if (!app.selectedCalendar) {
-      for (var i = 0; i < app.calendars.length; i++) {
-        events = events.concat(app.calendars[i].events);
+      var calendars = app.unhiddenCalendars;
+      for (var i = 0; i < calendars.length; i++) {
+        events = events.concat(calendars[i].events);
       }
     } else {
       var calendar = getCalendarById(app.selectedCalendar);
@@ -167,11 +176,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return !event.hidden;
       });
     }
-    openOnlyOne(events);
     events = sortedEvents(events);
+    openOnlyOne(events, openTopEvent);
     runWithoutAnimation(function() {
       app.listedEvents = events;
+      app.calculatingListedCalendars = false;
     });
+  };
+
+  app.calendarEmpty = function(calendarId, listedEvents, dataLoaded, calculating) {
+    return dataLoaded && !calculating && !Boolean(listedEvents.length) &&
+           !app.calendarErrored(calendarId, dataLoaded);
   };
 
   var deleteEvent = function(eventId, calendarId) {
@@ -225,7 +240,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       app.set(['listedEvents', i, 'duration'], timeToStart || timeToEnd);
     }
     if (needsUpdate) {
-      app.updateListedEvents();
+      app.updateListedEvents(false);
     }
   };
 
@@ -249,12 +264,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.eventStarredToggled = function() {
     // TODO: send api query
-    app.updateListedEvents();
+    app.updateListedEvents(false);
   };
 
   app.eventHiddenToggled = function() {
     // TODO: send api query
-    app.updateListedEvents();
+    app.updateListedEvents(false);
   };
 
   app.closeAllEvents = function() {
@@ -279,13 +294,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
-  app.toggleHiddenCalendars = function() {
+  app.toggleShowHiddenCalendars = function() {
     setTimeout(function() {
       app.showHiddenCalendars = !app.showHiddenCalendars;
     }, 20);
   };
 
-  app.updateCalendars = function() {
+  app.updateCalendars = function(event) {
     var hidden = [];
     var unhidden = [];
     for (var i = 0; i < app.calendars.length; i++) {
@@ -300,6 +315,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
     app.hiddenCalendars = hidden;
     app.unhiddenCalendars = unhidden;
+    app.updateListedEvents(!event);
   };
 
   app.arrayEmpty = function(array) {
@@ -335,103 +351,134 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     signin(false);
   };
 
-  var signin = function(mode) {
-    // app.$.ticktockApi.auth.authorize(
-    //   {client_id: CLIENT_ID, scope: SCOPES, immediate: mode}, // jshint ignore:line
-    //   loadCalendars);
-    console.log('signin mode = ' + mode);
-    app.$.userBar.removeEventListener('tap', app.showSigninPopup);
-    (function() {
-      getProfileInfo(mode);
-      loadCalendars();
-    })();
+  app.calendarErrored = function(calendarId, dataLoaded) {
+    if (!dataLoaded) {
+      return false;
+    } else {
+      return Boolean(calendarId) &&
+             (getCalendarById(calendarId) || {error: true}).error;
+    }
   };
 
-  var getProfileInfo = function(mode) {
-    var EXAMPLE_PROFILE_INFO = {
-      'id': '104276020854823045712',
-      'email': 'zotavka@gmail.com',
-      'verified_email': true,
-      'name': 'Zander Otavka',
-      'given_name': 'Zander',
-      'family_name': 'Otavka',
-      'link': 'https://plus.google.com/104276020854823045712',
-      'picture': 'https://lh4.googleusercontent.com/-CmWsvY70cjE/AAAAAAAAAAI/AAAAAAAADio/jahTG8VV1ek/photo.jpg',
-      'locale': 'en'
-    };
-    EXAMPLE_PROFILE_INFO.loading = false;
-    mode = false;
-    if (mode) {
-      app.userInfo = SIGNED_OUT_USER_INFO;
+  app.spinnerHidden = function(signedOut, calendarId, dataLoaded, calculating) {
+    if (calculating) {
+      return false;
+    } else if (signedOut) {
+      return true;
+    } else if (!dataLoaded) {
+      return false;
+    } else if (!calendarId) {
+      var nextPageToken = false;
+      var error = true;
+      app.calendars.forEach(function(c) {
+        if (!c.error) {
+          error = false;
+        }
+        if (c.nextPageToken) {
+          nextPageToken = true;
+        }
+      });
+      return error || !nextPageToken;
     } else {
-      app.userInfo = EXAMPLE_PROFILE_INFO;
+      var calendar = getCalendarById(calendarId);
+      if ((calendar || {error: true}).error) {
+        return true;
+      } else {
+        return !Boolean(calendar.nextPageToken);
+      }
     }
+  };
 
-    if (app.userInfo.signedOut) {
-      app.$.userBar.addEventListener('tap', app.showSigninPopup);
+  var raiseError = function(object) {
+    app.$.error.show();
+    if (object) {
+      console.error(object);
     }
+  };
+
+  var signin = function(mode) {
+    app.$.oauth2Api.auth.authorize({
+        client_id: CLIENT_ID, // jshint ignore:line
+        scope: SCOPES,
+        immediate: mode
+      }, function() {
+        getProfileInfo();
+        loadCalendars();
+      });
+    app.userInfo = LOADING_USER_INFO;
+    app.$.userBar.removeEventListener('tap', app.showSigninPopup);
+  };
+
+  var getProfileInfo = function() {
+    app.$.oauth2Api.api.userinfo.v2.me.get({
+        fields: 'name,picture'
+      }).execute(function(resp) {
+        if (resp.code === 401) {
+          app.userInfo = SIGNED_OUT_USER_INFO;
+          app.$.userBar.addEventListener('tap', app.showSigninPopup);
+        } else if (resp.code) {
+          raiseError(resp);
+        } else {
+          resp.loading = false;
+          resp.signedOut = false;
+          app.userInfo = resp;
+        }
+      });
   };
 
   var loadCalendars = function() {
-    var EXAMPLE_CALENDARS = [{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','color':'#a47ae2','hidden':false,'name':'TickTock Test'},{'calendarId':'zotavka@gmail.com','color':'#34a864','hidden':true,'name':'Zander'}];
-    if (!app.userInfo.signedOut) {
-      app.calendars = EXAMPLE_CALENDARS;
-    }
-    app.updateCalendars();
-    loadAllEvents();
-    // app.$.ticktockApi.api.calendars.list({
-    //   }).execute(function(resp) {
-    //     console.log(resp);
-    //     if (resp.code && resp.code === 401) {
-    //       console.log('UNAUTHORIZED');
-    //     } else if (resp.code) {
-    //       console.log('ERROR');
-    //     } else {
-    //       app.calendars = resp.items || [];
-    //       loadAllEvents();
-    //     }
-    //   });
+    app.dataLoaded = false;
+    app.$.ticktockApi.api.calendars.list({
+        hidden: null
+      }).execute(function(resp) {
+        if (resp.code) {
+          raiseError(resp);
+        } else {
+          var calendars = resp.items || [];
+          calendars.forEach(function(c) {
+            c.events = [];
+            c.error = false;
+          });
+          app.calendars = calendars;
+          app.updateCalendars();
+          loadAllEvents();
+        }
+      });
   };
 
   var loadAllEvents = function() {
-    var EXAMPLE_EVENTS = [{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-19T00:01:00-08:00','eventId':'f2inmdp5vsplf0i6o7331s2etk','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=ZjJpbm1kcDV2c3BsZjBpNm83MzMxczJldGsgb241MjkydG5xZ2NrYm5mZXR2NGU3dHBqbm9AZw&ctz=America/Los_Angeles','name':'Starred all day','starred':true,'startDate':'2016-01-18T00:01:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-19T00:00:00-08:00','eventId':'8une1glii8bbbuntveru3ohcv4','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=OHVuZTFnbGlpOGJiYnVudHZlcnUzb2hjdjQgb241MjkydG5xZ2NrYm5mZXR2NGU3dHBqbm9AZw&ctz=America/Los_Angeles','name':'Unstarred','starred':false,'startDate':'2016-01-18T00:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-18T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160118T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…hUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-01-18T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-01-25T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160125T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…VUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-01-25T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-01T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160201T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…FUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-01T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-08T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160208T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…hUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-08T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-15T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160215T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…VUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-15T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-22T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160222T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…JUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-22T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-02-29T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160229T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…lUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-02-29T10:00:00-08:00','color':'#a47ae2'},{'calendarId':'on5292tnqgckbnfetv4e7tpjno@group.calendar.google.com','endDate':'2016-03-07T11:00:00-08:00','eventId':'uf6qv5a5365cj3k0ue8jndltbs_20160307T180000Z','hidden':false,'link':'https://calendar.google.com/calendar/event?eid=dWY2cXY1YTUzNjVjajNrMHVlOGpu…dUMTgwMDAwWiBvbjUyOTJ0bnFnY2tibmZldHY0ZTd0cGpub0Bn&ctz=America/Los_Angeles','name':'Repeated','recurrenceId':'uf6qv5a5365cj3k0ue8jndltbs','starred':false,'startDate':'2016-03-07T10:00:00-08:00','color':'#a47ae2'}];
-    for (var i in EXAMPLE_EVENTS) {
-      EXAMPLE_EVENTS[i].opened = false;
-    }
-    EXAMPLE_EVENTS[0].opened = true;
-    if (!app.userInfo.signedOut) {
-      app.calendars[0].events = EXAMPLE_EVENTS;
-      app.calendars[1].events = [];
-    }
+    var calendarsToLoad = app.calendars.length;
+    var addEvents = function(calendar) {
+      return function(resp) {
+        if (!resp || resp.code) {
+          calendar.error = true;
+          raiseError(resp);
+        } else {
+          if (resp.items) {
+            resp.items.forEach(function(e) {
+              e.color = calendar.color;
+              e.opened = false;
+            });
+            resp.items[0].opened = true;
+            calendar.events = resp.items;
+          }
+        }
+        if (!--calendarsToLoad) {
+          app.dataLoaded = true;
+          app.updateListedEvents(true);
+          updateDurations();
+        }
+      };
+    };
 
-    app.updateListedEvents();
-    updateDurations();
-
-    // app.allEvents = [];
-    // var addEvents = function(calendar) {
-    //   return function(resp) {
-    //     if (resp.code) {
-    //       console.log('ERROR');
-    //     } else {
-    //       var events = resp.items || [];
-    //       for (var i = 0; i < events.length; i++) {
-    //         events[i].color = calendar.color;
-    //       }
-    //       calendar.events = events;
-    //       app.allEvents = app.allEvents.concat(events);
-    //
-    //       console.log(app.allEvents);
-    //     }
-    //   };
-    // };
-    //
-    // for (var i = 0; i < app.calendars.length; i++) {
-    //   app.$.ticktockApi.api.events.list({
-    //       calendarId: app.calendars[i].calendarId,
-    //       hidden: false,
-    //       maxResults: 10
-    //     }).execute(addEvents(app.calendars[i]));
-    // }
+    app.calendars.forEach(function(c) {
+      app.$.ticktockApi.api.events.list({
+          calendarId: c.calendarId,
+          hidden: false,
+          maxResults: 10,
+          timeZone: 'UTC'
+        }).execute(addEvents(c));
+    });
   };
 
 })(document);

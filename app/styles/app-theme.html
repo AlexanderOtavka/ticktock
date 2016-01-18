@@ -52,6 +52,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   /* General styles */
 
+  paper-spinner {
+    color: var(--default-primary-color);
+  }
+
   #drawerMenu {
     padding: 0;
   }
@@ -170,6 +174,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     display: none;
   }
 
+  .centered-content {
+    @apply(--layout-vertical);
+    @apply(--layout-center);
+    margin-top: 48px;
+  }
+
   /* Breakpoints */
 
   /* Small */
@@ -188,6 +198,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     #overlay {
       min-width: 360px;
+    }
+
+    #spinnerWrapper {
+      margin-bottom: 48px;
     }
 
   }
