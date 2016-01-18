@@ -137,8 +137,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         on-tap="toggleExpand"
         animated>
       <div id="toolbar" class="horizontal center layout">
-        <!-- TODO: icon match calendar hidden state -->
         <calendar-icon
+          icon="[[_icon(calendarHidden)]]"
           color="[[color]]"
           faded="[[eventHidden]]">
         </calendar-icon>
@@ -306,6 +306,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: Boolean,
           notify: true
         },
+        calendarHidden: Boolean,
         link: String,
         recurrenceId: String,
         noAnimation: Boolean
@@ -323,6 +324,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       toggleHide: function(event) {
         this.eventHidden = !this.eventHidden;
         event.stopPropagation();
+      },
+
+      _icon: function(calendarHidden) {
+        return calendarHidden ? 'ticktock:calendar-hidden' : 'ticktock:calendar';
       },
 
       _startsOrEnds: function(durationFromStart) {

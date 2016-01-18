@@ -151,7 +151,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-icon-button>
 
           <!-- Application name -->
-          <div class="view-name title">[[getViewName(selectedCalendar)]]</div>
+          <div class="view-name title">
+            [[getViewName(selectedCalendar, calendarsLoaded)]]
+          </div>
 
           <!-- Toolbar icons -->
           <paper-icon-button
@@ -208,6 +210,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   duration-from-start="{{item.durationFromStart}}"
                   starred="{{item.starred}}"
                   event-hidden="{{item.hidden}}"
+                  calendar-hidden="{{item.calendarHidden}}"
                   link="{{item.link}}"
                   recurrence-id="{{item.recurrenceId}}"
                   deleted="{{item.deleted}}"
@@ -221,19 +224,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <div
                   id="spinnerWrapper"
                   class="centered-content"
-                  hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, dataLoaded, calculatingListedCalendars)]]">
+                  hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, eventsLoaded, calculatingListedEvents)]]">
                 <paper-spinner active></paper-spinner>
               </div>
 
               <div
                   class="centered-content"
-                  hidden="[[!calendarErrored(selectedCalendar, dataLoaded)]]">
+                  hidden="[[!calendarErrored(selectedCalendar, eventsLoaded)]]">
                 Oops... this calendar could not be loaded :(
               </div>
 
               <div
                   class="centered-content"
-                  hidden="[[!calendarEmpty(selectedCalendar, listedEvents, dataLoaded, calculatingListedCalendars)]]">
+                  hidden="[[!calendarEmpty(selectedCalendar, listedEvents, eventsLoaded, calculatingListedEvents)]]">
                 Looks like there's nothing here.
               </div>
             </section>

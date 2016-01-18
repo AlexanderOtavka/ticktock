@@ -42,8 +42,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.unhiddenCalendars = [];
   app.listedEvents = [];
   app.selectedCalendar = '';
-  app.dataLoaded = false;
-  app.calculatingListedCalendars = false;
+  app.calendarsLoaded = false;
+  app.eventsLoaded = false;
+  app.calculatingListedEvents = false;
 
   app.showHiddenCalendars = false;
   app.showHiddenEvents = false;
@@ -80,11 +81,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     return app.calendars[getCalendarIndexById(calendarId)];
   };
 
-  app.getViewName = function(selectedCalendar) {
+  app.getViewName = function(selectedCalendar, calendarsLoaded) {
     var ALL_CALENDARS = 'All Calendars';
 
     if (!selectedCalendar) {
       return ALL_CALENDARS;
+    } else if (!calendarsLoaded) {
+      return 'TickTock';
     } else {
       var calendar = getCalendarById(selectedCalendar);
       return calendar ? calendar.name : ALL_CALENDARS;
@@ -160,7 +163,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.updateListedEvents = function(openTopEvent) {
-    app.calculatingListedCalendars = true;
+    app.calculatingListedEvents = true;
     var events = [];
     if (!app.selectedCalendar) {
       var calendars = app.unhiddenCalendars;
@@ -180,13 +183,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     openOnlyOne(events, openTopEvent);
     runWithoutAnimation(function() {
       app.listedEvents = events;
-      app.calculatingListedCalendars = false;
+      app.calculatingListedEvents = false;
     });
   };
 
-  app.calendarEmpty = function(calendarId, listedEvents, dataLoaded, calculating) {
-    return dataLoaded && !calculating && !Boolean(listedEvents.length) &&
-           !app.calendarErrored(calendarId, dataLoaded);
+  app.calendarEmpty = function(calendarId, listedEvents, eventsLoaded, calculating) {
+    return eventsLoaded && !calculating && !Boolean(listedEvents.length) &&
+           !app.calendarErrored(calendarId, eventsLoaded);
   };
 
   var deleteEvent = function(eventId, calendarId) {
@@ -305,6 +308,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var hidden = [];
     var unhidden = [];
     for (var i = 0; i < app.calendars.length; i++) {
+      app.calendars[i].events.forEach(function(e) {
+        e.calendarHidden = app.calendars[i].hidden;
+      });
       if (app.calendars[i].hidden) {
         hidden.push(app.calendars[i]);
         if (app.calendars[i].calendarId === app.selectedCalendar) {
@@ -352,8 +358,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     signin(false);
   };
 
-  app.calendarErrored = function(calendarId, dataLoaded) {
-    if (!dataLoaded) {
+  app.calendarErrored = function(calendarId, eventsLoaded) {
+    if (!eventsLoaded) {
       return false;
     } else {
       return Boolean(calendarId) &&
@@ -361,12 +367,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
-  app.spinnerHidden = function(signedOut, calendarId, dataLoaded, calculating) {
+  app.spinnerHidden = function(signedOut, calendarId, eventsLoaded, calculating) {
     if (calculating) {
       return false;
     } else if (signedOut) {
       return true;
-    } else if (!dataLoaded) {
+    } else if (!eventsLoaded) {
       return false;
     } else if (!calendarId) {
       var nextPageToken = false;
@@ -428,7 +434,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   var loadCalendars = function() {
-    app.dataLoaded = false;
+    app.calendarsLoaded = false;
+    app.eventsLoaded = false;
     app.$.ticktockApi.api.calendars.list({
         hidden: null
       }).execute(function(resp) {
@@ -441,6 +448,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             c.error = false;
           });
           app.calendars = calendars;
+          app.calendarsLoaded = true;
           app.updateCalendars();
           loadAllEvents();
         }
@@ -465,8 +473,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         }
         if (!--calendarsToLoad) {
-          app.dataLoaded = true;
-          app.updateListedEvents(true);
+          app.eventsLoaded = true;
+          app.updateCalendars();
           updateDurations();
         }
       };
