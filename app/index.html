@@ -156,7 +156,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <!-- Toolbar icons -->
           <paper-icon-button
             icon="refresh"
-            hidden="[[smallScreen]]">
+            hidden="[[smallScreen]]"
+            on-tap="refreshThisCalendar">
           </paper-icon-button>
 
           <!-- TODO: implement searching -->
@@ -190,8 +191,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   class="centered-content">
                 <paper-button
                     id="signinButton"
-                    on-click="showSigninPopup"
-                    raised>
+                    on-click="showSigninPopup">
                   Sign In with Google
                 </paper-button>
               </div>
@@ -216,6 +216,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   recurrence-id="{{item.recurrenceId}}"
                   deleted="{{item.deleted}}"
                   no-animation="[[noEventAnimations]]"
+                  hidden="[[calculatingListedEvents]]"
                   on-opened-changed="eventOpenedToggled"
                   on-starred-changed="eventStarredToggled"
                   on-event-hidden-changed="eventHiddenToggled">
@@ -223,22 +224,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </template>
 
               <div
-                  id="spinnerWrapper"
-                  class="centered-content"
-                  hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, eventsLoaded, calculatingListedEvents)]]">
-                <paper-spinner active></paper-spinner>
-              </div>
-
-              <div
+                  id="calNotLoaded"
                   class="centered-content"
                   hidden="[[!calendarErrored(selectedCalendar, eventsLoaded)]]">
                 Oops... this calendar could not be loaded :(
+                <br>
+                <paper-button on-tap="refreshThisCalendar">
+                  Refresh
+                </paper-button>
               </div>
 
               <div
                   class="centered-content"
                   hidden="[[!calendarEmpty(selectedCalendar, listedEvents, eventsLoaded, calculatingListedEvents)]]">
                 Looks like there's nothing here.
+              </div>
+              
+              <div
+                  id="spinnerWrapper"
+                  class="centered-content"
+                  hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, eventsLoaded, calculatingListedEvents)]]">
+                <paper-spinner active></paper-spinner>
               </div>
             </section>
 

@@ -444,6 +444,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
+  app.refreshThisCalendar = function() {
+    var calendars;
+    if (app.selectedCalendar) {
+      var c = getCalendarById(app.selectedCalendar);
+      if (c) {
+        calendars = [c];
+      } else {
+        return;
+      }
+    } else {
+      calendars = app.calendars;
+    }
+    loadEvents(calendars);
+    app.updateListedEvents(false);
+  };
+
   var raiseError = function(object) {
     app.$.error.show();
     if (object) {
@@ -513,13 +529,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           app.calendars = calendars;
           app.calendarsLoaded = true;
           app.updateCalendars(false);
-          loadAllEvents();
+          loadEvents(calendars);
         }
       });
   };
 
-  var loadAllEvents = function() {
-    var calendarsToLoad = app.calendars.length;
+  var loadEvents = function(calendars) {
+    app.eventsLoaded = false;
+
+    var remainingCalendarCount = calendars.length;
     var addEvents = function(calendar) {
       return function(resp) {
         if (!resp || resp.code) {
@@ -539,7 +557,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             calendar.events = resp.items;
           }
         }
-        if (!--calendarsToLoad) {
+        if (!--remainingCalendarCount) {
           app.eventsLoaded = true;
           app.updateCalendars(true);
           updateDurations();
@@ -553,7 +571,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     } catch (e) {
       timeZone = null;
     }
-    app.calendars.forEach(function(c) {
+    calendars.forEach(function(c) {
+      c.events = [];
       app.$.ticktockApi.api.events.list({
           calendarId: encodeURIComponent(c.calendarId),
           hidden: null,
