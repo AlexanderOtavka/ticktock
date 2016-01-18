@@ -170,7 +170,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-icon-button>
 
             <div class="dropdown-content">
-              <paper-item hidden="[[!smallScreen]]">
+              <paper-item
+                  hidden="[[!smallScreen]]"
+                  on-tap="refreshThisCalendar">
                 Refresh
               </paper-item>
               <paper-item on-tap="toggleShowHiddenEvents">
@@ -239,7 +241,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   hidden="[[!calendarEmpty(selectedCalendar, listedEvents, eventsLoaded, calculatingListedEvents)]]">
                 Looks like there's nothing here.
               </div>
-              
+
               <div
                   id="spinnerWrapper"
                   class="centered-content"
