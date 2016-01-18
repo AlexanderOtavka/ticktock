@@ -445,6 +445,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.refreshThisCalendar = function() {
+    if (!app.calendarsLoaded || !app.eventsLoaded || app.userInfo.signedOut) {
+      return;
+    }
     var calendars;
     if (app.selectedCalendar) {
       var c = getCalendarById(app.selectedCalendar);
