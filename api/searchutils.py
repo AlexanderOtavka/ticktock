@@ -2,6 +2,9 @@
 
 from __future__ import division, print_function
 
+import locale
+from functools import cmp_to_key
+
 from messages import EventProperties, CalendarProperties
 
 __author__ = "Alexander Otavka"
@@ -71,7 +74,7 @@ def event_start_date(e):
 
 
 def event_alpha_score(e):
-    return e.name
+    return cmp_to_key(locale.strcoll)(e.name.lower())
 
 
 def event_id_score(e):
@@ -90,7 +93,7 @@ def calendar_kw_score(kw, narrow):
 
 
 def calendar_alpha_score(c):
-    return c.name
+    return cmp_to_key(locale.strcoll)(c.name.lower())
 
 
 def calendar_id_score(c):
