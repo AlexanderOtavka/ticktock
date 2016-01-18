@@ -145,10 +145,6 @@ class EventsAPI(remote.Service):
 
         calendar_key = ndb.Key(models.Calendar, request.calendarId,
                                parent=user_key)
-        if calendar_key.get() is None:
-            raise endpoints.NotFoundException(
-                    strings.error_calendar_not_added(
-                            calendar_id=request.calendarId))
 
         if request.pageToken:
             # Grab the cache for given page token
@@ -274,10 +270,6 @@ class EventsAPI(remote.Service):
 
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, request.calendarId, parent=user_key)
-        if cal_key.get() is None:
-            raise endpoints.NotFoundException(
-                    strings.error_calendar_not_added(
-                            calendar_id=request.calendarId))
         entity = ndb.Key(models.Event, request.eventId, parent=cal_key).get()
 
         if entity is not None:
@@ -310,9 +302,6 @@ class EventsAPI(remote.Service):
         # Get ndb key for calendar
         user_key = models.get_user_key(user_id)
         cal_key = ndb.Key(models.Calendar, calendar_id, parent=user_key)
-        if cal_key.get() is None:
-            raise endpoints.NotFoundException(
-                    strings.error_calendar_not_added(calendar_id=calendar_id))
 
         # Get or create entity from calendar key and event id
         entity = ndb.Key(models.Event, event_id, parent=cal_key).get()
