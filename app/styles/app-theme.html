@@ -53,7 +53,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   /* General styles */
 
   paper-spinner {
-    color: var(--default-primary-color);
+    --paper-spinner-layer-1-color: var(--default-primary-color);
+    --paper-spinner-layer-2-color: var(--default-primary-color);
+    --paper-spinner-layer-3-color: var(--default-primary-color);
+    --paper-spinner-layer-4-color: var(--default-primary-color);
   }
 
   #drawerMenu {
@@ -96,16 +99,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     background-color: #e4e4e4;
   }
 
-  #userBar paper-spinner {
-    left: 26px;
-  }
-
   #userBar iron-image {
     width: 48px;
     height: 48px;
     border-radius: 50%;
     margin: 8px;
-    /*background-color: #f0f0f0;*/
+    background-color: #f0f0f0;
   }
 
   #userName {

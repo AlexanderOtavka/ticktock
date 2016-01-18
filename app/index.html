@@ -77,10 +77,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div id="userBar" class$="horizontal center layout [[signedOutClass(userInfo.signedOut)]]">
             <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
             <span id="userName">[[userInfo.name]]</span>
-
-            <div class="fit horizontal center layout">
-              <paper-spinner active="[[userInfo.loading]]"></paper-spinner>
-            </div>
           </div>
 
           <a
