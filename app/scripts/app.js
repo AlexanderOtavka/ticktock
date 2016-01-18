@@ -238,6 +238,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       app.set(['listedEvents', i, 'duration'], timeToStart || timeToEnd);
+      app.set(['listedEvents', i, 'durationFromStart'], Boolean(timeToStart));
     }
     if (needsUpdate) {
       app.updateListedEvents(false);

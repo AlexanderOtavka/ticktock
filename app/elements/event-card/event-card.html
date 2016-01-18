@@ -143,7 +143,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           faded="[[eventHidden]]">
         </calendar-icon>
         <div id="name" class$="[[_getEventHiddenClass(eventHidden)]] vertical left layout">
-          <span>{{name}}</span>
+          <span>{{name}} {{_startsOrEnds(durationFromStart)}}</span>
           <span id="miniTimer" hidden="[[opened]]">
             {{_getMajorDurationSegment(duration)}}
           </span>
@@ -294,6 +294,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           notify: true
         },
         duration: Number,
+        durationFromStart: {
+          type: Boolean,
+          value: true
+        },
         starred: {
           type: Boolean,
           notify: true
@@ -319,6 +323,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       toggleHide: function(event) {
         this.eventHidden = !this.eventHidden;
         event.stopPropagation();
+      },
+
+      _startsOrEnds: function(durationFromStart) {
+        return durationFromStart ? '' : 'Ends';
       },
 
       _spacingTop: function(opened, index) {
