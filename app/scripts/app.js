@@ -551,6 +551,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             raiseError(resp);
           }
         } else {
+          calendar.error = false;
           if (resp.items) {
             resp.items.forEach(function(e) {
               e.color = calendar.color;
