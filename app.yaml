@@ -1,7 +1,7 @@
 application: dhsdev-ticktock
 
-# Version 0.2.0
-version: v0-2-0
+# Version 0.3.0
+version: v0-3-0
 api_version: 1
 runtime: python27
 threadsafe: true
