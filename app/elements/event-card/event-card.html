@@ -43,12 +43,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 16px;
       }
 
-      #name {
+      #nameWrapper {
         margin: 8px;
       }
 
-      #name.event-hidden {
+      #nameWrapper.event-hidden {
         opacity: .5;
+      }
+
+      #name {
+        font-size: 16px;
+        line-height: 18px;
+        max-height: 36px;
+        overflow: hidden;
       }
 
       #miniTimer {
@@ -142,14 +149,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           color="[[color]]"
           faded="[[eventHidden]]">
         </calendar-icon>
-        <div id="name" class$="[[_getEventHiddenClass(eventHidden)]] vertical left layout">
-          <span>{{name}} {{_startsOrEnds(durationFromStart)}}</span>
+        <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]] vertical left layout flex">
+          <span id="name">{{name}} {{_startsOrEnds(durationFromStart)}}</span>
           <span id="miniTimer" hidden="[[opened]]">
             {{_getMajorDurationSegment(duration)}}
           </span>
         </div>
-
-        <span class="flex"></span>
 
         <paper-icon-button
           icon="icons:star"
