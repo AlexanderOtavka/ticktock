@@ -307,19 +307,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.updateCalendars = function(event) {
     var hidden = [];
     var unhidden = [];
-    for (var i = 0; i < app.calendars.length; i++) {
-      app.calendars[i].events.forEach(function(e) {
-        e.calendarHidden = app.calendars[i].hidden;
+    app.calendars.forEach(function(calendar) {
+      calendar.events.forEach(function(e) {
+        e.calendarHidden = calendar.hidden;
       });
-      if (app.calendars[i].hidden) {
-        hidden.push(app.calendars[i]);
-        if (app.calendars[i].calendarId === app.selectedCalendar) {
+      if (calendar.hidden) {
+        hidden.push(calendar);
+        if (calendar.calendarId === app.selectedCalendar) {
           app.showHiddenCalendars = true;
         }
       } else {
-        unhidden.push(app.calendars[i]);
+        unhidden.push(calendar);
       }
-    }
+    });
     app.hiddenCalendars = hidden;
     app.unhiddenCalendars = unhidden;
     app.updateListedEvents(!event);
