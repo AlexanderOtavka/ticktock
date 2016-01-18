@@ -68,17 +68,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // TODO: replace for loops with forEach
   // but profile both first, and choose the fastest
 
-  var getCalendarIndexById = function(calendarId) {
-    for (var i = 0; i < app.calendars.length; i++) {
-      if (app.calendars[i].calendarId === calendarId) {
-        return i;
-      }
-    }
-    return null;
-  };
-
   var getCalendarById = function(calendarId) {
-    return app.calendars[getCalendarIndexById(calendarId)];
+    return app.calendars.find(function(calendar) {
+      return calendar.calendarId === calendarId;
+    });
   };
 
   app.getViewName = function(selectedCalendar, calendarsLoaded) {
