@@ -230,7 +230,12 @@ def get_events(service, cal_id, time_zone, page_token, page_max):
         )
         events.append(event)
 
-    return events, result["nextPageToken"]
+    if "nextPageToken" in result:
+        next_page_token = result["nextPageToken"]
+    else:
+        next_page_token = None
+
+    return events, next_page_token
 
 
 def get_event(service, cal_id, event_id, time_zone, validation_only=False):
