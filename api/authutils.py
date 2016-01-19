@@ -20,6 +20,9 @@ from httplib2 import Http
 # from oauth2client.appengine import CredentialsNDBModel, StorageByKeyName
 from oauth2client.client import Credentials
 
+import strings
+import environment
+
 
 __author__ = "Alexander Otavka"
 __copyright__ = "Copyright (C) 2015 DHS Developers Club"
@@ -34,35 +37,47 @@ SERVICE_ACCOUNT_SCOPES = "https://www.googleapis.com/auth/calendar"
 _SAVED_TOKEN_DICT = {}
 
 
-def get_user_id():
-    """
-    Get the Google+ User ID from the environment.
+if environment.IS_DEV:
+    def get_user_id():
+        """
+        Get the Google+ User ID from the environment.
 
-    Attempts to get the user ID if the token in the environment is either
-    an ID token or a bearer token. If there is no token in the environment
-    or there the current token is invalid (no current endpoints user), will not
-    attempt either.
+        Attempts to get the user ID if the token in the environment is either
+        an ID token or a bearer token. If there is no token in the environment
+        or there the current token is invalid (no current endpoints user), will
+        not attempt either.
 
-    :rtype: unicode
-    :return: The Google+ User ID of the user whose token is in the
-             environment if it can be retrieved, else None.
-    """
-    # Assumes endpoints.get_current_user has already returned a
-    # non-null value, hence the needed environment variables
-    # should already be set and this won't make the RPC/url fetch
-    # a second time.
-    if endpoints.get_current_user() is None:
-        return
+        :rtype: unicode
+        :return: The Google+ User ID of the user whose token is in the
+                 environment if it can be retrieved, else None.
+        """
+        # Assumes endpoints.get_current_user has already returned a
+        # non-null value, hence the needed environment variables
+        # should already be set and this won't make the RPC/url fetch
+        # a second time.
+        if endpoints.get_current_user() is None:
+            return
 
-    # noinspection PyProtectedMember
-    token = users_id_token._get_token(None)
-    if token is None:
-        return
+        # noinspection PyProtectedMember
+        token = users_id_token._get_token(None)
+        if token is None:
+            return
 
-    user_id = _get_user_id_from_id_token(token)
-    if user_id is None:
-        user_id = _get_user_id_from_bearer_token(token)
-    return user_id
+        user_id = _get_user_id_from_id_token(token)
+        if user_id is None:
+            user_id = _get_user_id_from_bearer_token(token)
+        return user_id
+else:
+    def get_user_id():
+        """
+        Get endpoints user id.
+
+        :rtype: unicode
+        """
+        user = endpoints.get_current_user()
+        if user is not None:
+            return unicode(user.user_id())
+        return None
 
 
 def require_user_id():
@@ -74,7 +89,7 @@ def require_user_id():
     """
     current_user_id = get_user_id()
     if current_user_id is None:
-        raise endpoints.UnauthorizedException()
+        raise endpoints.UnauthorizedException(strings.ERROR_INVALID_TOKEN)
     return current_user_id
 
 

@@ -17,11 +17,13 @@ handlers:
 - url: /_ah/garbagecollect/.*
   script: api.garbagecollect.collectors
   login: admin
+  secure: always
 
 # Web App
 - url: /
   static_files: dist/index.html
   upload: dist/index\.html
+  secure: always
 - url: /
   static_dir: dist
 
