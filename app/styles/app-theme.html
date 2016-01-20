@@ -59,17 +59,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     --paper-spinner-layer-4-color: var(--default-primary-color);
   }
 
+  #drawer {
+    overflow: hidden;
+  }
+
   #drawerMenu {
     padding: 0;
+    overflow-y: auto;
   }
 
-  #drawerMenu selectable-calendar,
-  #drawerMenu paper-icon-item {
+  #drawer selectable-calendar,
+  #drawer paper-icon-item {
     --calendar-font-size: 14px;
     font-size: 14px;
+    --paper-item-focused-before: {
+      background-color: rgba(0, 0, 0, 0);
+    }
   }
 
-  #drawerMenu a {
+  #drawer a {
     text-decoration: none;
     color: #111;
   }
@@ -77,6 +85,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   #drawerMenu .iron-selected,
   #drawerMenu .iron-selected selectable-calendar {
     background-color: #f6f6f6;
+  }
+
+  #feedback {
+    @apply(--shadow-elevation-3dp);
+    z-index: 1;
+  }
+
+  #feedback:active {
+    background-color: #f6f6f6;
+  }
+
+  #feedback iron-icon {
+    margin: 4px;
   }
 
   #userBar {

@@ -66,11 +66,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <paper-drawer-panel id="paperDrawerPanel" responsive-width="800px">
       <!-- Drawer Scroll Header Panel -->
-      <paper-scroll-header-panel drawer fixed>
+      <div id="drawer" drawer class="vertical layout">
         <!-- Drawer Content -->
         <paper-menu
             id="drawerMenu"
-            class="list"
+            class="list flex"
             selectable="a"
             attr-for-selected="data-route"
             selected="[[route]]">
@@ -132,13 +132,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               class="vertical center-center layout">
             {{hiddenCalendarToggleText(showHiddenCalendars)}}
           </div>
-
-          <!-- TODO: add feedback (google plus community or google form) -->
         </paper-menu>
-      </paper-scroll-header-panel>
+
+        <a id="feedback" target="_blank" href="https://docs.google.com/forms/d/1AUPTrNIat7yyUahAsDZzd3uaQqHRKBPXT78llUyKecQ/viewform">
+          <paper-icon-item>
+            <iron-icon icon="icons:feedback" item-icon></iron-icon>
+            <span>Feedback</span>
+          </paper-item>
+        </a>
+      </div>
 
       <!-- Main Area -->
-      <paper-scroll-header-panel main>
+      <paper-scroll-header-panel main fixed="[[!smallScreen]]">
 
         <!-- Main Toolbar -->
         <paper-toolbar id="mainToolbar">
