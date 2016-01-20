@@ -253,7 +253,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     if (event.detail.value) {
       for (var i = 0; i < app.listedEvents.length; i++) {
         if (app.listedEvents[i].opened &&
-            app.listedEvents[i].eventId !== event.srcElement.eventId) {
+            app.listedEvents[i].eventId !== event.target.eventId) {
           app.set(['listedEvents', i, 'opened'], false);
         }
       }
@@ -288,23 +288,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.eventStarredToggled = function(event) {
     // TODO: move this logic to the element
+    console.log(event);
     var starred = event.detail.value;
     var hidden = null;
-    if (starred && event.srcElement.eventHidden) {
+    if (starred && event.target.eventHidden) {
       hidden = false;
-      event.srcElement.set('eventHidden', false);
+      event.target.set('eventHidden', false);
     }
-    pushEventState(event.srcElement.eventId, event.srcElement.calendarId, hidden, starred, true);
+    pushEventState(event.target.eventId, event.target.calendarId, hidden, starred, true);
   };
 
   app.eventHiddenToggled = function(event) {
+    console.log(event);
     var hidden = event.detail.value;
     var starred = null;
-    if (hidden && event.srcElement.starred) {
+    if (hidden && event.target.starred) {
       starred = false;
-      event.srcElement.set('starred', false);
+      event.target.set('starred', false);
     }
-    pushEventState(event.srcElement.eventId, event.srcElement.calendarId, hidden, starred, true);
+    pushEventState(event.target.eventId, event.target.calendarId, hidden, starred, true);
   };
 
   var pushCalendarState = function(calendarId, hidden, signinMode) {
@@ -332,7 +334,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.calendarHiddenToggled = function(event) {
-    pushCalendarState(event.srcElement.calendarId, event.detail.value, true);
+    pushCalendarState(event.target.calendarId, event.detail.value, true);
   };
 
   app.closeAllEvents = function() {
