@@ -259,7 +259,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
-  app.eventStarredToggled = function() {
+  var pushEventState = function(eventId, calendarId, hidden, starred, signinMode) {
+    app.$.ticktockApi.api.events.patch({
+        calendarId: encodeURIComponent(calendarId),
+        eventId: eventId,
+        starred: starred,
+        hidden: hidden
+      }).execute(function(resp) {
+        if (!resp || resp.code) {
+          if (resp.code === -1) {
+            raiseNetworkError(resp);
+          } else if (resp.code === 401) {
+            if (signinMode) {
+              console.warn(resp);
+              signin(true, pushEventState(eventId, calendarId, hidden, starred, false));
+            } else {
+              app.userInfo = SIGNED_OUT_USER_INFO;
+              app.$.userBar.addEventListener('tap', app.showSigninPopup);
+            }
+          } else {
+            raiseError(resp);
+          }
+        }
+      });
+    app.updateListedEvents(false);
+  };
+
+  app.eventStarredToggled = function(event) {
     // TODO: move this logic to the element
     var starred = event.detail.value;
     var hidden = null;
@@ -267,61 +293,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       hidden = false;
       event.srcElement.set('eventHidden', false);
     }
-    app.$.ticktockApi.api.events.patch({
-        calendarId: encodeURIComponent(event.srcElement.calendarId),
-        eventId: event.srcElement.eventId,
-        starred: starred,
-        hidden: hidden
-      }).execute(function(resp) {
-        if (!resp || resp.code) {
-          if (resp.code === -1) {
-            raiseNetworkError(resp);
-          } else {
-            raiseError(resp);
-          }
-        }
-      });
-    app.updateListedEvents(false);
+    pushEventState(event.srcElement.eventId, event.srcElement.calendarId, hidden, starred, true);
   };
 
-  app.eventHiddenToggled = function() {
+  app.eventHiddenToggled = function(event) {
     var hidden = event.detail.value;
     var starred = null;
     if (hidden && event.srcElement.starred) {
       starred = false;
       event.srcElement.set('starred', false);
     }
-    app.$.ticktockApi.api.events.patch({
-        calendarId: encodeURIComponent(event.srcElement.calendarId),
-        eventId: event.srcElement.eventId,
-        hidden: hidden,
-        starred: starred
-      }).execute(function(resp) {
-        if (!resp || resp.code) {
-          if (resp.code === -1) {
-            raiseNetworkError(resp);
-          } else {
-            raiseError(resp);
-          }
-        }
-      });
-    app.updateListedEvents(false);
+    pushEventState(event.srcElement.eventId, event.srcElement.calendarId, hidden, starred, true);
   };
 
-  app.calendarHiddenToggled = function(event) {
+  var pushCalendarState = function(calendarId, hidden, signinMode) {
     app.$.ticktockApi.api.calendars.patch({
-        calendarId: encodeURIComponent(event.srcElement.calendarId),
-        hidden: event.detail.value
+        calendarId: encodeURIComponent(calendarId),
+        hidden: hidden
       }).execute(function(resp) {
         if (!resp || resp.code) {
           if (resp.code === -1) {
             raiseNetworkError(resp);
+          } else if (resp.code === 401) {
+            if (signinMode) {
+              console.warn(resp);
+              signin(true, pushCalendarState(calendarId, hidden, false));
+            } else {
+              app.userInfo = SIGNED_OUT_USER_INFO;
+              app.$.userBar.addEventListener('tap', app.showSigninPopup);
+            }
           } else {
             raiseError(resp);
           }
         }
       });
     app.updateCalendars(false);
+  };
+
+  app.calendarHiddenToggled = function(event) {
+    pushCalendarState(event.srcElement.calendarId, event.detail.value, true);
   };
 
   app.closeAllEvents = function() {
@@ -459,7 +469,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     } else {
       calendars = app.calendars;
     }
-    loadEvents(calendars);
+    loadEvents(calendars, true);
     app.updateListedEvents(false);
   };
 
@@ -477,17 +487,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
-  var signin = function(mode) {
+  var signin = function(mode, callback) {
     app.$.oauth2Api.auth.authorize({
         client_id: CLIENT_ID, // jshint ignore:line
         scope: SCOPES,
         immediate: mode
-      }, function() {
-        getProfileInfo();
-        loadCalendars(true);
-      });
+      }, callback || initialLoad);
     app.userInfo = LOADING_USER_INFO;
     app.$.userBar.removeEventListener('tap', app.showSigninPopup);
+  };
+
+  var initialLoad = function() {
+    getProfileInfo();
+    loadCalendars(true);
   };
 
   var getProfileInfo = function() {
@@ -535,12 +547,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           app.calendars = calendars;
           app.calendarsLoaded = true;
           app.updateCalendars(false);
-          loadEvents(calendars);
+          loadEvents(calendars, true);
         }
       });
   };
 
-  var loadEvents = function(calendars) {
+  var loadEvents = function(calendars, signinMode) {
     app.eventsLoaded = false;
 
     var remainingCalendarCount = calendars.length;
@@ -550,6 +562,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           calendar.error = true;
           if (resp.code === -1) {
             raiseNetworkError(resp);
+          } else if (resp.code === 401) {
+            if (signinMode) {
+              console.warn(resp);
+              signin(true, loadEvents([calendar], false));
+            } else {
+              app.userInfo = SIGNED_OUT_USER_INFO;
+              app.$.userBar.addEventListener('tap', app.showSigninPopup);
+            }
           } else {
             raiseError(resp);
           }
