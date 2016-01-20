@@ -198,9 +198,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.displayInstalledToast = function() {
     // Check to make sure caching is actually enabled—it won't be in the dev environment.
-    if (!document.querySelector('platinum-sw-cache').disabled) {
-      document.querySelector('#caching-complete').show();
-    }
+    // if (!document.querySelector('platinum-sw-cache').disabled) {
+    //   document.querySelector('#caching-complete').show();
+    // }
   };
 
   var updateDurations = function() {
@@ -484,7 +484,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         immediate: mode
       }, function() {
         getProfileInfo();
-        loadCalendars();
+        loadCalendars(true);
       });
     app.userInfo = LOADING_USER_INFO;
     app.$.userBar.removeEventListener('tap', app.showSigninPopup);
@@ -511,15 +511,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       });
   };
 
-  var loadCalendars = function() {
+  var loadCalendars = function(silentAuthError) {
     app.calendarsLoaded = false;
     app.eventsLoaded = false;
     app.$.ticktockApi.api.calendars.list({
         hidden: null
       }).execute(function(resp) {
         if (!resp || resp.code) {
+          resp = resp || {};
           if (resp.code === -1) {
             raiseNetworkError(resp);
+          } else if (resp.code === 401 && silentAuthError) {
+            console.warn(resp);
           } else {
             raiseError(resp);
           }

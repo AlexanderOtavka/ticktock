@@ -298,6 +298,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <platinum-sw-cache default-cache-strategy="fastest"
                          cache-config-file="cache-config.json">
       </platinum-sw-cache>
+      <platinum-sw-fetch path="/_ah/api/(.*)"
+                         handler="networkFirst">
+      </platinum-sw-fetch>
     </platinum-sw-register>
 
   </template>
