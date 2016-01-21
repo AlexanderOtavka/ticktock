@@ -151,10 +151,7 @@ gulp.task('copy', function () {
     .pipe($.rename('elements.vulcanized.html'))
     .pipe(gulp.dest('dist/elements'));
 
-  var scripts = gulp.src(['app/scripts/*.js'])
-    .pipe(gulp.dest('dist/scripts'));
-
-  return merge(app, bower, elements, vulcanized, swBootstrap, swToolbox, scripts)
+  return merge(app, bower, elements, vulcanized, swBootstrap, swToolbox)
     .pipe($.size({title: 'copy'}));
 });
 
