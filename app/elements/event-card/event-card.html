@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/paper-material/paper-material.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
@@ -39,12 +39,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-right: auto;
       }
 
+      #toolbar {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
+
       calendar-icon {
         margin: 16px;
       }
 
       #nameWrapper {
         margin: 8px;
+        @apply(--layout-vertical);
+        @apply(--layout-start);
+        @apply(--layout-flex);
       }
 
       #nameWrapper.event-hidden {
@@ -97,6 +105,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-left: 12px;
       }
 
+      #collapse {
+        @apply(--layout-vertical);
+        @apply(--layout-center);
+      }
+
       progress-bubble {
         --progress-bubble-stroke-color: #E91E63;
         --progress-bubble-bg-stroke-color: #d5d5d5;
@@ -112,8 +125,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: #757575;
         font-weight: 300;
         width: 100%;
-        text-align: center;
         height: 100%;
+        @apply(--layout-vertical);
+        @apply(--layout-center-center);
       }
 
       #majorDurationSegment {
@@ -122,11 +136,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       #minorDurationSegmentsWrapper {
         font-size: 1rem;
-        text-align: center;
         width: 60%;
+        text-align: center;
       }
 
-      #minorDurationSegmentsWrapper div {
+      #minorDurationSegmentsWrapper span {
         display: inline-block;
         margin: 0 2px;
       }
@@ -143,17 +157,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         elevation="[[_getElevation(opened)]]"
         on-tap="toggleExpand"
         animated>
-      <div id="toolbar" class="horizontal center layout">
+      <div id="toolbar">
         <calendar-icon
           icon="[[_icon(calendarHidden)]]"
           color="[[color]]"
           faded="[[eventHidden]]">
         </calendar-icon>
-        <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]] vertical left layout flex">
-          <span id="name">{{name}} {{_startsOrEnds(durationFromStart)}}</span>
-          <span id="miniTimer" hidden="[[opened]]">
+        <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]]">
+          <div id="name">{{name}} {{_startsOrEnds(durationFromStart)}}</div>
+          <div id="miniTimer" hidden="[[opened]]">
             {{_getMajorDurationSegment(duration)}}
-          </span>
+          </div>
         </div>
 
         <paper-icon-button
@@ -186,7 +200,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <iron-collapse
           id="collapse"
           opened="[[opened]]"
-          class="vertical center layout"
           no-animation="[[noAnimation]]">
         <!-- TODO: invert direction -->
         <!-- Pink should extend to the left and grow smaller over time. -->
@@ -194,17 +207,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             stroke-width="15"
             value="[[duration]]"
             max="[[_getMajorDurationMax(duration)]]">
-          <div id="bubbleContent" class="vertical center-center layout">
-            <div
-                id="majorDurationSegment"
-                class="vertical end-justified layout">
+          <div id="bubbleContent">
+            <div id="majorDurationSegment">
               [[_getMajorDurationSegment(duration)]]
             </div>
             <div id="minorDurationSegmentsWrapper">
               <template
                   is="dom-repeat"
                   items="[[_getMinorDurationSegments(duration)]]">
-                <div>[[item]]</div>
+                <span>[[item]]</span>
               </template>
             </div>
           </div>

@@ -8,6 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
 <style is="custom-style">
 
   /*
@@ -52,6 +55,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   /* General styles */
 
+  body {
+    @apply(--layout-vertical);
+    @apply(--layout-fullbleed);
+  }
+
   paper-spinner {
     --paper-spinner-layer-1-color: var(--default-primary-color);
     --paper-spinner-layer-2-color: var(--default-primary-color);
@@ -61,11 +69,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   #drawer {
     overflow: hidden;
+    @apply(--layout-vertical);
   }
 
   #drawerMenu {
     padding: 0;
     overflow-y: auto;
+    @apply(--layout-flex);
   }
 
   #drawer selectable-calendar,
@@ -106,6 +116,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     background-color: var(--drawer-menu-color);
     border-bottom: 1px solid #f6f6f6;
     padding: 8px;
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
   }
 
   #userBar.signed-out {
@@ -155,7 +167,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     margin: 0;
   }
 
-  #mainToolbar .view-name {
+  #mainToolbar .title {
     margin: 8px;
     line-height: normal;
   }
@@ -181,6 +193,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     cursor: pointer;
     border-top: 1px solid #d5d5d5;
     color: #757575;
+    @apply(--layout);
+    @apply(--layout-center-center);
   }
 
   #showHiddenCalendars:active {

@@ -59,22 +59,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <style is="custom-style" include="shared-styles"></style>
 </head>
 
-<body unresolved class="fullbleed layout vertical">
+<body unresolved>
   <span id="browser-sync-binding"></span>
 
   <template is="dom-bind" id="app">
 
     <paper-drawer-panel id="paperDrawerPanel" responsive-width="800px">
       <!-- Drawer Scroll Header Panel -->
-      <div id="drawer" drawer class="vertical layout">
+      <div id="drawer" drawer>
         <!-- Drawer Content -->
         <paper-menu
             id="drawerMenu"
-            class="list flex"
+            class="list"
             selectable="a"
             attr-for-selected="data-route"
             selected="[[route]]">
-          <div id="userBar" class$="horizontal center layout [[signedOutClass(userInfo.signedOut)]]">
+          <div id="userBar" class$="[[signedOutClass(userInfo.signedOut)]]">
             <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
             <span id="userName">[[userInfo.name]]</span>
           </div>
@@ -128,8 +128,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div
               id="showHiddenCalendars"
               on-tap="toggleShowHiddenCalendars"
-              hidden="[[arrayEmpty(hiddenCalendars)]]"
-              class="vertical center-center layout">
+              hidden="[[arrayEmpty(hiddenCalendars)]]">
             {{hiddenCalendarToggleText(showHiddenCalendars)}}
           </div>
         </paper-menu>
@@ -154,7 +153,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-icon-button>
 
           <!-- Application name -->
-          <div class="view-name title">
+          <div class="title">
             [[getViewName(selectedCalendar, calendarsLoaded)]]
           </div>
 
