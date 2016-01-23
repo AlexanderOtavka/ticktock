@@ -50,6 +50,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   app.showHiddenEvents = false;
 
   app.noEventAnimations = false;
+
+  // TODO: replace for loops with forEach
+  // but profile both first, and choose the fastest
+
+  // See https://github.com/Polymer/polymer/issues/1381
+  window.addEventListener('WebComponentsReady', function() {
+    // imports are loaded and elements have been registered
+  });
+
+  // Listen for template bound event to know when bindings
+  // have resolved and content has been stamped to the page
+  app.addEventListener('dom-change', function() {
+    // Calculate durations
+    setInterval(updateDurations, 1000);
+  });
+
+  // Utility functions
+
   var runWithoutAnimation = function(callback) {
     // TODO: de-hackify this
     app.noEventAnimations = true;
@@ -61,129 +79,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }, 5);
   };
 
-  app.signedOutClass = function(signedOut) {
-    return signedOut ? 'signed-out' : '';
-  };
-
-  // TODO: replace for loops with forEach
-  // but profile both first, and choose the fastest
-
   var getCalendarById = function(calendarId) {
     return app.calendars.find(function(calendar) {
       return calendar.calendarId === calendarId;
     });
-  };
-
-  app.getViewName = function(selectedCalendar, calendarsLoaded) {
-    var ALL_CALENDARS = 'All Calendars';
-
-    if (!selectedCalendar) {
-      return ALL_CALENDARS;
-    } else if (!calendarsLoaded) {
-      return 'TickTock';
-    } else {
-      var calendar = getCalendarById(selectedCalendar);
-      return calendar ? calendar.name : ALL_CALENDARS;
-    }
-  };
-
-  app.toggleShowHiddenEvents = function() {
-    app.showHiddenEvents = !app.showHiddenEvents;
-    app.updateListedEvents(false);
-  };
-
-  app.hiddenEventsToggleText = function(showHiddenEvents) {
-    return showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events';
-  };
-
-  var compareBools = function(a, b) {
-    // True is first
-    return b - a;
-  };
-
-  var compareStrings = function(a, b) {
-    // Sort alphabetically
-    return a.localeCompare(b);
-  };
-
-  var sortedEvents = function(events) {
-    // Sort order: starred, duration, alphabetical, id
-    return events.sort(function(a, b) {
-      if (a.starred !== b.starred) {
-        return compareBools(a.starred, b.starred);
-      }
-      if (a.startDate !== b.startDate || a.endDate !== b.endDate) {
-        return compareStrings(a.startDate || a.endDate,
-                              b.startDate || b.endDate);
-      }
-      if (a.name !== b.name) {
-        return compareStrings(a.name, b.name);
-      }
-      if (a.eventId !== b.eventId) {
-        return compareStrings(a.eventId, b.eventId);
-      }
-      return 0;
-    });
-  };
-
-  var prunedEvents = function(events, keep) {
-    var pruned = [];
-    events.forEach(function(e) {
-      if (keep(e)) {
-        pruned.push(e);
-      }
-    });
-    return pruned;
-  };
-
-  var openOnlyOne = function(events, openTopEvent) {
-    if (!events.length) {
-      return;
-    }
-    var foundOpened = false;
-    events.forEach(function(e) {
-      if (e.opened) {
-        if (foundOpened) {
-          e.opened = false;
-        } else {
-          foundOpened = true;
-        }
-      }
-    });
-    if (openTopEvent && !foundOpened) {
-      events[0].opened = true;
-    }
-  };
-
-  app.updateListedEvents = function(openTopEvent) {
-    app.calculatingListedEvents = true;
-    var events = [];
-    if (!app.selectedCalendar) {
-      var calendars = app.unhiddenCalendars;
-      for (var i = 0; i < calendars.length; i++) {
-        events = events.concat(calendars[i].events);
-      }
-    } else {
-      var calendar = getCalendarById(app.selectedCalendar);
-      events = calendar ? calendar.events.slice() : [];
-    }
-    if (!app.showHiddenEvents) {
-      events = prunedEvents(events, function(event) {
-        return !event.hidden;
-      });
-    }
-    events = sortedEvents(events);
-    openOnlyOne(events, openTopEvent);
-    runWithoutAnimation(function() {
-      app.listedEvents = events;
-      updateDurations();
-      app.calculatingListedEvents = false;
-    });
-  };
-
-  app.calendarEmpty = function(calendarId, listedEvents, eventsLoaded, calculating) {
-    return eventsLoaded && !calculating && !Boolean(listedEvents.length) &&
-           !app.calendarErrored(calendarId, eventsLoaded);
   };
 
   var deleteEvent = function(eventId, calendarId) {
@@ -195,13 +94,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
     }
-  };
-
-  app.displayInstalledToast = function() {
-    // Check to make sure caching is actually enabled—it won't be in the dev environment.
-    // if (!document.querySelector('platinum-sw-cache').disabled) {
-    //   document.querySelector('#caching-complete').show();
-    // }
   };
 
   var updateDurations = function() {
@@ -242,148 +134,46 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
-  // Listen for template bound event to know when bindings
-  // have resolved and content has been stamped to the page
-  app.addEventListener('dom-change', function() {
-    // Calculate durations
-    setInterval(updateDurations, 1000);
-  });
-
-  app.eventOpenedToggled = function(event) {
-    if (event.detail.value) {
-      for (var i = 0; i < app.listedEvents.length; i++) {
-        if (app.listedEvents[i].opened &&
-            app.listedEvents[i].eventId !== event.target.eventId) {
-          app.set(['listedEvents', i, 'opened'], false);
-        }
-      }
+  var raiseError = function(object) {
+    app.$.error.show();
+    if (object) {
+      console.error(object);
     }
   };
 
-  var pushEventState = function(eventId, calendarId, hidden, starred, signinMode) {
-    app.$.ticktockApi.api.events.patch({
-        calendarId: encodeURIComponent(calendarId),
-        eventId: eventId,
-        starred: starred,
-        hidden: hidden
-      }).execute(function(resp) {
-        if (!resp || resp.code) {
-          if (resp.code === -1) {
-            raiseNetworkError(resp);
-          } else if (resp.code === 401) {
-            if (signinMode) {
-              console.warn(resp);
-              signin(true, pushEventState(eventId, calendarId, hidden, starred, false));
-            } else {
-              app.userInfo = SIGNED_OUT_USER_INFO;
-              app.$.userBar.addEventListener('tap', app.showSigninPopup);
-            }
-          } else {
-            raiseError(resp);
-          }
-        }
-      });
-    app.updateListedEvents(false);
-  };
-
-  app.eventStarredToggled = function(event) {
-    // TODO: move this logic to the element
-    console.log(event);
-    var starred = event.detail.value;
-    var hidden = null;
-    if (starred && event.target.eventHidden) {
-      hidden = false;
-      event.target.set('eventHidden', false);
-    }
-    pushEventState(event.target.eventId, event.target.calendarId, hidden, starred, true);
-  };
-
-  app.eventHiddenToggled = function(event) {
-    console.log(event);
-    var hidden = event.detail.value;
-    var starred = null;
-    if (hidden && event.target.starred) {
-      starred = false;
-      event.target.set('starred', false);
-    }
-    pushEventState(event.target.eventId, event.target.calendarId, hidden, starred, true);
-  };
-
-  var pushCalendarState = function(calendarId, hidden, signinMode) {
-    app.$.ticktockApi.api.calendars.patch({
-        calendarId: encodeURIComponent(calendarId),
-        hidden: hidden
-      }).execute(function(resp) {
-        if (!resp || resp.code) {
-          if (resp.code === -1) {
-            raiseNetworkError(resp);
-          } else if (resp.code === 401) {
-            if (signinMode) {
-              console.warn(resp);
-              signin(true, pushCalendarState(calendarId, hidden, false));
-            } else {
-              app.userInfo = SIGNED_OUT_USER_INFO;
-              app.$.userBar.addEventListener('tap', app.showSigninPopup);
-            }
-          } else {
-            raiseError(resp);
-          }
-        }
-      });
-    app.updateCalendars(false);
-  };
-
-  app.calendarHiddenToggled = function(event) {
-    pushCalendarState(event.target.calendarId, event.detail.value, true);
-  };
-
-  app.closeAllEvents = function() {
-    for (var i = 0; i < app.listedEvents.length; i++) {
-      if (app.listedEvents[i].opened) {
-        app.set(['listedEvents', i, 'opened'], false);
-        return;
-      }
+  var raiseNetworkError = function(object) {
+    app.$.networkError.show();
+    if (object) {
+      console.error(object);
     }
   };
 
-  // See https://github.com/Polymer/polymer/issues/1381
-  window.addEventListener('WebComponentsReady', function() {
-    // imports are loaded and elements have been registered
-  });
+  // Getters
 
-  // Close drawer after menu item is selected if drawerPanel is narrow
-  app.onDataRouteClick = function() {
-    var drawerPanel = document.querySelector('#paperDrawerPanel');
-    if (drawerPanel.narrow) {
-      drawerPanel.closeDrawer();
+  app.signedOutClass = function(signedOut) {
+    return signedOut ? 'signed-out' : '';
+  };
+
+  app.getViewName = function(selectedCalendar, calendarsLoaded) {
+    var ALL_CALENDARS = 'All Calendars';
+
+    if (!selectedCalendar) {
+      return ALL_CALENDARS;
+    } else if (!calendarsLoaded) {
+      return 'TickTock';
+    } else {
+      var calendar = getCalendarById(selectedCalendar);
+      return calendar ? calendar.name : ALL_CALENDARS;
     }
   };
 
-  app.toggleShowHiddenCalendars = function() {
-    setTimeout(function() {
-      app.showHiddenCalendars = !app.showHiddenCalendars;
-    }, 20);
+  app.hiddenEventsToggleText = function(showHiddenEvents) {
+    return showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events';
   };
 
-  app.updateCalendars = function(openTopEvent) {
-    var hidden = [];
-    var unhidden = [];
-    app.calendars.forEach(function(calendar) {
-      calendar.events.forEach(function(e) {
-        e.calendarHidden = calendar.hidden;
-      });
-      if (calendar.hidden) {
-        hidden.push(calendar);
-        if (calendar.calendarId === app.selectedCalendar) {
-          app.showHiddenCalendars = true;
-        }
-      } else {
-        unhidden.push(calendar);
-      }
-    });
-    app.hiddenCalendars = hidden;
-    app.unhiddenCalendars = unhidden;
-    app.updateListedEvents(openTopEvent);
+  app.calendarEmpty = function(calendarId, listedEvents, eventsLoaded, calculating) {
+    return eventsLoaded && !calculating && !Boolean(listedEvents.length) &&
+           !app.calendarErrored(calendarId, eventsLoaded);
   };
 
   app.arrayEmpty = function(array) {
@@ -402,21 +192,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.urlDecode = function(string) {
     return decodeURIComponent(string);
-  };
-
-  // Scroll page to top and expand header
-  app.scrollPageToTop = function() {
-    document.getElementById('mainContainer').scrollTop = 0;
-  };
-
-  app.onAPILoaded = function() {
-    if (app.$.ticktockApi.api && app.$.oauth2Api.api) {
-      signin(true);
-    }
-  };
-
-  app.showSigninPopup = function() {
-    signin(false);
   };
 
   app.calendarErrored = function(calendarId, eventsLoaded) {
@@ -457,6 +232,152 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   };
 
+  // Actions
+
+  app.toggleShowHiddenEvents = function() {
+    app.showHiddenEvents = !app.showHiddenEvents;
+    app.updateListedEvents(false);
+  };
+
+  (function() {
+    var compareBools = function(a, b) {
+      // True is first
+      return b - a;
+    };
+
+    var compareStrings = function(a, b) {
+      // Sort alphabetically
+      return a.localeCompare(b);
+    };
+
+    var sortedEvents = function(events) {
+      // Sort order: starred, duration, alphabetical, id
+      return events.sort(function(a, b) {
+        if (a.starred !== b.starred) {
+          return compareBools(a.starred, b.starred);
+        }
+        if (a.startDate !== b.startDate || a.endDate !== b.endDate) {
+          return compareStrings(a.startDate || a.endDate,
+                                b.startDate || b.endDate);
+        }
+        if (a.name !== b.name) {
+          return compareStrings(a.name, b.name);
+        }
+        if (a.eventId !== b.eventId) {
+          return compareStrings(a.eventId, b.eventId);
+        }
+        return 0;
+      });
+    };
+
+    var prunedEvents = function(events, keep) {
+      var pruned = [];
+      events.forEach(function(e) {
+        if (keep(e)) {
+          pruned.push(e);
+        }
+      });
+      return pruned;
+    };
+
+    var openOnlyOne = function(events, openTopEvent) {
+      if (!events.length) {
+        return;
+      }
+      var foundOpened = false;
+      events.forEach(function(e) {
+        if (e.opened) {
+          if (foundOpened) {
+            e.opened = false;
+          } else {
+            foundOpened = true;
+          }
+        }
+      });
+      if (openTopEvent && !foundOpened) {
+        events[0].opened = true;
+      }
+    };
+
+    app.updateListedEvents = function(openTopEvent) {
+      app.calculatingListedEvents = true;
+      var events = [];
+      if (!app.selectedCalendar) {
+        var calendars = app.unhiddenCalendars;
+        for (var i = 0; i < calendars.length; i++) {
+          events = events.concat(calendars[i].events);
+        }
+      } else {
+        var calendar = getCalendarById(app.selectedCalendar);
+        events = calendar ? calendar.events.slice() : [];
+      }
+      if (!app.showHiddenEvents) {
+        events = prunedEvents(events, function(event) {
+          return !event.hidden;
+        });
+      }
+      events = sortedEvents(events);
+      openOnlyOne(events, openTopEvent);
+      runWithoutAnimation(function() {
+        app.listedEvents = events;
+        updateDurations();
+        app.calculatingListedEvents = false;
+      });
+    };
+  })():
+
+  app.displayInstalledToast = function() {
+    // Check to make sure caching is actually enabled—it won't be in the dev environment.
+    // if (!document.querySelector('platinum-sw-cache').disabled) {
+    //   document.querySelector('#caching-complete').show();
+    // }
+  };
+
+  app.closeAllEvents = function() {
+    for (var i = 0; i < app.listedEvents.length; i++) {
+      if (app.listedEvents[i].opened) {
+        app.set(['listedEvents', i, 'opened'], false);
+        return;
+      }
+    }
+  };
+
+  app.toggleShowHiddenCalendars = function() {
+    setTimeout(function() {
+      app.showHiddenCalendars = !app.showHiddenCalendars;
+    }, 20);
+  };
+
+  app.updateCalendars = function(openTopEvent) {
+    var hidden = [];
+    var unhidden = [];
+    app.calendars.forEach(function(calendar) {
+      calendar.events.forEach(function(e) {
+        e.calendarHidden = calendar.hidden;
+      });
+      if (calendar.hidden) {
+        hidden.push(calendar);
+        if (calendar.calendarId === app.selectedCalendar) {
+          app.showHiddenCalendars = true;
+        }
+      } else {
+        unhidden.push(calendar);
+      }
+    });
+    app.hiddenCalendars = hidden;
+    app.unhiddenCalendars = unhidden;
+    app.updateListedEvents(openTopEvent);
+  };
+
+  // Scroll page to top and expand header
+  app.scrollPageToTop = function() {
+    document.getElementById('mainContainer').scrollTop = 0;
+  };
+
+  app.showSigninPopup = function() {
+    signin(false);
+  };
+
   app.refreshThisCalendar = function() {
     if (!app.calendarsLoaded || !app.eventsLoaded || app.userInfo.signedOut) {
       return;
@@ -476,18 +397,110 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     app.updateListedEvents(false);
   };
 
-  var raiseError = function(object) {
-    app.$.error.show();
-    if (object) {
-      console.error(object);
+  // Event handlers
+
+  app.eventOpenedToggled = function(event) {
+    if (event.detail.value) {
+      for (var i = 0; i < app.listedEvents.length; i++) {
+        if (app.listedEvents[i].opened &&
+            app.listedEvents[i].eventId !== event.target.eventId) {
+          app.set(['listedEvents', i, 'opened'], false);
+        }
+      }
     }
   };
 
-  var raiseNetworkError = function(object) {
-    app.$.networkError.show();
-    if (object) {
-      console.error(object);
+  app.eventStarredToggled = function(event) {
+    // TODO: move this logic to the element
+    console.log(event);
+    var starred = event.detail.value;
+    var hidden = null;
+    if (starred && event.target.eventHidden) {
+      hidden = false;
+      event.target.set('eventHidden', false);
     }
+    pushEventState(event.target.eventId, event.target.calendarId, hidden, starred, true);
+  };
+
+  app.eventHiddenToggled = function(event) {
+    console.log(event);
+    var hidden = event.detail.value;
+    var starred = null;
+    if (hidden && event.target.starred) {
+      starred = false;
+      event.target.set('starred', false);
+    }
+    pushEventState(event.target.eventId, event.target.calendarId, hidden, starred, true);
+  };
+
+  app.calendarHiddenToggled = function(event) {
+    pushCalendarState(event.target.calendarId, event.detail.value, true);
+  };
+
+  // Close drawer after menu item is selected if drawerPanel is narrow
+  app.onDataRouteClick = function() {
+    var drawerPanel = document.querySelector('#paperDrawerPanel');
+    if (drawerPanel.narrow) {
+      drawerPanel.closeDrawer();
+    }
+  };
+
+  app.onAPILoaded = function() {
+    if (app.$.ticktockApi.api && app.$.oauth2Api.api) {
+      signin(true);
+    }
+  };
+
+  // Network
+
+  var pushEventState = function(eventId, calendarId, hidden, starred, signinMode) {
+    app.$.ticktockApi.api.events.patch({
+        calendarId: encodeURIComponent(calendarId),
+        eventId: eventId,
+        starred: starred,
+        hidden: hidden
+      }).execute(function(resp) {
+        if (!resp || resp.code) {
+          if (resp.code === -1) {
+            raiseNetworkError(resp);
+          } else if (resp.code === 401) {
+            if (signinMode) {
+              console.warn(resp);
+              signin(true, pushEventState(eventId, calendarId, hidden, starred, false));
+            } else {
+              app.userInfo = SIGNED_OUT_USER_INFO;
+              app.$.userBar.addEventListener('tap', app.showSigninPopup);
+            }
+          } else {
+            raiseError(resp);
+          }
+        }
+      });
+    app.updateListedEvents(false);
+  };
+
+  var pushCalendarState = function(calendarId, hidden, signinMode) {
+    app.$.ticktockApi.api.calendars.patch({
+        calendarId: encodeURIComponent(calendarId),
+        hidden: hidden
+      }).execute(function(resp) {
+        if (!resp || resp.code) {
+          if (resp.code === -1) {
+            raiseNetworkError(resp);
+          } else if (resp.code === 401) {
+            if (signinMode) {
+              console.warn(resp);
+              signin(true, pushCalendarState(calendarId, hidden, false));
+            } else {
+              app.userInfo = SIGNED_OUT_USER_INFO;
+              app.$.userBar.addEventListener('tap', app.showSigninPopup);
+            }
+          } else {
+            raiseError(resp);
+          }
+        }
+      });
+    app.updateCalendars(false);
   };
 
   var signin = function(mode, callback) {
