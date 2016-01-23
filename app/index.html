@@ -42,17 +42,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <!-- Tile icon for Win8 (144x144) -->
   <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
 
-  <!-- build:css styles/main.css -->
-  <link rel="stylesheet" href="styles/main.css">
-  <!-- endbuild-->
-
-  <!-- build:js bower_components/webcomponentsjs/webcomponents-lite.min.js -->
+  <!-- Shims and polyfills -->
+  <script src="https://cdn.rawgit.com/eligrey/classList.js/master/classList.min.js"></script>
+  <!-- build:js scripts/polyfills.js -->
+  <script src="bower_components/es5-shim/es5-shim.js"></script>
+  <script src="scripts/array-find-polyfill.js"></script>
   <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <!-- endbuild -->
 
   <!-- will be replaced with elements/elements.vulcanized.html -->
   <link rel="import" href="elements/elements.html">
   <!-- endreplace-->
+
+  <!-- build:css styles/main.css -->
+  <link rel="stylesheet" href="styles/main.css">
+  <!-- endbuild-->
 
   <!-- For shared styles, shared-styles.html import in elements.html -->
   <style is="custom-style" include="shared-styles"></style>
@@ -305,13 +309,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </platinum-sw-register>
 
   </template>
-
-  <!-- Shims and polyfills -->
-  <script src="https://cdn.rawgit.com/eligrey/classList.js/master/classList.min.js"></script>
-  <script src="bower_components/es5-shim/es5-shim.js"></script>
-  <!-- build:js scripts/array-find-polyfill.js -->
-  <script src="scripts/array-find-polyfill.js"></script>
-  <!-- endbuild -->
 
   <!-- build:js scripts/app.js -->
   <script src="scripts/app.js"></script>
