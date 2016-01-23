@@ -13,7 +13,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <head>
   <meta charset="utf-8">
-  <meta name="description" content="An app that counts down to upcoming events you care about.">
+  <meta
+    name="description"
+    content="An app that counts down to upcoming events you care about.">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="TickTock" />
   <title>TickTock</title>
@@ -31,7 +33,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <!-- Add to homescreen for Chrome on Android -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="application-name" content="TickTock">
-  <link rel="icon" sizes="192x192" href="images/touch/chrome-touch-icon-192x192.png">
+  <link
+    rel="icon"
+    sizes="192x192"
+    href="images/touch/chrome-touch-icon-192x192.png">
 
   <!-- Add to homescreen for Safari on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,10 +45,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <link rel="apple-touch-icon" href="images/touch/apple-touch-icon.png">
 
   <!-- Tile icon for Win8 (144x144) -->
-  <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
+  <meta
+    name="msapplication-TileImage"
+    content="images/touch/ms-touch-icon-144x144-precomposed.png">
 
   <!-- Shims and polyfills -->
-  <script src="https://cdn.rawgit.com/eligrey/classList.js/master/classList.min.js"></script>
+  <script
+    src="https://cdn.rawgit.com/eligrey/classList.js/master/classList.min.js">
+  </script>
   <!-- build:js scripts/polyfills.js -->
   <script src="bower_components/es5-shim/es5-shim.js"></script>
   <script src="scripts/array-find-polyfill.js"></script>
@@ -72,19 +81,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <div id="drawer" drawer>
         <!-- Drawer Content -->
         <paper-menu
-            id="drawerMenu"
-            selectable="a"
-            attr-for-selected="data-route"
-            selected="[[route]]">
+          id="drawerMenu"
+          selectable="a"
+          attr-for-selected="data-route"
+          selected="[[route]]">
           <div id="userBar" class$="[[signedOutClass(userInfo.signedOut)]]">
             <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
             <span id="userName">[[userInfo.name]]</span>
           </div>
 
           <a
-              href="/"
-              on-click="onDataRouteClick"
-              data-route="eventsList:">
+            href="/"
+            on-click="onDataRouteClick"
+            data-route="eventsList:">
             <selectable-calendar
               color="#e91e63"
               icon="ticktock:calendar-multiple"
@@ -95,9 +104,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <template is="dom-repeat" items="[[unhiddenCalendars]]">
             <a
-                href="/calendars/[[urlEncode(item.calendarId)]]"
-                on-click="onDataRouteClick"
-                data-route$="eventsList:[[item.calendarId]]">
+              href="/calendars/[[urlEncode(item.calendarId)]]"
+              on-click="onDataRouteClick"
+              data-route$="eventsList:[[item.calendarId]]">
               <selectable-calendar
                 color="[[item.color]]"
                 name="[[item.name]]"
@@ -108,13 +117,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </a>
           </template>
 
-          <template
-              is="dom-repeat"
-              items="[[hiddenCalendars]]">
+          <template is="dom-repeat" items="[[hiddenCalendars]]">
             <a
-                href="/calendars/[[urlEncode(item.calendarId)]]"
-                on-click="onDataRouteClick"
-                data-route$="eventsList:[[item.calendarId]]">
+              href="/calendars/[[urlEncode(item.calendarId)]]"
+              on-click="onDataRouteClick"
+              data-route$="eventsList:[[item.calendarId]]">
               <selectable-calendar
                 icon="ticktock:calendar-hidden"
                 color="[[item.color]]"
@@ -128,14 +135,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </template>
 
           <div
-              id="showHiddenCalendars"
-              on-tap="toggleShowHiddenCalendars"
-              hidden="[[arrayEmpty(hiddenCalendars)]]">
+            id="showHiddenCalendars"
+            on-tap="toggleShowHiddenCalendars"
+            hidden="[[arrayEmpty(hiddenCalendars)]]">
             {{hiddenCalendarToggleText(showHiddenCalendars)}}
           </div>
         </paper-menu>
 
-        <a id="feedback" target="_blank" href="https://docs.google.com/forms/d/1AUPTrNIat7yyUahAsDZzd3uaQqHRKBPXT78llUyKecQ/viewform">
+        <a
+          id="feedback"
+          target="_blank"
+          href="https://docs.google.com/forms/d/1AUPTrNIat7yyUahAsDZzd3uaQqHRKBPXT78llUyKecQ/viewform">
           <paper-icon-item>
             <iron-icon icon="icons:feedback" item-icon></iron-icon>
             <span>Feedback</span>
@@ -177,8 +187,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             <div class="dropdown-content">
               <paper-item
-                  hidden="[[!smallScreen]]"
-                  on-tap="refreshThisCalendar">
+                hidden="[[!smallScreen]]"
+                on-tap="refreshThisCalendar">
                 Refresh
               </paper-item>
               <paper-item on-tap="toggleShowHiddenEvents">
@@ -194,20 +204,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             <section page-name="eventsList">
               <div
-                  id="signinButtonWrapper"
-                  hidden="[[!userInfo.signedOut]]"
-                  class="centered-content">
+                id="signinButtonWrapper"
+                hidden="[[!userInfo.signedOut]]"
+                class="centered-content">
                 <paper-button
-                    id="signinButton"
-                    on-click="showSigninPopup">
+                  id="signinButton"
+                  on-click="showSigninPopup">
                   Sign In with Google
                 </paper-button>
               </div>
 
               <template
-                  is="dom-repeat"
-                  id="eventsListTemplate"
-                  items="{{listedEvents}}">
+                is="dom-repeat"
+                id="eventsListTemplate"
+                items="{{listedEvents}}">
                 <event-card
                   index="[[index]]"
                   event-id="{{item.eventId}}"
@@ -231,9 +241,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </template>
 
               <div
-                  id="calNotLoaded"
-                  class="centered-content"
-                  hidden="[[!calendarErrored(selectedCalendar, eventsLoaded)]]">
+                id="calNotLoaded"
+                class="centered-content"
+                hidden="[[!calendarErrored(selectedCalendar, eventsLoaded)]]">
                 Oops... this calendar could not be loaded :(
                 <br>
                 <paper-button on-tap="refreshThisCalendar">
@@ -242,15 +252,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </div>
 
               <div
-                  class="centered-content"
-                  hidden="[[!calendarEmpty(selectedCalendar, listedEvents, eventsLoaded, calculatingListedEvents)]]">
+                class="centered-content"
+                hidden="[[!calendarEmpty(selectedCalendar, listedEvents, eventsLoaded, calculatingListedEvents)]]">
                 Looks like there's nothing here.
               </div>
 
               <div
-                  id="spinnerWrapper"
-                  class="centered-content"
-                  hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, eventsLoaded, calculatingListedEvents)]]">
+                id="spinnerWrapper"
+                class="centered-content"
+                hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, eventsLoaded, calculatingListedEvents)]]">
                 <paper-spinner active></paper-spinner>
               </div>
             </section>
@@ -280,31 +290,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       on-google-api-load="onAPILoaded">
     </google-client-loader>
 
-    <paper-toast id="error"
-                 duration="6000"
-                 text="An error occurred.">
+    <paper-toast
+      id="error"
+      duration="6000"
+      text="An error occurred.">
     </paper-toast>
 
-    <paper-toast id="networkError"
-                 duration="6000"
-                 text="There was a problem with the network.">
+    <paper-toast
+      id="networkError"
+      duration="6000"
+      text="There was a problem with the network.">
     </paper-toast>
 
     <!-- SW Stuff -->
-    <paper-toast id="caching-complete"
-                 duration="6000"
-                 text="Caching complete! This app will work offline.">
+    <paper-toast
+      id="caching-complete"
+      duration="6000"
+      text="Caching complete! This app will work offline.">
     </paper-toast>
 
-    <platinum-sw-register auto-register
-                          clients-claim
-                          skip-waiting
-                          on-service-worker-installed="displayInstalledToast">
-      <platinum-sw-cache default-cache-strategy="fastest"
-                         cache-config-file="cache-config.json">
+    <platinum-sw-register
+      auto-register
+      clients-claim
+      skip-waiting
+      on-service-worker-installed="displayInstalledToast">
+      <platinum-sw-cache
+        default-cache-strategy="fastest"
+        cache-config-file="cache-config.json">
       </platinum-sw-cache>
-      <platinum-sw-fetch path="/_ah/api/(.*)"
-                         handler="networkFirst">
+      <platinum-sw-fetch
+        path="/_ah/api/(.*)"
+        handler="networkFirst">
       </platinum-sw-fetch>
     </platinum-sw-register>
 

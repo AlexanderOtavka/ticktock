@@ -147,16 +147,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
 
     <iron-collapse
-        opened="[[_spacingTop(opened, index)]]"
-        no-animation="[[noAnimation]]">
+      opened="[[_spacingTop(opened, index)]]"
+      no-animation="[[noAnimation]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
 
     <paper-material
-        id="material"
-        elevation="[[_getElevation(opened)]]"
-        on-tap="toggleExpand"
-        animated>
+      id="material"
+      elevation="[[_getElevation(opened)]]"
+      on-tap="toggleExpand"
+      animated>
       <div id="toolbar">
         <calendar-icon
           icon="[[_icon(calendarHidden)]]"
@@ -198,23 +198,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
 
       <iron-collapse
-          id="collapse"
-          opened="[[opened]]"
-          no-animation="[[noAnimation]]">
+        id="collapse"
+        opened="[[opened]]"
+        no-animation="[[noAnimation]]">
         <!-- TODO: invert direction -->
         <!-- Pink should extend to the left and grow smaller over time. -->
         <progress-bubble
-            stroke-width="15"
-            value="[[duration]]"
-            max="[[_getMajorDurationMax(duration)]]">
+          stroke-width="15"
+          value="[[duration]]"
+          max="[[_getMajorDurationMax(duration)]]">
           <div id="bubbleContent">
             <div id="majorDurationSegment">
               [[_getMajorDurationSegment(duration)]]
             </div>
             <div id="minorDurationSegmentsWrapper">
               <template
-                  is="dom-repeat"
-                  items="[[_getMinorDurationSegments(duration)]]">
+                is="dom-repeat"
+                items="[[_getMinorDurationSegments(duration)]]">
                 <span>[[item]]</span>
               </template>
             </div>
