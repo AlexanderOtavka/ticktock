@@ -51,9 +51,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.noEventAnimations = false;
 
-  // TODO: replace for loops with forEach
-  // but profile both first, and choose the fastest
-
   // See https://github.com/Polymer/polymer/issues/1381
   window.addEventListener('WebComponentsReady', function() {
     // imports are loaded and elements have been registered
@@ -88,10 +85,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   var deleteEvent = function(eventId, calendarId) {
     var calendar = getCalendarById(calendarId);
     if (calendar) {
-      for (var i = 0; i < calendar.events.length; i++) {
-        if (calendar.events[i].eventId === eventId) {
-          return calendar.events.splice(i, 1);
-        }
+      var i = calendar.events.findIndex(function(calendarEvent) {
+        return calendarEvent.eventId === eventId;
+      });
+      if (i >= 0) {
+        return calendar.events.splice(i, 1);
       }
     }
   };
@@ -99,36 +97,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   var updateDurations = function() {
     var now = Date.now();
     var needsUpdate = false;
-    for (var i = 0; i < app.listedEvents.length; i++) {
+
+    app.listedEvents.forEach(function(listedEvent, i) {
       var timeToStart = 0;
       var timeToEnd = 0;
-      if (app.listedEvents[i].startDate) {
-        var eventStart = Date.parse(app.listedEvents[i].startDate);
+      if (listedEvent.startDate) {
+        var eventStart = Date.parse(listedEvent.startDate);
         timeToStart = Math.floor((eventStart - now) / 1000);
       }
 
       if (timeToStart < 0) {
         timeToStart = 0;
-        delete app.listedEvents[i].startDate;
+        delete listedEvent.startDate;
       }
 
       if (!timeToStart) {
-        var eventEnd = Date.parse(app.listedEvents[i].endDate);
+        var eventEnd = Date.parse(listedEvent.endDate);
         timeToEnd = Math.floor((eventEnd - now) / 1000);
 
         if (timeToEnd < 0) {
-          if (app.listedEvents[i].opened) {
+          if (listedEvent.opened) {
             app.set(['listedEvents', i + 1, 'opened'], true);
           }
-          deleteEvent(app.listedEvents[i].eventId,
-                      app.listedEvents[i].calendarId);
+          deleteEvent(listedEvent.eventId,
+                      listedEvent.calendarId);
           needsUpdate = true;
         }
       }
 
       app.set(['listedEvents', i, 'duration'], timeToStart || timeToEnd);
       app.set(['listedEvents', i, 'durationFromStart'], Boolean(timeToStart));
-    }
+    });
     if (needsUpdate) {
       app.updateListedEvents(false);
     }
@@ -272,9 +271,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     var prunedEvents = function(events, keep) {
       var pruned = [];
-      events.forEach(function(e) {
-        if (keep(e)) {
-          pruned.push(e);
+      events.forEach(function(calendarEvent) {
+        if (keep(calendarEvent)) {
+          pruned.push(calendarEvent);
         }
       });
       return pruned;
@@ -285,10 +284,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return;
       }
       var foundOpened = false;
-      events.forEach(function(e) {
-        if (e.opened) {
+      events.forEach(function(calendarEvent) {
+        if (calendarEvent.opened) {
           if (foundOpened) {
-            e.opened = false;
+            calendarEvent.opened = false;
           } else {
             foundOpened = true;
           }
@@ -304,16 +303,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var events = [];
       if (!app.selectedCalendar) {
         var calendars = app.unhiddenCalendars;
-        for (var i = 0; i < calendars.length; i++) {
-          events = events.concat(calendars[i].events);
-        }
+        calendars.forEach(function(calendar) {
+          events = events.concat(calendar.events);
+        });
       } else {
         var calendar = getCalendarById(app.selectedCalendar);
         events = calendar ? calendar.events.slice() : [];
       }
       if (!app.showHiddenEvents) {
-        events = prunedEvents(events, function(event) {
-          return !event.hidden;
+        events = prunedEvents(events, function(unprunedEvent) {
+          return !unprunedEvent.hidden;
         });
       }
       events = sortedEvents(events);
@@ -334,12 +333,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.closeAllEvents = function() {
-    for (var i = 0; i < app.listedEvents.length; i++) {
-      if (app.listedEvents[i].opened) {
-        app.set(['listedEvents', i, 'opened'], false);
-        return;
-      }
-    }
+    var i = app.listedEvents.findIndex(function(listedEvent) {
+      return listedEvent.opened;
+    });
+    app.set(['listedEvents', i, 'opened'], false);
   };
 
   app.toggleShowHiddenCalendars = function() {
@@ -352,8 +349,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var hidden = [];
     var unhidden = [];
     app.calendars.forEach(function(calendar) {
-      calendar.events.forEach(function(e) {
-        e.calendarHidden = calendar.hidden;
+      calendar.events.forEach(function(calendarEvent) {
+        calendarEvent.calendarHidden = calendar.hidden;
       });
       if (calendar.hidden) {
         hidden.push(calendar);
@@ -401,12 +398,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.eventOpenedToggled = function(event) {
     if (event.detail.value) {
-      for (var i = 0; i < app.listedEvents.length; i++) {
-        if (app.listedEvents[i].opened &&
-            app.listedEvents[i].eventId !== event.target.eventId) {
-          app.set(['listedEvents', i, 'opened'], false);
-        }
-      }
+      var i = app.listedEvents.findIndex(function(listedEvent) {
+        return listedEvent.opened &&
+               listedEvent.eventId !== event.target.eventId;
+      });
+      app.set(['listedEvents', i, 'opened'], false);
     }
   };
 
@@ -592,9 +588,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         } else {
           calendar.error = false;
           if (resp.items) {
-            resp.items.forEach(function(e) {
-              e.color = calendar.color;
-              e.opened = false;
+            resp.items.forEach(function(calendarEvent) {
+              calendarEvent.color = calendar.color;
+              calendarEvent.opened = false;
             });
             resp.items[0].opened = true;
             calendar.events = resp.items;
@@ -611,7 +607,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var timeZone;
     try {
       timeZone =  Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch (e) {
+    } catch (err) {
       timeZone = null;
     }
     calendars.forEach(function(c) {
