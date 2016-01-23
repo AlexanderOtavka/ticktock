@@ -30,6 +30,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         border-bottom: 1px solid rgba(0, 0, 0, 0);
       }
 
+      calendar-icon {
+        margin: 16px;
+      }
+
+      paper-icon-button {
+        color: var(--dark-icon-color);
+      }
+
+      paper-icon-button.starred {
+        color: #f8bb03;
+      }
+
+      paper-item {
+        cursor: pointer;
+      }
+
+      paper-item iron-icon {
+        color: var(--dark-icon-color);
+      }
+
+      paper-item iron-icon.right {
+        margin-left: 12px;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      progress-bubble {
+        --progress-bubble-stroke-color: var(--primary-color);
+        --progress-bubble-bg-stroke-color: var(--accent-grey);
+        --progress-bubble-background: rgba(0, 0, 0, 0);
+        --progress-bubble-reflection-display: none;
+        width: 300px;
+        height: 300px;
+        margin-bottom: 32px;
+      }
+
+      .outer-spacer {
+        height: 16px;
+      }
+
       #material {
         padding: 0;
         background-color: white;
@@ -44,15 +87,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         @apply(--layout-center);
       }
 
-      calendar-icon {
-        margin: 16px;
-      }
-
       #nameWrapper {
-        margin: 8px;
         @apply(--layout-vertical);
         @apply(--layout-start);
         @apply(--layout-flex);
+        margin: 8px;
       }
 
       #nameWrapper.event-hidden {
@@ -67,42 +106,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       #miniTimer {
-        color: #757575;
+        color: var(--secondary-text-color);
         font-weight: 300;
         font-size: .8rem;
       }
 
-      .outer-spacer {
-        height: 16px;
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      paper-icon-button {
-        color: #757575;
-      }
-
       #toolbar paper-icon-button:last-child {
         margin-right: 4px;
-      }
-
-      paper-icon-button.starred {
-        color: #f8bb03;
-      }
-
-      paper-item {
-        cursor: pointer;
-      }
-
-      paper-item iron-icon {
-        color: #666;
-      }
-
-      paper-item iron-icon.right {
-        margin-left: 12px;
       }
 
       #collapse {
@@ -110,24 +120,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         @apply(--layout-center);
       }
 
-      progress-bubble {
-        --progress-bubble-stroke-color: #E91E63;
-        --progress-bubble-bg-stroke-color: #d5d5d5;
-        --progress-bubble-background: transparent;
-        --progress-bubble-reflection-display: none;
-        width: 300px;
-        height: 300px;
-        margin-bottom: 32px;
-      }
-
       #bubbleContent {
+        @apply(--layout-vertical);
+        @apply(--layout-center-center);
         text-shadow: none;
-        color: #757575;
+        color: var(--secondary-text-color);
         font-weight: 300;
         width: 100%;
         height: 100%;
-        @apply(--layout-vertical);
-        @apply(--layout-center-center);
       }
 
       #majorDurationSegment {

@@ -24,11 +24,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
 
-      #name {
-        @apply(--layout-flex);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      paper-icon-button {
+        color: var(--light-icon-color);
       }
 
       paper-icon-item {
@@ -39,14 +36,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      paper-icon-button {
-        color: #999;
-      }
-
-      .hidden {
-        opacity: 0.7;
-      }
-
       /*a dropdown-menu {
         display: inline-block;
       }*/
@@ -54,6 +43,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       /*:host:not(.iron-selected) a:not(:hover) dropdown-menu:not(.opened) {
         display: none;
       }*/
+
+      .hidden {
+        opacity: 0.7;
+      }
+
+      #name {
+        @apply(--layout-flex);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     </style>
 
     <paper-icon-item>

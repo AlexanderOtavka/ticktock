@@ -22,42 +22,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
  for further information on custom CSS properties.
  */
 
-/* Application theme */
-
 :root {
-  --dark-primary-color: #c2185b;
-  --default-primary-color: #E91E63;
-  --light-primary-color: #C5CAE9;
-  --text-primary-color: #ffffff; /*text/icons*/
-  --accent-color: #FF4081;
-  --primary-background-color: #F48FB1;
-  --primary-text-color: #212121;
-  --secondary-text-color: #727272;
-  --disabled-text-color: #bdbdbd;
-  --divider-color: #B6B6B6;
-
-  /* Components */
-
   /* paper-drawer-panel */
   --drawer-menu-color: #ffffff;
-  --drawer-border-color: 1px solid #ccc;
-  --drawer-toolbar-border-color: 1px solid rgba(0, 0, 0, 0.22);
+  --drawer-selected-background-color: #f6f6f6;
+  --drawer-clicked-background-color: var(--accent-grey);
 
-  /* paper-menu */
+  --content-button-color: var(--accent-grey);
+}
+
+body {
+  @apply(--layout-vertical);
+  @apply(--layout-fullbleed);
+  background: var(--primary-background-color);
+  color: var(--primary-text-color);
+}
+
+paper-scroll-header-panel {
+  height: 100%;
+}
+
+paper-menu {
   --paper-menu-background-color: #fff;
   --paper-menu-selected-item: {
-    font-weight: 400;
+    font-weight: normal;
   };
   --paper-menu-focused-item-after: {
     background-color: rgba(0, 0, 0, 0);
   };
 }
 
-/* General styles */
-
-body {
-  @apply(--layout-vertical);
-  @apply(--layout-fullbleed);
+paper-toolbar {
+  --paper-toolbar-color: #fff;
 }
 
 paper-spinner {
@@ -67,15 +63,25 @@ paper-spinner {
   --paper-spinner-layer-4-color: var(--default-primary-color);
 }
 
-#drawer {
-  overflow: hidden;
+.centered-content {
   @apply(--layout-vertical);
+  @apply(--layout-center);
+  margin-top: 48px;
+}
+
+.content paper-button {
+  background-color: var(--content-button-color);
+}
+
+#drawer {
+  @apply(--layout-vertical);
+  overflow: hidden;
 }
 
 #drawerMenu {
+  @apply(--layout-flex);
   padding: 0;
   overflow-y: auto;
-  @apply(--layout-flex);
 }
 
 #drawer selectable-calendar,
@@ -89,35 +95,22 @@ paper-spinner {
 
 #drawer a {
   text-decoration: none;
-  color: #111;
+  color: var(--primary-text-color);
 }
 
 #drawerMenu .iron-selected,
 #drawerMenu .iron-selected selectable-calendar {
-  background-color: #f6f6f6;
-}
-
-#feedback {
-  @apply(--shadow-elevation-3dp);
-  z-index: 1;
-}
-
-#feedback:active {
-  background-color: #f6f6f6;
-}
-
-#feedback iron-icon {
-  margin: 4px;
+  background-color: var(--drawer-selected-background-color);
 }
 
 #userBar {
+  @apply(--layout-horizontal);
+  @apply(--layout-center);
   position: relative;
   color: var(--secondary-text-color);
   background-color: var(--drawer-menu-color);
-  border-bottom: 1px solid #f6f6f6;
+  border-bottom: 1px solid var(--drawer-selected-background-color);
   padding: 8px;
-  @apply(--layout-horizontal);
-  @apply(--layout-center);
 }
 
 #userBar.signed-out {
@@ -125,11 +118,11 @@ paper-spinner {
 }
 
 #userBar.signed-out:hover {
-  background-color: #f6f6f6;
+  background-color: var(--drawer-selected-background-color);
 }
 
 #userBar.signed-out:active {
-  background-color: #e4e4e4;
+  background-color: var(--drawer-clicked-background-color);
 }
 
 #userBar iron-image {
@@ -144,17 +137,34 @@ paper-spinner {
   padding: 16px;
 }
 
-paper-scroll-header-panel {
-  height: 100%;
+#showHiddenCalendars {
+  @apply(--layout);
+  @apply(--layout-center-center);
+  font-size: .8rem;
+  text-transform: uppercase;
+  padding: 0;
+  height: 48px;
+  cursor: pointer;
+  border-top: 1px solid #d5d5d5;
+  color: var(--secondary-text-color);
 }
 
-paper-material {
-  border-radius: 2px;
-  height: 100%;
-  padding: 16px 0 16px 0;
-  width: calc(98.66% - 16px);
-  margin: 16px auto;
-  background: white;
+#showHiddenCalendars:active {
+  background: var(--drawer-clicked-background-color);
+}
+
+#feedback {
+  @apply(--shadow-elevation-3dp);
+  z-index: 1;
+}
+
+#feedback:active {
+  background-color: var(--drawer-clicked-background-color);
+}
+
+#feedback iron-icon {
+  margin: 4px;
+  color: var(--dark-icon-color);
 }
 
 #mainToolbar {
@@ -181,71 +191,22 @@ paper-material {
 }
 
 #mainToolbar dropdown-menu .dropdown-content {
-  color: #111;
+  color: var(--primary-text-color);
   cursor: pointer;
-}
-
-#showHiddenCalendars {
-  font-size: .8rem;
-  text-transform: uppercase;
-  padding: 0;
-  height: 48px;
-  cursor: pointer;
-  border-top: 1px solid #d5d5d5;
-  color: #757575;
-  @apply(--layout);
-  @apply(--layout-center-center);
-}
-
-#showHiddenCalendars:active {
-  background: #e4e4e4;
-}
-
-#showHiddenCalendars.border-bottom {
-  border-bottom: 1px solid #d5d5d5;
-}
-
-#signinButton {
-  background-color: #f0f0f0;
 }
 
 #signinButton.signed-in {
   display: none;
 }
 
-.content paper-button {
-  background-color: #e5e5e5;
-}
-
 #calNotLoaded paper-button {
   margin-top: 16px;
-}
-
-.centered-content {
-  @apply(--layout-vertical);
-  @apply(--layout-center);
-  margin-top: 48px;
 }
 
 /* Breakpoints */
 
 /* Small */
 @media (max-width: 600px) {
-
-  paper-material {
-    --menu-container-display: none;
-    width: calc(97.33% - 32px);
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  #drawer .paper-toolbar {
-    margin-left: 16px;
-  }
-
-  #overlay {
-    min-width: 360px;
-  }
 
   #spinnerWrapper {
     margin-bottom: 48px;
@@ -256,14 +217,7 @@ paper-material {
 /* Tablet+ */
 @media (min-width: 601px) {
 
-  paper-material {
-    width: calc(98% - 46px);
-    margin-bottom: 32px;
-    padding-left: 30px;
-    padding-right: 30px;
-  }
-
-  #drawer.paper-drawer-panel > [drawer] {
+  #drawer > [drawer] {
     border-right: 1px solid rgba(0, 0, 0, 0.14);
   }
 

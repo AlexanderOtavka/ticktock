@@ -7,7 +7,27 @@
 <template>
 <style>
 
-/* Insert styles here. */
+:root {
+  /* Main theme colors. */
+  --primary-color: #e91e63;
+  --primary-background-color: #fafafa;
+  --primary-text-color: #333;
+  --secondary-text-color: #757575;
+  --disabled-text-color: #bdbdbd;
+  --divider-color: #b6b6b6;
+  --accent-grey: #e4e4e4;
+  --dark-icon-color: #555;
+  --light-icon-color: #999;
+
+  /* Deprecated values. */
+  --text-primary-color: var(--primary-text-color);
+  --default-primary-color: var(--primary-color);
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-text-color);
+}
 
 </style>
 </template>
