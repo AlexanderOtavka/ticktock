@@ -503,7 +503,7 @@ var pushCalendarState = function(calendarId, hidden, signInMode) {
   app.updateCalendars(false);
 };
 
-var signin = function(mode, callback) {
+var signIn = function(mode, callback) {
   app.$.oauth2Api.auth.authorize({
       client_id: CLIENT_ID, // jshint ignore:line
       scope: SCOPES,
