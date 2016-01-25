@@ -372,7 +372,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.showSigninPopup = function() {
-    signin(false);
+    signIn(false);
   };
 
   app.refreshThisCalendar = function() {
@@ -443,13 +443,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.onAPILoaded = function() {
     if (app.$.ticktockApi.api && app.$.oauth2Api.api) {
-      signin(true);
+      signIn(true);
     }
   };
 
   // Network
 
-  var pushEventState = function(eventId, calendarId, hidden, starred, signinMode) {
+  var pushEventState = function(eventId, calendarId, hidden, starred, signInMode) {
     app.$.ticktockApi.api.events.patch({
         calendarId: encodeURIComponent(calendarId),
         eventId: eventId,
@@ -460,9 +460,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (resp.code === -1) {
             raiseNetworkError(resp);
           } else if (resp.code === 401) {
-            if (signinMode) {
+            if (signInMode) {
               console.warn(resp);
-              signin(true, pushEventState(eventId, calendarId, hidden, starred, false));
+              signIn(true, function() {
+                pushEventState(eventId, calendarId, hidden, starred, false);
+              });
             } else {
               app.userInfo = SIGNED_OUT_USER_INFO;
               app.$.userBar.addEventListener('tap', app.showSigninPopup);
@@ -475,7 +477,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     app.updateListedEvents(false);
   };
 
-  var pushCalendarState = function(calendarId, hidden, signinMode) {
+  var pushCalendarState = function(calendarId, hidden, signInMode) {
     app.$.ticktockApi.api.calendars.patch({
         calendarId: encodeURIComponent(calendarId),
         hidden: hidden
@@ -484,9 +486,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (resp.code === -1) {
             raiseNetworkError(resp);
           } else if (resp.code === 401) {
-            if (signinMode) {
+            if (signInMode) {
               console.warn(resp);
-              signin(true, pushCalendarState(calendarId, hidden, false));
+              signIn(true, function() {
+                pushCalendarState(calendarId, hidden, false);
+              });
             } else {
               app.userInfo = SIGNED_OUT_USER_INFO;
               app.$.userBar.addEventListener('tap', app.showSigninPopup);
@@ -564,7 +568,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       });
   };
 
-  var loadEvents = function(calendars, signinMode) {
+  var loadEvents = function(calendars, signInMode) {
     app.eventsLoaded = false;
 
     var remainingCalendarCount = calendars.length;
@@ -575,9 +579,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (resp.code === -1) {
             raiseNetworkError(resp);
           } else if (resp.code === 401) {
-            if (signinMode) {
+            if (signInMode) {
               console.warn(resp);
-              signin(true, loadEvents([calendar], false));
+              signIn(true, function() {
+                loadEvents([calendar], false);
+              });
             } else {
               app.userInfo = SIGNED_OUT_USER_INFO;
               app.$.userBar.addEventListener('tap', app.showSigninPopup);
