@@ -38,10 +38,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--dark-icon-color);
       }
 
-      paper-icon-button.starred {
-        color: #f8bb03;
-      }
-
       paper-item {
         cursor: pointer;
       }
@@ -103,6 +99,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         line-height: 18px;
         max-height: 36px;
         overflow: hidden;
+      }
+
+      #star.starred {
+        color: #f8bb03;
       }
 
       #miniTimer {
@@ -171,6 +171,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
 
         <paper-icon-button
+          id="star"
           icon="icons:star"
           class$="[[_getStarredClass(starred)]]"
           on-tap="toggleStar">
