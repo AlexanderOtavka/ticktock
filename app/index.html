@@ -56,6 +56,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <!-- build:js scripts/polyfills.js -->
   <script src="bower_components/es5-shim/es5-shim.js"></script>
   <script src="scripts/array-find-polyfill.js"></script>
+  <script src="bower_components/es6-promise/promise.js"></script>
   <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <!-- endbuild -->
 
@@ -275,21 +276,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       query-matches="{{smallScreen}}">
     </iron-media-query>
 
-    <google-client-loader
-      id="ticktockApi"
-      api-root="{{apiRoot}}"
-      name="ticktock"
-      version="v1"
-      on-google-api-load="onAPILoaded">
-    </google-client-loader>
-
-    <google-client-loader
-      id="oauth2Api"
-      name="oauth2"
-      version="v2"
-      on-google-api-load="onAPILoaded">
-    </google-client-loader>
-
     <paper-toast
       id="error"
       duration="6000"
@@ -304,7 +290,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <!-- SW Stuff -->
     <paper-toast
-      id="caching-complete"
+      id="cachingComplete"
       duration="6000"
       text="Caching complete! This app will work offline.">
     </paper-toast>
@@ -325,6 +311,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </platinum-sw-register>
 
   </template>
+
+  <!-- build:js scripts/gapi-manager.js -->
+  <script src="scripts/gapi-manager.js"></script>
+  <!-- endbuild -->
+  <script
+    src="https://apis.google.com/js/client.js?onload=_loadGAPIManager">
+  </script>
 
   <!-- build:js scripts/app.js -->
   <script src="scripts/app.js"></script>
