@@ -94,7 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a
             href="/"
             on-click="onDataRouteClick"
-            data-route="eventsList:">
+            data-route="eventsList:*">
             <selectable-calendar
               color="#e91e63"
               icon="ticktock:calendar-multiple"
@@ -167,7 +167,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <!-- Application name -->
           <div class="title">
-            [[getViewName(selectedCalendar, calendarsLoaded)]]
+            [[getViewName(selectedCalendar)]]
           </div>
 
           <!-- Toolbar icons -->

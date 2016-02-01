@@ -47,12 +47,19 @@ var LOADING_USER_INFO = {
 };
 app.userInfo = LOADING_USER_INFO;
 
+var ALL_CALENDAR = {
+  name: 'All Calendars',
+  calendarId: '*',
+  color: '#e91e63',
+  error: false,
+  hidden: false,
+  events: []
+};
 app.calendars = [];
 app.hiddenCalendars = [];
 app.unhiddenCalendars = [];
 app.listedEvents = [];
-// TODO: make app.selectedCalendar a reference to the current calendar object.
-app.selectedCalendar = '';
+app.selectedCalendar = null;
 app.calendarsLoaded = false;
 // TODO: move events loaded to each calendar.
 app.eventsLoaded = false;
@@ -91,9 +98,13 @@ var runWithoutAnimation = function(callback) {
 };
 
 var getCalendarById = function(calendarId) {
-  return app.calendars.find(function(calendar) {
-    return calendar.calendarId === calendarId;
-  });
+  if (calendarId === ALL_CALENDAR.calendarId) {
+    return ALL_CALENDAR;
+  } else {
+    return app.calendars.find(function(calendar) {
+      return calendar.calendarId === calendarId;
+    });
+  }
 };
 
 var deleteEvent = function(eventId, calendarId) {
@@ -153,16 +164,11 @@ app.signedOutClass = function(signedOut) {
   return signedOut ? 'signed-out' : '';
 };
 
-app.getViewName = function(selectedCalendar, calendarsLoaded) {
-  var ALL_CALENDARS = 'All Calendars';
-
-  if (!selectedCalendar) {
-    return ALL_CALENDARS;
-  } else if (!calendarsLoaded) {
-    return 'TickTock';
+app.getViewName = function(selectedCalendar) {
+  if (selectedCalendar && selectedCalendar.name) {
+    return selectedCalendar.name;
   } else {
-    var calendar = getCalendarById(selectedCalendar);
-    return calendar ? calendar.name : ALL_CALENDARS;
+    return 'TickTock';
   }
 };
 
@@ -170,9 +176,9 @@ app.hiddenEventsToggleText = function(showHiddenEvents) {
   return showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events';
 };
 
-app.calendarEmpty = function(calendarId, listedEvents, eventsLoaded, calculating) {
+app.calendarEmpty = function(selectCalendar, listedEvents, eventsLoaded, calculating) {
   return eventsLoaded && !calculating && !Boolean(listedEvents.length) &&
-         !app.calendarErrored(calendarId, eventsLoaded);
+         !app.calendarErrored(selectCalendar, eventsLoaded);
 };
 
 app.arrayEmpty = function(array) {
@@ -193,23 +199,22 @@ app.urlDecode = function(string) {
   return decodeURIComponent(string);
 };
 
-app.calendarErrored = function(calendarId, eventsLoaded) {
+app.calendarErrored = function(calendar, eventsLoaded) {
   if (!eventsLoaded) {
     return false;
   } else {
-    return Boolean(calendarId) &&
-           (getCalendarById(calendarId) || {error: true}).error;
+    return (calendar || {error: true}).error;
   }
 };
 
-app.spinnerHidden = function(signedOut, calendarId, eventsLoaded, calculating) {
+app.spinnerHidden = function(signedOut, selectCalendar, eventsLoaded, calculating) {
   if (calculating) {
     return false;
   } else if (signedOut) {
     return true;
   } else if (!eventsLoaded) {
     return false;
-  } else if (!calendarId) {
+  } else if (selectCalendar) {
     var nextPageToken = false;
     var error = true;
     app.calendars.forEach(function(c) {
@@ -222,16 +227,36 @@ app.spinnerHidden = function(signedOut, calendarId, eventsLoaded, calculating) {
     });
     return error || !nextPageToken;
   } else {
-    var calendar = getCalendarById(calendarId);
-    if ((calendar || {error: true}).error) {
+    if ((selectCalendar || {error: true}).error) {
       return true;
     } else {
-      return !Boolean(calendar.nextPageToken);
+      return !Boolean(selectCalendar.nextPageToken);
     }
   }
 };
 
 // Actions
+
+app.selectCalendar = function(calendarId) {
+  if (calendarId === undefined) {
+    if (app.selectCalendar._pendingCalendar) {
+      calendarId = app.selectCalendar._pendingCalendar;
+      app.selectCalendar._pendingCalendar = null;
+    } else {
+      return;
+    }
+  }
+  var calendar = getCalendarById(calendarId);
+  if (calendar) {
+    app.selectedCalendar = calendar;
+  } else {
+    app.selectedCalendar = null;
+    if (!app.calendarsLoaded) {
+      app.selectCalendar._pendingCalendar = calendarId;
+    }
+  }
+};
+app.selectCalendar._pendingCalendar = null;
 
 app.toggleShowHiddenEvents = function() {
   app.showHiddenEvents = !app.showHiddenEvents;
@@ -301,14 +326,13 @@ app.toggleShowHiddenEvents = function() {
   app.updateListedEvents = function(openTopEvent) {
     app.calculatingListedEvents = true;
     var events = [];
-    if (!app.selectedCalendar) {
+    if (app.selectedCalendar === ALL_CALENDAR) {
       var calendars = app.unhiddenCalendars;
       calendars.forEach(function(calendar) {
         events = events.concat(calendar.events);
       });
     } else {
-      var calendar = getCalendarById(app.selectedCalendar);
-      events = calendar ? calendar.events.slice() : [];
+      events = app.selectedCalendar ? app.selectedCalendar.events.slice() : [];
     }
     if (!app.showHiddenEvents) {
       events = prunedEvents(events, function(unprunedEvent) {
@@ -354,7 +378,7 @@ app.updateCalendars = function(openTopEvent) {
     });
     if (calendar.hidden) {
       hidden.push(calendar);
-      if (calendar.calendarId === app.selectedCalendar) {
+      if (calendar === app.selectedCalendar) {
         app.showHiddenCalendars = true;
       }
     } else {
@@ -379,25 +403,23 @@ app.refreshThisCalendar = function() {
   if (!app.calendarsLoaded || !app.eventsLoaded || app.userInfo.signedOut) {
     return;
   }
-  var calendars;
+
   if (app.selectedCalendar) {
-    var c = getCalendarById(app.selectedCalendar);
-    if (c) {
-      calendars = [c];
+    var calendars;
+    if (app.selectedCalendar === ALL_CALENDAR) {
+      calendars = app.calendars;
     } else {
-      return;
+      calendars = [app.selectedCalendar];
     }
-  } else {
-    calendars = app.calendars;
+    app.eventsLoaded = false;
+    Promise.all(calendars.map(function(calendar) {
+      return sendHandledRequest(loadEvents(calendar));
+    }))
+      .then(function() {
+        app.eventsLoaded = true;
+        app.updateListedEvents(true);
+      });
   }
-  app.eventsLoaded = false;
-  Promise.all(calendars.map(function(calendar) {
-    return sendHandledRequest(loadEvents(calendar));
-  }))
-    .then(function() {
-      app.eventsLoaded = true;
-      app.updateListedEvents(true);
-    });
   app.updateListedEvents(true);
 };
 
@@ -588,6 +610,7 @@ var loadCalendars = function() {
       });
       app.calendars = calendars;
       app.calendarsLoaded = true;
+      app.selectCalendar();
       app.updateCalendars(false);
       return calendars;
     })
