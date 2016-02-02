@@ -118,7 +118,8 @@ var GAPIManager = {
           $gapi.auth.authorize({
             client_id: _clientId, // jshint ignore:line
             scope: _scopes,
-            immediate: mode
+            immediate: mode,
+            cookie_policy: window.location.origin // jshint ignore:line
           }, function(resp) {
             if (resp.error) {
               reject(new AuthError(resp.error, resp.error_subtype)); // jshint ignore:line
@@ -127,6 +128,16 @@ var GAPIManager = {
             }
           });
         });
+      });
+  },
+
+  /**
+   * Sign the currently authed user out.
+   */
+  signOut: function() {
+    _loadedGAPI
+      .then(function($gapi) {
+        $gapi.auth.signOut();
       });
   }
 };
