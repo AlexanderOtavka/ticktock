@@ -27,11 +27,7 @@ GAPIManager.setScopes([
 
 var LOCAL_API_ROOT = '//' + window.location.host + '/_ah/api';
 var loadedTickTockAPI = GAPIManager.loadAPI('ticktock', 'v1', LOCAL_API_ROOT);
-var loadedOauth2API = GAPIManager.loadAPI('oauth2', 'v2')
-  .catch(function(err) {
-    console.error(err);
-    throw err;
-  });
+var loadedOauth2API = GAPIManager.loadAPI('oauth2', 'v2');
 
 var SIGNED_OUT_USER_INFO = {
   name: 'Sign In with Google',
@@ -58,9 +54,18 @@ var ALL_CALENDAR = {
 };
 var LOADING_CALENDAR = {
   name: 'TickTock',
-  calendarId: '',
+  calendarId: ALL_CALENDAR.calendarId,
   color: '#e91e63',
   error: false,
+  hidden: false,
+  events: [],
+  nextPageToken: null
+};
+var ERROR_CALENDAR = {
+  name: 'TickTock',
+  calendarId: '',
+  color: '#e91e63',
+  error: true,
   hidden: false,
   events: [],
   nextPageToken: null
@@ -70,7 +75,6 @@ app.hiddenCalendars = [];
 app.unhiddenCalendars = [];
 app.listedEvents = [];
 app.selectedCalendar = LOADING_CALENDAR;
-app.calendarsLoaded = false;
 // TODO: move events loaded to each calendar.
 app.eventsLoaded = false;
 app.calculatingListedEvents = false;
@@ -251,26 +255,24 @@ app.urlDecode = function(string) {
 
 // Actions
 
+/**
+ * Select calendar, or que up calendar to be selected.
+ */
 app.selectCalendar = function(calendarId) {
   if (calendarId === undefined) {
-    if (app.selectCalendar._pendingCalendar) {
-      calendarId = app.selectCalendar._pendingCalendar;
-      app.selectCalendar._pendingCalendar = null;
-    } else {
-      return;
-    }
+    calendarId = app.selectedCalendar.calendarId;
+  } else if (app.selectedCalendar === LOADING_CALENDAR) {
+    LOADING_CALENDAR.calendarId = calendarId;
+    return;
   }
   var calendar = getCalendarById(calendarId);
   if (calendar) {
     app.selectedCalendar = calendar;
   } else {
-    app.selectedCalendar = LOADING_CALENDAR;
-    if (!app.calendarsLoaded) {
-      app.selectCalendar._pendingCalendar = calendarId;
-    }
+    ERROR_CALENDAR.calendarId = calendarId;
+    app.selectedCalendar = ERROR_CALENDAR;
   }
 };
-app.selectCalendar._pendingCalendar = null;
 
 app.toggleShowHiddenEvents = function() {
   app.showHiddenEvents = !app.showHiddenEvents;
@@ -414,8 +416,9 @@ app.showSigninPopup = function() {
 };
 
 app.refreshThisCalendar = function() {
-  if (app.calendarsLoaded && app.eventsLoaded && !app.userInfo.signedOut &&
-      app.selectedCalendar !== LOADING_CALENDAR) {
+  if (app.selectedCalendar !== LOADING_CALENDAR &&
+      app.selectedCalendar !== ERROR_CALENDAR &&
+      app.eventsLoaded && !app.userInfo.signedOut) {
     var calendars;
     if (app.selectedCalendar === ALL_CALENDAR) {
       calendars = app.calendars;
@@ -625,7 +628,8 @@ var loadProfile = function() {
 };
 
 var loadCalendars = function() {
-  app.calendarsLoaded = false;
+  LOADING_CALENDAR.calendarId = app.selectedCalendar.calendarId;
+  app.selectedCalendar = LOADING_CALENDAR;
   return sendReAuthedRequest(loadedTickTockAPI
     .then(function(ticktock) {
       return ticktock.calendars.list({
@@ -640,7 +644,6 @@ var loadCalendars = function() {
         calendar.nextPageToken = null;
       });
       app.calendars = calendars;
-      app.calendarsLoaded = true;
       app.selectCalendar();
       app.updateCalendars(false);
       return calendars;
