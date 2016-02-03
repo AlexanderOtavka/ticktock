@@ -167,9 +167,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-icon-button>
 
           <!-- Application name -->
-          <div class="title">
-            [[getViewName(selectedCalendar)]]
-          </div>
+          <div class="title">[[selectedCalendar.name]]</div>
 
           <!-- Toolbar icons -->
           <paper-icon-button
@@ -245,7 +243,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <div
                 id="calNotLoaded"
                 class="centered-content"
-                hidden="[[!calendarErrored(selectedCalendar, eventsLoaded)]]">
+                hidden="[[!calendarErrored(userInfo.signedOut, selectedCalendar.error)]]">
                 Oops... this calendar could not be loaded :(
                 <br>
                 <paper-button on-tap="refreshThisCalendar">
@@ -255,14 +253,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
               <div
                 class="centered-content"
-                hidden="[[!calendarEmpty(selectedCalendar, listedEvents, eventsLoaded, calculatingListedEvents)]]">
+                hidden="[[!calendarEmpty(userInfo.signedOut, selectedCalendar.error, eventsLoaded, selectedCalendar.nextPageToken, calculatingListedEvents, listedEvents)]]">
                 Looks like there's nothing here.
               </div>
 
               <div
                 id="spinnerWrapper"
                 class="centered-content"
-                hidden="[[spinnerHidden(userInfo.signedOut, selectedCalendar, eventsLoaded, calculatingListedEvents)]]">
+                hidden="[[!calendarLoading(userInfo.signedOut, selectedCalendar.error, eventsLoaded, selectedCalendar.nextPageToken, calculatingListedEvents)]]">
                 <paper-spinner active></paper-spinner>
               </div>
             </section>
