@@ -47,7 +47,8 @@ var ALL_CALENDAR = {
   name: 'All Calendars',
   calendarId: '*',
   color: '#e91e63',
-  error: false,
+  errored: false,
+  loading: true,
   hidden: false,
   events: [],
   nextPageToken: null
@@ -56,7 +57,8 @@ var LOADING_CALENDAR = {
   name: 'TickTock',
   calendarId: ALL_CALENDAR.calendarId,
   color: '#e91e63',
-  error: false,
+  errored: false,
+  loading: true,
   hidden: false,
   events: [],
   nextPageToken: null
@@ -65,7 +67,8 @@ var ERROR_CALENDAR = {
   name: 'TickTock',
   calendarId: '',
   color: '#e91e63',
-  error: true,
+  errored: true,
+  loading: false,
   hidden: false,
   events: [],
   nextPageToken: null
@@ -75,8 +78,6 @@ app.hiddenCalendars = [];
 app.unhiddenCalendars = [];
 app.listedEvents = [];
 app.selectedCalendar = LOADING_CALENDAR;
-// TODO: move events loaded to each calendar.
-app.eventsLoaded = false;
 app.calculatingListedEvents = false;
 
 app.showHiddenCalendars = false;
@@ -95,7 +96,9 @@ app.addEventListener('dom-change', function() {
   // Calculate durations
   setInterval(updateDurations, 1000);
 
-  signIn(true).then(loadAllData);
+  signIn(true)
+    .then(loadAllData)
+    .catch(logError);
 });
 
 // Utility functions
@@ -209,7 +212,7 @@ app.urlDecode = function(string) {
 };
 
 (function() {
-  var calendarStatus = function(signedOut, calendarErrored, eventsLoaded,
+  var calendarStatus = function(signedOut, calendarErrored, eventsLoading,
                                 nextPageToken, calculating, events) {
     if (signedOut) {
       return calendarStatus.Status.SIGNED_OUT;
@@ -217,7 +220,7 @@ app.urlDecode = function(string) {
     if (calendarErrored) {
       return calendarStatus.Status.ERRORED;
     }
-    if (!eventsLoaded || nextPageToken || calculating) {
+    if (eventsLoading || nextPageToken || calculating) {
       return calendarStatus.Status.LOADING;
     }
     if (!Boolean((events || []).length)) {
@@ -233,9 +236,9 @@ app.urlDecode = function(string) {
     SIGNED_OUT: 4
   };
 
-  app.calendarEmpty = function(signedOut, calendarErrored, eventsLoaded,
+  app.calendarEmpty = function(signedOut, calendarErrored, eventsLoading,
                                nextPageToken, calculating, events) {
-    return calendarStatus(signedOut, calendarErrored, eventsLoaded,
+    return calendarStatus(signedOut, calendarErrored, eventsLoading,
                           nextPageToken, calculating, events) ===
            calendarStatus.Status.EMPTY;
   };
@@ -245,9 +248,9 @@ app.urlDecode = function(string) {
            calendarStatus.Status.ERRORED;
   };
 
-  app.calendarLoading = function(signedOut, calendarErrored, eventsLoaded,
+  app.calendarLoading = function(signedOut, calendarErrored, eventsLoading,
                                  nextPageToken, calculating) {
-    return calendarStatus(signedOut, calendarErrored, eventsLoaded,
+    return calendarStatus(signedOut, calendarErrored, eventsLoading,
                           nextPageToken, calculating) ===
            calendarStatus.Status.LOADING;
   };
@@ -412,29 +415,30 @@ app.scrollPageToTop = function() {
 };
 
 app.showSigninPopup = function() {
-  signIn(false).then(loadAllData);
+  signIn(false)
+    .then(loadAllData)
+    .catch(logError);
 };
 
 app.refreshThisCalendar = function() {
-  if (app.selectedCalendar !== LOADING_CALENDAR &&
-      app.selectedCalendar !== ERROR_CALENDAR &&
-      app.eventsLoaded && !app.userInfo.signedOut) {
-    var calendars;
-    if (app.selectedCalendar === ALL_CALENDAR) {
-      calendars = app.calendars;
-    } else {
-      calendars = [app.selectedCalendar];
-    }
-    app.eventsLoaded = false;
-    loadEvents(calendars)
-      .catch(logError)
-      .catch(eatError)
-      .then(function() {
-        app.eventsLoaded = true;
-        app.updateListedEvents(true);
-      });
-    app.updateListedEvents(true);
+  if (app.selectedCalendar === LOADING_CALENDAR ||
+      app.selectedCalendar === ERROR_CALENDAR ||
+      app.selectedCalendar.loading ||
+      app.userInfo.signedOut) {
+    return;
   }
+
+  var calendars;
+  var doAllCalendars = (app.selectedCalendar === ALL_CALENDAR);
+
+  if (doAllCalendars) {
+    calendars = app.calendars;
+  } else {
+    calendars = [app.selectedCalendar];
+  }
+
+  loadEvents(calendars)
+    .catch(logError);
 };
 
 // Event handlers
@@ -542,6 +546,23 @@ var sendReAuthedRequest = function(request) {
     });
 };
 
+var updateAllCalendarState = function() {
+  ALL_CALENDAR.loading = false;
+  ALL_CALENDAR.errored = true;
+  app.calendars.forEach(function(calendar) {
+    if (calendar.loading) {
+      ALL_CALENDAR.loading = true;
+    }
+    if (!calendar.errored) {
+      ALL_CALENDAR.errored = false;
+    }
+  });
+  if (app.selectedCalendar === ALL_CALENDAR) {
+    app.notifyPath('selectedCalendar.loading', ALL_CALENDAR.loading);
+    app.notifyPath('selectedCalendar.errored', ALL_CALENDAR.errored);
+  }
+};
+
 var signIn = function(mode) {
   app.userInfo = LOADING_USER_INFO;
   app.$.userBar.removeEventListener('tap', app.showSigninPopup);
@@ -582,34 +603,12 @@ var patchCalendar = function(params) {
 };
 
 var loadAllData = function() {
-  app.eventsLoaded = false;
-  ALL_CALENDAR.error = false;
-  if (app.selectedCalendar === ALL_CALENDAR) {
-    app.notifyPath('selectedCalendar.error', false);
-  }
-
   return Promise.all([
     loadProfile()
       .catch(handleHTTPError),
     loadCalendars()
       .then(loadEvents)
       .catch(handleHTTPError)
-      .catch(function(err) {
-        if (err instanceof AllCalendarsError) {
-          ALL_CALENDAR.error = true;
-          if (app.selectedCalendar === ALL_CALENDAR) {
-            app.notifyPath('selectedCalendar.error', false);
-          }
-        } else {
-          throw err;
-        }
-      })
-      .catch(logError)
-      .catch(eatError)
-      .then(function() {
-        app.eventsLoaded = true;
-        app.updateListedEvents(true);
-      })
   ]);
 };
 
@@ -640,15 +639,14 @@ var loadCalendars = function() {
       var calendars = resp.items || [];
       calendars.forEach(function(calendar) {
         calendar.events = [];
-        calendar.error = false;
+        calendar.errored = false;
         calendar.nextPageToken = null;
       });
       app.calendars = calendars;
       app.selectCalendar();
       app.updateCalendars(false);
       return calendars;
-    })
-    .catch(logError);
+    });
 };
 
 var loadEvents = function(calendars) {
@@ -659,13 +657,13 @@ var loadEvents = function(calendars) {
     timeZone = null;
   }
 
-  var allCalendarsErrored = true;
-
-  return Promise.all(calendars.map(function(calendar) {
+  var promise = Promise.all(calendars.map(function(calendar) {
     calendar.events = [];
-    calendar.error = false;
+    calendar.errored = false;
+    calendar.loading = true;
     if (calendar === app.selectedCalendar) {
-      app.notifyPath('selectedCalendar.error', false);
+      app.notifyPath('selectedCalendar.errored', false);
+      app.notifyPath('selectedCalendar.loading', true);
     }
 
     return sendReAuthedRequest(loadedTickTockAPI
@@ -687,28 +685,34 @@ var loadEvents = function(calendars) {
           resp.items[0].opened = true;
           calendar.events = resp.items;
         }
-        allCalendarsErrored = false;
       })
       .catch(function(err) {
-        calendar.error = true;
+        calendar.errored = true;
         if (calendar === app.selectedCalendar) {
-          app.notifyPath('selectedCalendar.error', true);
+          app.notifyPath('selectedCalendar.errored', true);
         }
         throw err;
       })
-      .catch(handleHTTPError);
+      .catch(handleHTTPError)
+      .then(function() {
+        calendar.loading = false;
+        if (calendar === app.selectedCalendar) {
+          app.notifyPath('selectedCalendar.loading', false);
+          app.updateListedEvents(true);
+        }
+      });
   }))
+    .then(updateAllCalendarState)
     .then(function() {
-      if (allCalendarsErrored) {
-        throw new AllCalendarsError();
+      if (app.selectedCalendar === ALL_CALENDAR) {
+        app.updateListedEvents(true);
       }
     });
-};
 
-var AllCalendarsError = function() {
-  this.message = 'All calendars failed to load.';
+  updateAllCalendarState();
+  app.updateListedEvents(true);
+
+  return promise;
 };
-AllCalendarsError.prototype = Object.create(Error);
-AllCalendarsError.prototype.constructor = AllCalendarsError;
 
 })(document);

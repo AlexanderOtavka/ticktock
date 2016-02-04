@@ -243,7 +243,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <div
                 id="calNotLoaded"
                 class="centered-content"
-                hidden="[[!calendarErrored(userInfo.signedOut, selectedCalendar.error)]]">
+                hidden="[[!calendarErrored(userInfo.signedOut, selectedCalendar.errored)]]">
                 Oops... this calendar could not be loaded :(
                 <br>
                 <paper-button on-tap="refreshThisCalendar">
@@ -253,14 +253,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
               <div
                 class="centered-content"
-                hidden="[[!calendarEmpty(userInfo.signedOut, selectedCalendar.error, eventsLoaded, selectedCalendar.nextPageToken, calculatingListedEvents, listedEvents)]]">
+                hidden="[[!calendarEmpty(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents, listedEvents)]]">
                 Looks like there's nothing here.
               </div>
 
               <div
                 id="spinnerWrapper"
                 class="centered-content"
-                hidden="[[!calendarLoading(userInfo.signedOut, selectedCalendar.error, eventsLoaded, selectedCalendar.nextPageToken, calculatingListedEvents)]]">
+                hidden="[[!calendarLoading(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents)]]">
                 <paper-spinner active></paper-spinner>
               </div>
             </section>
