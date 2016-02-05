@@ -87,14 +87,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           selectable="a"
           attr-for-selected="data-route"
           selected="[[route]]">
-          <div id="userBar" class$="[[signedOutClass(userInfo.signedOut)]]">
+          <div id="userBar" class$="[[getSignedOutClass(userInfo.signedOut)]]">
             <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
             <span id="userName">[[userInfo.name]]</span>
           </div>
 
           <a
             href="/"
-            on-click="onDataRouteClick"
+            on-click="closeDrawer"
             data-route="eventsList:*">
             <selectable-calendar
               color="#e91e63"
@@ -106,23 +106,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <template is="dom-repeat" items="[[unhiddenCalendars]]">
             <a
-              href="/calendars/[[urlEncode(item.calendarId)]]"
-              on-click="onDataRouteClick"
+              href="/calendars/[[getUrlEncoded(item.calendarId)]]"
+              on-click="closeDrawer"
               data-route$="eventsList:[[item.calendarId]]">
               <selectable-calendar
                 color="[[item.color]]"
                 name="[[item.name]]"
                 calendar-id="[[item.calendarId]]"
                 calendar-hidden="{{item.hidden}}"
-                on-calendar-hidden-changed="calendarHiddenToggled">
+                on-calendar-hidden-changed="onCalendarHiddenToggled">
               </selectable-calendar>
             </a>
           </template>
 
           <template is="dom-repeat" items="[[hiddenCalendars]]">
             <a
-              href="/calendars/[[urlEncode(item.calendarId)]]"
-              on-click="onDataRouteClick"
+              href="/calendars/[[getUrlEncoded(item.calendarId)]]"
+              on-click="closeDrawer"
               data-route$="eventsList:[[item.calendarId]]">
               <selectable-calendar
                 icon="ticktock:calendar-hidden"
@@ -131,7 +131,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 calendar-id="[[item.calendarId]]"
                 calendar-hidden="{{item.hidden}}"
                 hidden="[[!showHiddenCalendars]]"
-                on-calendar-hidden-changed="calendarHiddenToggled">
+                on-calendar-hidden-changed="onCalendarHiddenToggled">
               </selectable-calendar>
             </a>
           </template>
@@ -139,8 +139,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div
             id="showHiddenCalendars"
             on-tap="toggleShowHiddenCalendars"
-            hidden="[[arrayEmpty(hiddenCalendars)]]">
-            {{hiddenCalendarToggleText(showHiddenCalendars)}}
+            hidden="[[getArrayEmpty(hiddenCalendars)]]">
+            {{getHiddenCalendarToggleText(showHiddenCalendars)}}
           </div>
         </paper-menu>
 
@@ -156,7 +156,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
 
       <!-- Main Area -->
-      <paper-scroll-header-panel main fixed="[[!smallScreen]]">
+      <paper-scroll-header-panel id="mainArea" main fixed="[[!smallScreen]]">
 
         <!-- Main Toolbar -->
         <paper-toolbar id="mainToolbar">
@@ -192,7 +192,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 Refresh
               </paper-item>
               <paper-item on-tap="toggleShowHiddenEvents">
-                [[hiddenEventsToggleText(showHiddenEvents)]]
+                [[getHiddenEventsToggleText(showHiddenEvents)]]
               </paper-item>
             </div>
           </dropdown-menu>
@@ -234,16 +234,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   recurrence-id="{{item.recurrenceId}}"
                   deleted="{{item.deleted}}"
                   no-animation="[[noEventAnimations]]"
-                  on-opened-changed="eventOpenedToggled"
-                  on-starred-changed="eventStarredToggled"
-                  on-event-hidden-changed="eventHiddenToggled">
+                  on-opened-changed="onEventOpenedToggled"
+                  on-starred-changed="onEventStarredToggled"
+                  on-event-hidden-changed="onEventHiddenToggled">
                 </event-card>
               </template>
 
               <div
                 id="calNotLoaded"
                 class="centered-content"
-                hidden="[[!calendarErrored(userInfo.signedOut, selectedCalendar.errored)]]">
+                hidden="[[!getCalendarErrored(userInfo.signedOut, selectedCalendar.errored)]]">
                 Oops... this calendar could not be loaded :(
                 <br>
                 <paper-button on-tap="refreshThisCalendar">
@@ -253,14 +253,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
               <div
                 class="centered-content"
-                hidden="[[!calendarEmpty(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents, listedEvents)]]">
+                hidden="[[!getCalendarEmpty(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents, listedEvents)]]">
                 Looks like there's nothing here.
               </div>
 
               <div
                 id="spinnerWrapper"
                 class="centered-content"
-                hidden="[[!calendarLoading(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents)]]">
+                hidden="[[!getCalendarLoading(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents)]]">
                 <paper-spinner active></paper-spinner>
               </div>
             </section>

@@ -8,50 +8,12 @@
  * Client library must be loaded after gapi-manager.js with callback named
  * '_loadGAPIManager'.
  */
-(function(window) {
+(function() {
 'use strict';
 
 var _scopes = [];
 var _clientId = '';
 var _loadedAPIs = [];
-
-/**
- * Promise that resolves to the gapi object.
- */
-var _loadedGAPI = new Promise(function(resolve) {
-  window._loadGAPIManager = function() {
-    resolve(window.gapi);
-  };
-});
-
-/**
- * Recursively crawl the API and return a modified copy that uses promises.
- */
-var _patchifyAPI = function(apiObject, notInAPIRoot) {
-  if (apiObject instanceof Function) {
-    return function(params) {
-      return new Promise(function(resolve, reject) {
-        apiObject(params).execute(function(resp) {
-          if (!resp) {
-            reject(new HTTPError(404, 'Not Found.'));
-          } else if (resp.code) {
-            reject(new HTTPError(resp.code, resp.message));
-          } else {
-            resolve(resp);
-          }
-        });
-      });
-    };
-  } else {
-    var copy = {};
-    Object.keys(apiObject).forEach(function(name) {
-      if (notInAPIRoot || name !== 'kB') {
-        copy[name] = _patchifyAPI(apiObject[name], true);
-      }
-    });
-    return copy;
-  }
-};
 
 var GAPIManager = {
   /**
@@ -142,6 +104,9 @@ var GAPIManager = {
   }
 };
 
+/**
+ * Error with an HTTP status code, thrown when API request fails.
+ */
 var HTTPError = function(code, message) {
   Error.call(this);
   this.message = message;
@@ -151,6 +116,9 @@ HTTPError.prototype = Object.create(Error.prototype);
 HTTPError.prototype.constructor = HTTPError;
 GAPIManager.HTTPError = HTTPError;
 
+/**
+ * Error signaling authorization failed.
+ */
 var AuthError = function(errorType, errorSubtype) {
   Error.call(this);
   this.message = errorType + ': ' + errorSubtype;
@@ -163,6 +131,44 @@ AuthError.prototype = Object.create(Error.prototype);
 AuthError.prototype.constructor = AuthError;
 GAPIManager.AuthError = AuthError;
 
+/**
+ * Promise that resolves to the gapi object.
+ */
+var _loadedGAPI = new Promise(function(resolve) {
+  window._loadGAPIManager = function() {
+    resolve(window.gapi);
+  };
+});
+
+/**
+ * Recursively crawl the API and return a modified copy that uses promises.
+ */
+var _patchifyAPI = function(apiObject, notInAPIRoot) {
+  if (apiObject instanceof Function) {
+    return function(params) {
+      return new Promise(function(resolve, reject) {
+        apiObject(params).execute(function(resp) {
+          if (!resp) {
+            reject(new HTTPError(404, 'Not Found.'));
+          } else if (resp.code) {
+            reject(new HTTPError(resp.code, resp.message));
+          } else {
+            resolve(resp);
+          }
+        });
+      });
+    };
+  } else {
+    var copy = {};
+    Object.keys(apiObject).forEach(function(name) {
+      if (notInAPIRoot || name !== 'kB') {
+        copy[name] = _patchifyAPI(apiObject[name], true);
+      }
+    });
+    return copy;
+  }
+};
+
 window.GAPIManager = GAPIManager;
 
-})(window);
+})();
