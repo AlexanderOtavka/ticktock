@@ -59,7 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-icon-item>
       <calendar-icon
         color="[[color]]"
-        icon="[[icon]]"
+        icon="[[_getIcon(icon, calendarHidden)]]"
         faded="[[calendarHidden]]"
         item-icon>
       </calendar-icon>
@@ -94,15 +94,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       properties: {
         color: String,
-        icon: String,
+        icon: {
+          type: String,
+          value: ''
+        },
         name: String,
         calendarId: String,
         calendarHidden: {
           type: Boolean,
-          notify: true
+          notify: true,
+          value: false
         },
         noMenu: Boolean
       },
+
 
       attached: function() {
         this.$$('dropdown-menu').onclick = function(event) {
@@ -114,6 +119,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       toggleHide: function(event) {
         this.calendarHidden = !this.calendarHidden;
         event.stopPropagation();
+      },
+
+      _getIcon: function(icon, calendarHidden) {
+        return icon || (calendarHidden ? 'ticktock:calendar-hidden' :
+                                         'ticktock:calendar');
       },
 
       _getHideButtonText: function(calendarHidden) {

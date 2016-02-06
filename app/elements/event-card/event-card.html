@@ -161,7 +161,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <calendar-icon
           icon="[[_icon(calendarHidden)]]"
           color="[[color]]"
-          faded="[[eventHidden]]">
+          faded="[[_iconFaded(eventHidden, calendarHidden)]]">
         </calendar-icon>
         <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]]">
           <div id="name">{{name}} {{_startsOrEnds(durationFromStart)}}</div>
@@ -345,6 +345,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _icon: function(calendarHidden) {
         return calendarHidden ? 'ticktock:calendar-hidden' : 'ticktock:calendar';
+      },
+
+      _iconFaded: function(eventHidden, calendarHidden) {
+        return eventHidden || calendarHidden;
       },
 
       _startsOrEnds: function(durationFromStart) {

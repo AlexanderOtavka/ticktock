@@ -87,11 +87,12 @@ var ERROR_CALENDAR = {
   events: [],
   nextPageToken: null
 };
-app.calendars = [];
-app.hiddenCalendars = [];
-app.unhiddenCalendars = [];
-app.listedEvents = [];
 app.selectedCalendar = LOADING_CALENDAR;
+
+app.calendars = [];
+app.listedCalendars = [];
+app.listedEvents = [];
+app.hasHiddenCalendars = false;
 app.calculatingListedEvents = false;
 
 // Settings.
@@ -111,10 +112,6 @@ app.getSignedOutClass = function(signedOut) {
 
 app.getHiddenEventsToggleText = function(showHiddenEvents) {
   return showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events';
-};
-
-app.getArrayEmpty = function(array) {
-  return !Boolean(array.length);
 };
 
 app.getHiddenCalendarToggleText = function(showHiddenCalendars) {
@@ -238,6 +235,7 @@ app.toggleShowHiddenEvents = function() {
 app.toggleShowHiddenCalendars = function() {
   setTimeout(function() {
     app.showHiddenCalendars = !app.showHiddenCalendars;
+    updateCalendars(false);
   }, 20);
 };
 
@@ -322,6 +320,12 @@ app.onEventHiddenToggled = function(event) {
 };
 
 app.onCalendarHiddenToggled = function(event) {
+  var calendar = getCalendarById(event.target.calendarId);
+  if (calendar) {
+    calendar.events.forEach(function(calendarEvent) {
+      calendarEvent.calendarHidden = calendar.hidden;
+    });
+  }
   updateCalendars(false);
   patchCalendar({
     calendarId: event.target.calendarId,
@@ -372,7 +376,7 @@ var sendReAuthedRequest = function(request) {
 var updateAllCalendarState = function() {
   ALL_CALENDAR.loading = false;
   ALL_CALENDAR.errored = true;
-  app.calendars.forEach(function(calendar) {
+  app.listedCalendars.forEach(function(calendar) {
     if (calendar.loading) {
       ALL_CALENDAR.loading = true;
     }
@@ -618,23 +622,22 @@ var updateDurations = function() {
 };
 
 var updateCalendars = function(forceOpenTopEvent) {
-  var hidden = [];
-  var unhidden = [];
+  if (app.selectedCalendar.hidden) {
+    app.showHiddenCalendars = true;
+  }
+
+  var hasHidden = false;
+  var listed = [];
   app.calendars.forEach(function(calendar) {
-    calendar.events.forEach(function(calendarEvent) {
-      calendarEvent.calendarHidden = calendar.hidden;
-    });
-    if (calendar.hidden) {
-      hidden.push(calendar);
-      if (calendar === app.selectedCalendar) {
-        app.showHiddenCalendars = true;
-      }
-    } else {
-      unhidden.push(calendar);
+    if (!hasHidden && calendar.hidden) {
+      hasHidden = true;
+    }
+    if (!calendar.hidden || app.showHiddenCalendars) {
+      listed.push(calendar);
     }
   });
-  app.hiddenCalendars = hidden;
-  app.unhiddenCalendars = unhidden;
+  app.listedCalendars = listed;
+  app.hasHiddenCalendars = hasHidden;
 
   updateListedEvents(false);
   if (forceOpenTopEvent) {
@@ -707,7 +710,7 @@ var updateListedEvents;
     app.calculatingListedEvents = true;
     var events = [];
     if (app.selectedCalendar === ALL_CALENDAR) {
-      var calendars = app.unhiddenCalendars;
+      var calendars = app.listedCalendars;
       calendars.forEach(function(calendar) {
         events = events.concat(calendar.events);
       });

@@ -104,7 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </selectable-calendar>
           </a>
 
-          <template is="dom-repeat" items="[[unhiddenCalendars]]">
+          <template is="dom-repeat" items="[[listedCalendars]]">
             <a
               href="/calendars/[[getUrlEncoded(item.calendarId)]]"
               on-click="closeDrawer"
@@ -114,23 +114,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 name="[[item.name]]"
                 calendar-id="[[item.calendarId]]"
                 calendar-hidden="{{item.hidden}}"
-                on-calendar-hidden-changed="onCalendarHiddenToggled">
-              </selectable-calendar>
-            </a>
-          </template>
-
-          <template is="dom-repeat" items="[[hiddenCalendars]]">
-            <a
-              href="/calendars/[[getUrlEncoded(item.calendarId)]]"
-              on-click="closeDrawer"
-              data-route$="eventsList:[[item.calendarId]]">
-              <selectable-calendar
-                icon="ticktock:calendar-hidden"
-                color="[[item.color]]"
-                name="[[item.name]]"
-                calendar-id="[[item.calendarId]]"
-                calendar-hidden="{{item.hidden}}"
-                hidden="[[!showHiddenCalendars]]"
                 on-calendar-hidden-changed="onCalendarHiddenToggled">
               </selectable-calendar>
             </a>
@@ -139,7 +122,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div
             id="showHiddenCalendars"
             on-tap="toggleShowHiddenCalendars"
-            hidden="[[getArrayEmpty(hiddenCalendars)]]">
+            hidden="[[!hasHiddenCalendars]]">
             {{getHiddenCalendarToggleText(showHiddenCalendars)}}
           </div>
         </paper-menu>
