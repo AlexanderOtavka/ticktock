@@ -395,9 +395,11 @@ var updateAllCalendarState = function() {
 };
 
 var signIn = function(mode) {
-  app.userInfo = LOADING_USER_INFO;
-  app.$.userBar.removeEventListener('tap', app.showSigninPopup);
   return GAPIManager.authorize(mode)
+    .then(function() {
+      app.userInfo = LOADING_USER_INFO;
+      app.$.userBar.removeEventListener('tap', app.showSigninPopup);
+    })
     .catch(function(err) {
       if (err instanceof GAPIManager.AuthError && err.accessDenied) {
         signOut();
