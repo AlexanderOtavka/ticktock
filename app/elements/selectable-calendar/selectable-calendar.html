@@ -16,6 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../calendar-icon/calendar-icon.html">
 <link rel="import" href="../dropdown-menu/dropdown-menu.html">
+<link rel="import" href="../ticktock-icons/ticktock-icons.html">
 
 <dom-module id="selectable-calendar">
   <template>
@@ -35,14 +36,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           background-color: rgba(0, 0, 0, 0);
         }
       }
-
-      /*a dropdown-menu {
-        display: inline-block;
-      }*/
-
-      /*:host:not(.iron-selected) a:not(:hover) dropdown-menu:not(.opened) {
-        display: none;
-      }*/
 
       .hidden {
         opacity: 0.7;
@@ -107,7 +100,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         noMenu: Boolean
       },
-
 
       attached: function() {
         this.$$('dropdown-menu').onclick = function(event) {
