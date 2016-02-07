@@ -45,7 +45,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <div id="wrapper" style$="background-color: [[color]];">
-      <div id="fade" hidden="[[_notFaded(faded)]]"></div>
+      <div id="fade" hidden="[[!faded]]"></div>
       <iron-icon id="icon" icon="[[icon]]"></iron-icon>
     </div>
   </template>
@@ -61,20 +61,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: String,
           value: '#bbb'
         },
-
         icon: {
           type: String,
           value: 'ticktock:calendar'
         },
-
         faded: {
           type: Boolean,
           value: false
         }
-      },
-
-      _notFaded: function(faded) {
-        return !faded;
       }
     });
   })();
