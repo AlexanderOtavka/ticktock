@@ -147,7 +147,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
 
     <iron-collapse
-      opened="[[_spacingTop(opened, index)]]"
+      opened="[[_isSpacedTop(opened, index)]]"
       no-animation="[[noAnimation]]">
       <div class="outer-spacer"></div>
     </iron-collapse>
@@ -159,14 +159,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       animated>
       <div id="toolbar">
         <calendar-icon
-          icon="[[_icon(calendarHidden)]]"
+          icon="[[_getIcon(calendarHidden)]]"
           color="[[color]]"
-          faded="[[_iconFaded(eventHidden, calendarHidden)]]">
+          faded="[[_getIconFaded(eventHidden, calendarHidden)]]">
         </calendar-icon>
         <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]]">
-          <div id="name">[[name]] [[_startsOrEnds(durationFromStart)]]</div>
+          <div id="name">
+            [[name]] [[_getNameSuffixText(durationFromStart)]]
+          </div>
           <div id="miniTimer" hidden="[[opened]]">
-            [[_getMajorDurationSegment(duration)]]
+            [[_getMajorDurationText(duration)]]
           </div>
         </div>
 
@@ -210,7 +212,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           max="[[_getMajorDurationMax(duration)]]">
           <div id="bubbleContent">
             <div id="majorDurationSegment">
-              [[_getMajorDurationSegment(duration)]]
+              [[_getMajorDurationText(duration)]]
             </div>
             <div id="minorDurationSegmentsWrapper">
               <template
@@ -272,7 +274,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             segment += 's';
           }
           if (!multiple) {
-            return segment;
+            return [segment];
           } else {
             segments.push(segment);
           }
@@ -329,6 +331,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         noAnimation: Boolean
       },
 
+      //
+      // Actions
+      //
+
       toggleExpand: function() {
         this.opened = !this.opened;
       },
@@ -343,29 +349,50 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         event.stopPropagation();
       },
 
-      _icon: function(calendarHidden) {
-        return calendarHidden ? 'ticktock:calendar-hidden' : 'ticktock:calendar';
-      },
+      //
+      // Getters
+      //
 
-      _iconFaded: function(eventHidden, calendarHidden) {
-        return eventHidden || calendarHidden;
-      },
-
-      _startsOrEnds: function(durationFromStart) {
-        return durationFromStart ? '' : 'Ends';
-      },
-
-      _spacingTop: function(opened, index) {
+      _isSpacedTop: function(opened, index) {
         return opened && index;
-      },
-
-      _noPropagation: function(event) {
-        event.stopPropagation();
       },
 
       _getElevation: function(opened) {
         return opened ? 2 : 1;
       },
+
+      _getIcon: function(calendarHidden) {
+        return calendarHidden ? 'ticktock:calendar-hidden' :
+                                'ticktock:calendar';
+      },
+
+      _getIconFaded: function(eventHidden, calendarHidden) {
+        return eventHidden || calendarHidden;
+      },
+
+      _getMajorDurationMax: function(duration) {
+        return getMajorDurationMax(duration);
+      },
+
+      _getMinorDurationSegments: function(duration) {
+        return getDurationSegments(duration).slice(1);
+      },
+
+      // Text Getters
+
+      _getNameSuffixText: function(durationFromStart) {
+        return durationFromStart ? '' : 'Ends';
+      },
+
+      _getMajorDurationText: function(duration) {
+        return getDurationSegments(duration, false)[0];
+      },
+
+      _getHideButtonText: function(eventHidden) {
+        return eventHidden ? 'Unhide' : 'Hide';
+      },
+
+      // Class Getters
 
       _getStarredClass: function(starred) {
         return starred ? 'starred' : '';
@@ -375,20 +402,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return eventHidden ? 'event-hidden' : '';
       },
 
-      _getHideButtonText: function(eventHidden) {
-        return eventHidden ? 'Unhide' : 'Hide';
-      },
+      //
+      // Event Handlers
+      //
 
-      _getMajorDurationSegment: function(duration) {
-        return getDurationSegments(duration, false);
-      },
-
-      _getMajorDurationMax: function(duration) {
-        return getMajorDurationMax(duration);
-      },
-
-      _getMinorDurationSegments: function(duration) {
-        return getDurationSegments(duration).slice(1);
+      _noPropagation: function(event) {
+        event.stopPropagation();
       }
     });
   })();
