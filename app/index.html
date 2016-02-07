@@ -79,9 +79,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template is="dom-bind" id="app">
 
     <paper-drawer-panel id="paperDrawerPanel" responsive-width="800px">
-      <!-- Drawer Scroll Header Panel -->
+      <!-- Drawer -->
       <div id="drawer" drawer>
-        <!-- Drawer Content -->
         <paper-menu
           id="drawerMenu"
           selectable="a"
@@ -104,7 +103,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </selectable-calendar>
           </a>
 
-          <template is="dom-repeat" items="[[listedCalendars]]">
+          <template is="dom-repeat" items="{{listedCalendars}}">
             <a
               href="/calendars/[[getUrlEncoded(item.calendarId)]]"
               on-click="closeDrawer"
@@ -123,7 +122,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             id="showHiddenCalendars"
             on-tap="toggleShowHiddenCalendars"
             hidden="[[!hasHiddenCalendars]]">
-            {{getHiddenCalendarToggleText(showHiddenCalendars)}}
+            [[getHiddenCalendarToggleText(showHiddenCalendars)]]
           </div>
         </paper-menu>
 
@@ -183,7 +182,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <!-- Main Content -->
         <div class="content">
-          <iron-pages attr-for-selected="page-name" selected="{{page}}">
+          <iron-pages attr-for-selected="page-name" selected="[[page]]">
 
             <section page-name="eventsList">
               <div
@@ -203,19 +202,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 items="{{listedEvents}}">
                 <event-card
                   index="[[index]]"
-                  event-id="{{item.eventId}}"
-                  calendar-id="{{item.calendarId}}"
-                  name="{{item.name}}"
-                  color="{{item.color}}"
+                  event-id="[[item.eventId]]"
+                  calendar-id="[[item.calendarId]]"
+                  name="[[item.name]]"
+                  color="[[item.color]]"
                   opened="{{item.opened}}"
                   duration="{{item.duration}}"
-                  duration-from-start="{{item.durationFromStart}}"
+                  duration-from-start="[[item.durationFromStart]]"
                   starred="{{item.starred}}"
                   event-hidden="{{item.hidden}}"
                   calendar-hidden="{{item.calendarHidden}}"
-                  link="{{item.link}}"
-                  recurrence-id="{{item.recurrenceId}}"
-                  deleted="{{item.deleted}}"
+                  link="[[item.link]]"
+                  recurrence-id="[[item.recurrenceId]]"
                   no-animation="[[noEventAnimations]]"
                   on-opened-changed="onEventOpenedToggled"
                   on-starred-changed="onEventStarredToggled"

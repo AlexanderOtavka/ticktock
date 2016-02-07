@@ -164,9 +164,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           faded="[[_iconFaded(eventHidden, calendarHidden)]]">
         </calendar-icon>
         <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]]">
-          <div id="name">{{name}} {{_startsOrEnds(durationFromStart)}}</div>
+          <div id="name">[[name]] [[_startsOrEnds(durationFromStart)]]</div>
           <div id="miniTimer" hidden="[[opened]]">
-            {{_getMajorDurationSegment(duration)}}
+            [[_getMajorDurationSegment(duration)]]
           </div>
         </div>
 
@@ -185,7 +185,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <div class="dropdown-content">
             <paper-item on-tap="toggleHide">
-              <div>{{_getHideButtonText(eventHidden)}}</div>
+              <div>[[_getHideButtonText(eventHidden)]]</div>
             </paper-item>
 
             <a href="[[link]]" target="_blank">
