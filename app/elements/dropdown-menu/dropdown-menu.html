@@ -43,6 +43,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </iron-dropdown>
   </template>
   <script>
+  (function() {
+    'use strict';
+
     Polymer({
       is: 'dropdown-menu',
       properties: {
@@ -92,20 +95,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
-      observers: [
-        '_updateClass(opened)'
-      ],
-
       open: function(event) {
         setTimeout((function() {
           this.$.dropdown.open();
         }).bind(this), 20);
         event.stopPropagation();
-      },
-
-      _updateClass: function(opened) {
-        this.classList.toggle('opened', opened);
       }
     });
+  })();
   </script>
 </dom-module>
