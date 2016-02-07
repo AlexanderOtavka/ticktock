@@ -217,7 +217,7 @@ app.selectCalendar = function(calendarId) {
     ERROR_CALENDAR.calendarId = calendarId;
     app.selectedCalendar = ERROR_CALENDAR;
   }
-  updateCalendars(true);
+  updateListedCalendars(true);
 };
 
 app.closeAllEvents = function() {
@@ -235,7 +235,7 @@ app.toggleShowHiddenEvents = function() {
 app.toggleShowHiddenCalendars = function() {
   setTimeout(function() {
     app.showHiddenCalendars = !app.showHiddenCalendars;
-    updateCalendars(false);
+    updateListedCalendars(false);
   }, 20);
 };
 
@@ -320,13 +320,17 @@ app.onEventHiddenToggled = function(event) {
 };
 
 app.onCalendarHiddenToggled = function(event) {
-  var calendar = getCalendarById(event.target.calendarId);
-  if (calendar) {
-    calendar.events.forEach(function(calendarEvent) {
-      calendarEvent.calendarHidden = calendar.hidden;
+  var calendarIndex = app.calendars.findIndex(function(calendar) {
+    return calendar.calendarId === event.target.calendarId;
+  });
+  if (calendarIndex !== -1) {
+    var calendar = app.calendars[calendarIndex];
+    calendar.events.forEach(function(calendarEvent, i) {
+      app.set(['calendars', calendarIndex, 'events', i, 'calendarHidden'],
+              calendar.hidden);
     });
   }
-  updateCalendars(false);
+  updateListedCalendars(false);
   patchCalendar({
     calendarId: event.target.calendarId,
     hidden: event.detail.value
@@ -405,6 +409,7 @@ var signIn = function(mode) {
 var signOut = function() {
   app.userInfo = SIGNED_OUT_USER_INFO;
   app.$.userBar.addEventListener('tap', app.showSigninPopup);
+  updateListedCalendars();
 };
 
 var patchEvent = function(params) {
@@ -621,7 +626,14 @@ var updateDurations = function() {
   }
 };
 
-var updateCalendars = function(forceOpenTopEvent) {
+var updateListedCalendars = function(forceOpenTopEvent) {
+  if (app.userInfo.signedOut) {
+    app.listedCalendars = [];
+    app.hasHiddenCalendars = false;
+    updateListedEvents(false);
+    return;
+  }
+
   if (app.selectedCalendar.hidden) {
     app.showHiddenCalendars = true;
   }
@@ -639,7 +651,7 @@ var updateCalendars = function(forceOpenTopEvent) {
   app.listedCalendars = listed;
   app.hasHiddenCalendars = hasHidden;
 
-  updateListedEvents(false);
+  updateListedEvents(forceOpenTopEvent);
   if (forceOpenTopEvent) {
     app.set('listedEvents.0.opened', true);
   }
