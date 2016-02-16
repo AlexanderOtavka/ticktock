@@ -196,30 +196,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 </paper-button>
               </div>
 
-              <template
-                is="dom-repeat"
-                id="eventsListTemplate"
-                items="{{listedEvents}}">
-                <event-card
-                  index="[[index]]"
-                  event-id="[[item.eventId]]"
-                  calendar-id="[[item.calendarId]]"
-                  name="[[item.name]]"
-                  color="[[item.color]]"
-                  opened="{{item.opened}}"
-                  duration="{{item.duration}}"
-                  duration-from-start="[[item.durationFromStart]]"
-                  starred="{{item.starred}}"
-                  event-hidden="{{item.hidden}}"
-                  calendar-hidden="{{item.calendarHidden}}"
-                  link="[[item.link]]"
-                  recurrence-id="[[item.recurrenceId]]"
-                  no-animation="[[noEventAnimations]]"
-                  on-opened-changed="onEventOpenedToggled"
-                  on-starred-changed="onEventStarredToggled"
-                  on-event-hidden-changed="onEventHiddenToggled">
-                </event-card>
-              </template>
+              <div hidden="[[userInfo.signedOut]]">
+                <template
+                  is="dom-repeat"
+                  id="eventsListTemplate"
+                  items="{{selectedCalendar.events}}">
+                  <event-card
+                    index="[[index]]"
+                    event-id="[[item.eventId]]"
+                    calendar-id="[[item.calendarId]]"
+                    name="[[item.name]]"
+                    color="[[item.color]]"
+                    opened="{{item.opened}}"
+                    duration="{{item.duration}}"
+                    duration-from-start="[[item.durationFromStart]]"
+                    starred="{{item.starred}}"
+                    event-hidden="{{item.hidden}}"
+                    calendar-hidden="{{item.calendarHidden}}"
+                    link="[[item.link]]"
+                    recurrence-id="[[item.recurrenceId]]"
+                    no-animation="[[noEventAnimations]]"
+                    hidden="[[getEventHidden(item.hidden, item.calendarHidden, showHiddenEvents, showHiddenCalendars)]]"
+                    on-opened-changed="onEventOpenedToggled"
+                    on-starred-changed="onEventStarredToggled"
+                    on-event-hidden-changed="onEventHiddenToggled">
+                  </event-card>
+                </template>
+              </div>
 
               <div
                 id="calNotLoaded"
@@ -234,14 +237,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
               <div
                 class="centered-content"
-                hidden="[[!getCalendarEmpty(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents, listedEvents)]]">
+                hidden="[[!getCalendarEmpty(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, selectedCalendar.events)]]">
                 Looks like there's nothing here.
               </div>
 
               <div
                 id="spinnerWrapper"
                 class="centered-content"
-                hidden="[[!getCalendarLoading(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, calculatingListedEvents)]]">
+                hidden="[[!getCalendarLoading(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken)]]">
                 <paper-spinner active></paper-spinner>
               </div>
             </section>

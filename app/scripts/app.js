@@ -14,7 +14,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 // Imports are loaded and elements have been registered.
 window.addEventListener('WebComponentsReady', function() {
-  setInterval(updateDurations, 1000);
+  setInterval(function() {
+    updateDurations(app.selectedCalendar);
+  }, 1000);
 
   signIn(true)
     .then(loadAllData)
@@ -58,6 +60,7 @@ app.userInfo = LOADING_USER_INFO;
 
 // Calendar and event data.
 var ALL_CALENDAR = {
+  kind: 'pseudo:all',
   name: 'All Calendars',
   calendarId: '*',
   color: '#e91e63',
@@ -68,6 +71,7 @@ var ALL_CALENDAR = {
   nextPageToken: null
 };
 var LOADING_CALENDAR = {
+  kind: 'pseudo:loading',
   name: 'TickTock',
   calendarId: ALL_CALENDAR.calendarId,
   color: '#e91e63',
@@ -78,6 +82,7 @@ var LOADING_CALENDAR = {
   nextPageToken: null
 };
 var ERROR_CALENDAR = {
+  kind: 'pseudo:error',
   name: 'TickTock',
   calendarId: '',
   color: '#e91e63',
@@ -91,9 +96,7 @@ app.selectedCalendar = LOADING_CALENDAR;
 
 app.calendars = [];
 app.listedCalendars = [];
-app.listedEvents = [];
 app.hasHiddenCalendars = false;
-app.calculatingListedEvents = false;
 
 // Settings.
 app.showHiddenCalendars = false;
@@ -129,14 +132,14 @@ app.getUrlDecoded = function(string) {
 
 (function() {
   var calendarStatus = function(signedOut, calendarErrored, eventsLoading,
-                                nextPageToken, calculating, events) {
+                                nextPageToken, events) {
     if (signedOut) {
       return calendarStatus.Status.SIGNED_OUT;
     }
     if (calendarErrored) {
       return calendarStatus.Status.ERRORED;
     }
-    if (eventsLoading || nextPageToken || calculating) {
+    if (eventsLoading || nextPageToken) {
       return calendarStatus.Status.LOADING;
     }
     if (!Boolean((events || []).length)) {
@@ -153,9 +156,9 @@ app.getUrlDecoded = function(string) {
   };
 
   app.getCalendarEmpty = function(signedOut, calendarErrored, eventsLoading,
-                                  nextPageToken, calculating, events) {
+                                  nextPageToken, events) {
     return calendarStatus(signedOut, calendarErrored, eventsLoading,
-                          nextPageToken, calculating, events) ===
+                          nextPageToken, events) ===
            calendarStatus.Status.EMPTY;
   };
 
@@ -165,12 +168,18 @@ app.getUrlDecoded = function(string) {
   };
 
   app.getCalendarLoading = function(signedOut, calendarErrored, eventsLoading,
-                                    nextPageToken, calculating) {
+                                    nextPageToken) {
     return calendarStatus(signedOut, calendarErrored, eventsLoading,
-                          nextPageToken, calculating) ===
+                          nextPageToken) ===
            calendarStatus.Status.LOADING;
   };
 })();
+
+app.getEventHidden = function(eventHidden, calendarHidden, showHiddenEvents,
+                              showHiddenCalendars) {
+  return (eventHidden && !showHiddenEvents) ||
+         (calendarHidden && !showHiddenCalendars);
+};
 
 //
 // Actions
@@ -184,7 +193,7 @@ app.displayInstalledToast = function() {
 };
 
 /**
- * Close drawer after menu item is selected if drawerPanel is narrow
+ * Close drawer after menu item is selected if drawerPanel is narrow.
  */
 app.closeDrawer = function() {
   var drawerPanel = app.$.paperDrawerPanel;
@@ -202,6 +211,9 @@ app.scrollPageToTop = function() {
 
 /**
  * Select calendar, or que up calendar to be selected.
+ *
+ * If no calendar ID is provided, the selectedCalendar will be forced off the
+ * LOADING_CALENDAR, either on to a proper calendar, or the ERROR_CALENDAR.
  */
 app.selectCalendar = function(calendarId) {
   if (!calendarId) {
@@ -217,25 +229,18 @@ app.selectCalendar = function(calendarId) {
     ERROR_CALENDAR.calendarId = calendarId;
     app.selectedCalendar = ERROR_CALENDAR;
   }
-  updateListedCalendars(true);
-};
-
-app.closeAllEvents = function() {
-  var i = app.listedEvents.findIndex(function(listedEvent) {
-    return listedEvent.opened;
-  });
-  app.set(['listedEvents', i, 'opened'], false);
+  updateListedCalendars();
+  openOnlyOne(true);
 };
 
 app.toggleShowHiddenEvents = function() {
   app.showHiddenEvents = !app.showHiddenEvents;
-  updateListedEvents(false);
 };
 
 app.toggleShowHiddenCalendars = function() {
   setTimeout(function() {
     app.showHiddenCalendars = !app.showHiddenCalendars;
-    updateListedCalendars(false);
+    updateListedCalendars();
   }, 20);
 };
 
@@ -272,11 +277,11 @@ app.refreshThisCalendar = function() {
 
 app.onEventOpenedToggled = function(event) {
   if (event.detail.value) {
-    var i = app.listedEvents.findIndex(function(listedEvent) {
-      return listedEvent.opened &&
-             listedEvent.eventId !== event.target.eventId;
+    var i = app.selectedCalendar.events.findIndex(function(calendarEvent) {
+      return calendarEvent.opened &&
+             calendarEvent.eventId !== event.target.eventId;
     });
-    app.set(['listedEvents', i, 'opened'], false);
+    app.set(['selectedCalendar', 'events', i, 'opened'], false);
   }
 };
 
@@ -289,7 +294,7 @@ app.onEventStarredToggled = function(event) {
     hidden = false;
     event.target.set('eventHidden', false);
   }
-  updateListedEvents(false);
+  singleSortEvent(event.target.eventId, event.target.calendarId);
   patchEvent({
     calendarId: event.target.calendarId,
     eventId: event.target.eventId,
@@ -308,7 +313,7 @@ app.onEventHiddenToggled = function(event) {
     starred = false;
     event.target.set('starred', false);
   }
-  updateListedEvents(false);
+  singleSortEvent(event.target.eventId, event.target.calendarId);
   patchEvent({
     calendarId: event.target.calendarId,
     eventId: event.target.eventId,
@@ -320,17 +325,26 @@ app.onEventHiddenToggled = function(event) {
 };
 
 app.onCalendarHiddenToggled = function(event) {
-  var calendarIndex = app.calendars.findIndex(function(calendar) {
-    return calendar.calendarId === event.target.calendarId;
-  });
-  if (calendarIndex !== -1) {
-    var calendar = app.calendars[calendarIndex];
-    calendar.events.forEach(function(calendarEvent, i) {
-      app.set(['calendars', calendarIndex, 'events', i, 'calendarHidden'],
-              calendar.hidden);
+  var calendar = getCalendarById(event.target.calendarId);
+  if (calendar) {
+    calendar.events.forEach(function(calendarEvent) {
+      calendarEvent.calendarHidden = calendar.hidden;
     });
+    if (calendar === app.selectedCalendar) {
+      calendar.events.forEach(function(calendarEvent, i) {
+        app.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
+                       calendar.hidden);
+      });
+    } else if (app.selectedCalendar === ALL_CALENDAR) {
+      ALL_CALENDAR.events.forEach(function(calendarEvent, i) {
+        if (calendarEvent.calendarId === event.target.calendarId) {
+          app.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
+                         calendar.hidden);
+        }
+      })
+    }
   }
-  updateListedCalendars(false);
+  updateListedCalendars();
   patchCalendar({
     calendarId: event.target.calendarId,
     hidden: event.detail.value
@@ -378,9 +392,15 @@ var sendReAuthedRequest = function(request) {
 };
 
 var updateAllCalendarState = function() {
+  ALL_CALENDAR.events = [];
+  app.calendars.forEach(function(calendar) {
+    ALL_CALENDAR.events = ALL_CALENDAR.events.concat(calendar.events);
+  });
+  sortEvents(ALL_CALENDAR);
+
   ALL_CALENDAR.loading = false;
   ALL_CALENDAR.errored = true;
-  app.listedCalendars.forEach(function(calendar) {
+  app.calendars.forEach(function(calendar) {
     if (calendar.loading) {
       ALL_CALENDAR.loading = true;
     }
@@ -388,7 +408,9 @@ var updateAllCalendarState = function() {
       ALL_CALENDAR.errored = false;
     }
   });
-  if (app.selectedCalendar === ALL_CALENDAR) {
+
+  if (ALL_CALENDAR === app.selectedCalendar) {
+    app.notifyPath('selectedCalendar.events', ALL_CALENDAR.events);
     app.notifyPath('selectedCalendar.loading', ALL_CALENDAR.loading);
     app.notifyPath('selectedCalendar.errored', ALL_CALENDAR.errored);
   }
@@ -517,6 +539,7 @@ var loadEvents = function(calendars) {
           });
           resp.items[0].opened = true;
           calendar.events = resp.items;
+          sortEvents(calendar);
         }
       })
       .catch(function(err) {
@@ -530,20 +553,17 @@ var loadEvents = function(calendars) {
       .then(function() {
         calendar.loading = false;
         if (calendar === app.selectedCalendar) {
+          app.notifyPath('selectedCalendar.events', calendar.events);
           app.notifyPath('selectedCalendar.loading', false);
-          updateListedEvents(true);
         }
       });
   }))
     .then(updateAllCalendarState)
     .then(function() {
-      if (app.selectedCalendar === ALL_CALENDAR) {
-        updateListedEvents(true);
-      }
+      openOnlyOne(true);
     });
 
   updateAllCalendarState();
-  updateListedEvents(true);
 
   return promise;
 };
@@ -578,61 +598,73 @@ var getCalendarById = function(calendarId) {
   }
 };
 
+var getEventIndexById = function(eventId, calendar) {
+  return calendar.events.findIndex(function(calendarEvent) {
+    return calendarEvent.eventId === eventId;
+  });
+};
+
 var deleteEventById = function(eventId, calendarId) {
+  var i;
   var calendar = getCalendarById(calendarId);
   if (calendar) {
-    var i = calendar.events.findIndex(function(calendarEvent) {
-      return calendarEvent.eventId === eventId;
-    });
+    i = getEventIndexById(eventId, calendar);
     if (i >= 0) {
-      return calendar.events.splice(i, 1);
+      calendar.events.splice(i, 1);
     }
+  }
+  i = getEventIndexById(eventId, ALL_CALENDAR);
+  if (i >= 0) {
+    ALL_CALENDAR.events.splice(i, 1);
   }
 };
 
-var updateDurations = function() {
+var updateDurations = function(calendar) {
   // TODO: Optimize this.
   var now = Date.now();
-  var needsUpdate = false;
 
-  app.listedEvents.forEach(function(listedEvent, i) {
+  calendar.events.forEach(function(calendarEvent, i) {
     var timeToStart = 0;
     var timeToEnd = 0;
-    if (listedEvent.startDate) {
-      var eventStart = Date.parse(listedEvent.startDate);
+    if (calendarEvent.startDate) {
+      var eventStart = Date.parse(calendarEvent.startDate);
       timeToStart = Math.floor((eventStart - now) / 1000);
     }
 
     if (timeToStart <= 0) {
       timeToStart = 0;
-      delete listedEvent.startDate;
+      delete calendarEvent.startDate;
 
-      var eventEnd = Date.parse(listedEvent.endDate);
+      var eventEnd = Date.parse(calendarEvent.endDate);
       timeToEnd = Math.floor((eventEnd - now) / 1000);
 
       if (timeToEnd < 0) {
-        if (listedEvent.opened) {
-          app.set(['listedEvents', i + 1, 'opened'], true);
+        if (calendarEvent.opened) {
+          calendar.events[i + 1].opened = true;
+          if (calendar === app.selectedCalendar) {
+            app.notifyPath(['selectedCalendar', 'events', i + 1, 'opened'],
+                           true);
+          }
         }
-        deleteEventById(listedEvent.eventId,
-                    listedEvent.calendarId);
-        needsUpdate = true;
+        deleteEventById(calendarEvent.eventId, calendarEvent.calendarId);
       }
     }
 
-    app.set(['listedEvents', i, 'duration'], timeToStart || timeToEnd);
-    app.set(['listedEvents', i, 'durationFromStart'], Boolean(timeToStart));
+    calendarEvent.duration = timeToStart || timeToEnd;
+    calendarEvent.durationFromStart = Boolean(timeToStart);
+    if (calendar === app.selectedCalendar) {
+      app.notifyPath(['selectedCalendar', 'events', i, 'duration'],
+                     calendarEvent.duration);
+      app.notifyPath(['selectedCalendar', 'events', i, 'durationFromStart'],
+                     calendarEvent.durationFromStart);
+    }
   });
-  if (needsUpdate) {
-    updateListedEvents(false);
-  }
 };
 
-var updateListedCalendars = function(forceOpenTopEvent) {
+var updateListedCalendars = function() {
   if (app.userInfo.signedOut) {
     app.listedCalendars = [];
     app.hasHiddenCalendars = false;
-    updateListedEvents(false);
     return;
   }
 
@@ -652,98 +684,134 @@ var updateListedCalendars = function(forceOpenTopEvent) {
   });
   app.listedCalendars = listed;
   app.hasHiddenCalendars = hasHidden;
-
-  updateListedEvents(forceOpenTopEvent);
-  if (forceOpenTopEvent) {
-    app.set('listedEvents.0.opened', true);
-  }
 };
 
-var updateListedEvents;
+var singleSortEvent, sortEvents;
 (function() {
+  /**
+   * Move an event to its proper place in its calendar and the ALL_CALENDAR.
+   *
+   * Uses the insertion sort algorithm, and notifies splices.
+   *
+   * @param {String} eventId - The event's ID.
+   * @param {String} calendarId - The event's calendar's ID.
+   */
+  singleSortEvent = function(eventId, calendarId) {
+    /************************
+    Algorithm Summary Drawing
+    *************************
+                  *-3
+    [1, 6, 9, 15, 19, 22]
+        ^
+    (1, 3)? yes
+       (6, 3)? no
+
+    [1, 6, 9, 15, 3, 19, 22]
+            - to -
+    [1, 3, 6, 9, 15, 19, 22]
+    -----------------------------
+        *-16
+    [1, 9, 15, 17, 19, 22]
+               ^
+    (1, 16)? yes
+       (9, 16)? yes
+          (15, 16)? yes
+              (17, 16)? no
+
+    [1, 16, 9, 15, 17, 19, 22]
+             - to -
+    [1, 9, 15, 16, 17, 19, 22]
+    ************************/
+    var calendar = getCalendarById(calendarId);
+    if (calendar) {
+      var misplacedIndex = calendar.events.findIndex(function(calendarEvent) {
+        return calendarEvent.eventId === eventId;
+      });
+      var misplacedEvent = calendar.events.splice(misplacedIndex, 1)[0];
+
+      var targetIndex = calendar.events.findIndex(function(calendarEvent) {
+        return compareEvents(calendarEvent, misplacedEvent) > 0;
+      });
+      calendar.events.splice(targetIndex, 0, misplacedEvent);
+
+      app.notifySplices('selectedCalendar.events', [
+        {
+          index: misplacedIndex,
+          removed: [misplacedEvent],
+          addedCount: 0,
+          object: app.selectedCalendar.events,
+          type: 'splice'
+        },
+        {
+          index: targetIndex,
+          removed: [],
+          addedCount: 1,
+          object: app.selectedCalendar.events,
+          type: 'splice'
+        }
+      ]);
+    }
+  };
+
+  /**
+   * Sort all of a calendar's events.
+   *
+   * Does not notify.
+   *
+   * @param {Object} calendar - The calendar object whose events should be
+   *   sorted.
+   */
+  sortEvents = function(calendar) {
+    calendar.events = calendar.events.sort(compareEvents);
+  };
+
+  // True is first.
   var compareBools = function(a, b) {
-    // True is first
     return b - a;
   };
 
+  // Sort alphabetically, any language, case insensitive.
   var compareStrings = function(a, b) {
-    // Sort alphabetically
     return a.localeCompare(b);
   };
 
-  var sortedEvents = function(events) {
-    // Sort order: starred, duration, alphabetical, id
-    return events.sort(function(a, b) {
-      if (a.starred !== b.starred) {
-        return compareBools(a.starred, b.starred);
-      }
-      if (a.startDate !== b.startDate || a.endDate !== b.endDate) {
-        return compareStrings(a.startDate || a.endDate,
-                              b.startDate || b.endDate);
-      }
-      if (a.name !== b.name) {
-        return compareStrings(a.name, b.name);
-      }
-      if (a.eventId !== b.eventId) {
-        return compareStrings(a.eventId, b.eventId);
-      }
-      return 0;
-    });
-  };
-
-  var prunedEvents = function(events, keep) {
-    var pruned = [];
-    events.forEach(function(calendarEvent) {
-      if (keep(calendarEvent)) {
-        pruned.push(calendarEvent);
-      }
-    });
-    return pruned;
-  };
-
-  var openOnlyOne = function(events, openTopEvent) {
-    if (!events.length) {
-      return;
-    }
-    var foundOpened = false;
-    events.forEach(function(calendarEvent) {
-      if (calendarEvent.opened) {
-        if (foundOpened) {
-          calendarEvent.opened = false;
-        } else {
-          foundOpened = true;
-        }
-      }
-    });
-    if (openTopEvent && !foundOpened) {
-      events[0].opened = true;
-    }
-  };
-
-  updateListedEvents = function(openTopEvent) {
-    app.calculatingListedEvents = true;
-    var events = [];
-    if (app.selectedCalendar === ALL_CALENDAR) {
-      var calendars = app.listedCalendars;
-      calendars.forEach(function(calendar) {
-        events = events.concat(calendar.events);
-      });
-    } else {
-      events = app.selectedCalendar.events.slice();
-    }
-    if (!app.showHiddenEvents) {
-      events = prunedEvents(events, function(unprunedEvent) {
-        return !unprunedEvent.hidden;
-      });
-    }
-    events = sortedEvents(events);
-    openOnlyOne(events, openTopEvent);
-    runWithoutAnimation(function() {
-      app.listedEvents = events;
-      updateDurations();
-      app.calculatingListedEvents = false;
-    });
+  // Sort order: starred, duration, alphabetical, id.
+  var compareEvents = function(a, b) {
+    return compareBools(a.starred, b.starred) ||
+           compareStrings(a.startDate || a.endDate,
+                          b.startDate || b.endDate) ||
+           compareStrings(a.name, b.name) ||
+           compareStrings(a.eventId, b.eventId) ||
+           0;
   };
 })();
+
+/**
+ * Ensure only one event is opened in selectedCalendar.
+ *
+ * @param {Boolean} openTopEvent - If no events are open, open the top one.
+ */
+var openOnlyOne = function(openTopEvent) {
+  if (!app.selectedCalendar.events.length) {
+    return;
+  }
+  var foundOpened = false;
+  app.selectedCalendar.events.forEach(function(calendarEvent, i) {
+    if (calendarEvent.opened) {
+      if (!foundOpened &&
+          !app.getEventHidden(
+            calendarEvent.eventHidden, calendarEvent.calendarHidden,
+            app.showHiddenEvents, app.showHiddenCalendars)) {
+        foundOpened = true;
+      } else {
+        app.set(['selectedCalendar', 'events', i, 'opened'], false);
+      }
+    }
+  });
+  if (openTopEvent && !foundOpened) {
+    app.set('selectedCalendar.events.0.opened', true);
+    console.log('did not find opened');
+  }
+};
 
 })(app);
