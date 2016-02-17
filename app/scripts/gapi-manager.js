@@ -42,6 +42,9 @@ var GAPIManager, _loadedGAPI;
 /**
  * Load an api with the given data.
  *
+ * @param {String} name - API name.
+ * @param {String} version - API version.
+ * @param {String} apiRoot - Root URI of the API, or undefined for Google APIs.
  * @return Promise that resolves to an API object.
  */
 GAPIManager.loadAPI = function(name, version, apiRoot) {
