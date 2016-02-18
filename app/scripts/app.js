@@ -7,7 +7,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-/* globals GAPIManager, Promise */
+/* globals Promise, GAPIManager */
 
 (function(app) {
 'use strict';
@@ -102,9 +102,6 @@ app.hasHiddenCalendars = false;
 app.showHiddenCalendars = false;
 app.showHiddenEvents = false;
 
-// Other global state properties.
-app.noEventAnimations = false;
-
 //
 // Getters
 //
@@ -175,12 +172,6 @@ app.getUrlDecoded = function(string) {
   };
 })();
 
-app.getEventHidden = function(eventHidden, calendarHidden, showHiddenEvents,
-                              showHiddenCalendars) {
-  return (eventHidden && !showHiddenEvents) ||
-         (calendarHidden && !showHiddenCalendars);
-};
-
 //
 // Actions
 //
@@ -230,7 +221,7 @@ app.selectCalendar = function(calendarId) {
     app.selectedCalendar = ERROR_CALENDAR;
   }
   updateListedCalendars();
-  openOnlyOne(true);
+  app.$.eventList.openedIndex = 0;
 };
 
 app.toggleShowHiddenEvents = function() {
@@ -275,51 +266,9 @@ app.refreshThisCalendar = function() {
 // Event handlers
 //
 
-app.onEventOpenedToggled = function(event) {
-  if (event.detail.value) {
-    var i = app.selectedCalendar.events.findIndex(function(calendarEvent) {
-      return calendarEvent.opened &&
-             calendarEvent.eventId !== event.target.eventId;
-    });
-    app.set(['selectedCalendar', 'events', i, 'opened'], false);
-  }
-};
-
-app.onEventStarredToggled = function(event) {
-  // TODO: move this logic to the element
-  console.log(event);
-  var starred = event.detail.value;
-  var hidden = null;
-  if (starred && event.target.eventHidden) {
-    hidden = false;
-    event.target.set('eventHidden', false);
-  }
-  singleSortEvent(event.target.eventId, event.target.calendarId);
-  patchEvent({
-    calendarId: event.target.calendarId,
-    eventId: event.target.eventId,
-    hidden: hidden,
-    starred: starred
-  })
-    .catch(handleHTTPError)
-    .catch(logError);
-};
-
-app.onEventHiddenToggled = function(event) {
-  console.log(event);
-  var hidden = event.detail.value;
-  var starred = null;
-  if (hidden && event.target.starred) {
-    starred = false;
-    event.target.set('starred', false);
-  }
-  singleSortEvent(event.target.eventId, event.target.calendarId);
-  patchEvent({
-    calendarId: event.target.calendarId,
-    eventId: event.target.eventId,
-    hidden: hidden,
-    starred: starred
-  })
+app.onEventChanged = function(event) {
+  singleSortEvent(event.detail.eventId, event.detail.calendarId);
+  patchEvent(event.detail)
     .catch(handleHTTPError)
     .catch(logError);
 };
@@ -341,7 +290,7 @@ app.onCalendarHiddenToggled = function(event) {
           app.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
                          calendar.hidden);
         }
-      })
+      });
     }
   }
   updateListedCalendars();
@@ -512,6 +461,8 @@ var loadEvents = function(calendars) {
     timeZone = null;
   }
 
+  app.$.eventList.openedIndex = 0;
+
   var promise = Promise.all(calendars.map(function(calendar) {
     calendar.events = [];
     calendar.errored = false;
@@ -534,10 +485,8 @@ var loadEvents = function(calendars) {
         if (resp.items) {
           resp.items.forEach(function(calendarEvent) {
             calendarEvent.color = calendar.color;
-            calendarEvent.opened = false;
             calendarEvent.calendarHidden = calendar.hidden;
           });
-          resp.items[0].opened = true;
           calendar.events = resp.items;
           sortEvents(calendar);
         }
@@ -558,10 +507,7 @@ var loadEvents = function(calendars) {
         }
       });
   }))
-    .then(updateAllCalendarState)
-    .then(function() {
-      openOnlyOne(true);
-    });
+    .then(updateAllCalendarState);
 
   updateAllCalendarState();
 
@@ -577,17 +523,6 @@ var logError = function(err) {
   throw err;
 };
 
-var runWithoutAnimation = function(callback) {
-  // TODO: de-hackify this
-  app.noEventAnimations = true;
-  setTimeout(function() {
-    callback();
-    setTimeout(function() {
-      app.noEventAnimations = false;
-    }, 5);
-  }, 5);
-};
-
 var getCalendarById = function(calendarId) {
   if (calendarId === ALL_CALENDAR.calendarId) {
     return ALL_CALENDAR;
@@ -598,24 +533,43 @@ var getCalendarById = function(calendarId) {
   }
 };
 
-var getEventIndexById = function(eventId, calendar) {
+var getEventIndexById = function(calendar, eventId, calendarId) {
   return calendar.events.findIndex(function(calendarEvent) {
-    return calendarEvent.eventId === eventId;
+    return calendarEvent.eventId === eventId &&
+           calendarEvent.calendarId === (calendarId || calendar.calendarId);
   });
 };
 
-var deleteEventById = function(eventId, calendarId) {
+var deleteEventById = function(calendarId, eventId) {
   var i;
   var calendar = getCalendarById(calendarId);
   if (calendar) {
-    i = getEventIndexById(eventId, calendar);
+    i = getEventIndexById(calendar, eventId);
     if (i >= 0) {
-      calendar.events.splice(i, 1);
+      var removed = calendar.events.splice(i, 1);
+      if (calendar === app.selectedCalendar) {
+        app.notifySplices('selectedCalendar.events', [{
+          index: i,
+          removed: removed,
+          addedCount: 0,
+          object: app.selectedCalendar.events,
+          type: 'splice'
+        }]);
+      }
     }
   }
-  i = getEventIndexById(eventId, ALL_CALENDAR);
+  i = getEventIndexById(ALL_CALENDAR, eventId, calendarId);
   if (i >= 0) {
-    ALL_CALENDAR.events.splice(i, 1);
+    var removed = ALL_CALENDAR.events.splice(i, 1);
+    if (calendar === app.selectedCalendar) {
+      app.notifySplices('selectedCalendar.events', [{
+        index: i,
+        removed: removed,
+        addedCount: 0,
+        object: app.selectedCalendar.events,
+        type: 'splice'
+      }]);
+    }
   }
 };
 
@@ -639,14 +593,7 @@ var updateDurations = function(calendar) {
       timeToEnd = Math.floor((eventEnd - now) / 1000);
 
       if (timeToEnd < 0) {
-        if (calendarEvent.opened) {
-          calendar.events[i + 1].opened = true;
-          if (calendar === app.selectedCalendar) {
-            app.notifyPath(['selectedCalendar', 'events', i + 1, 'opened'],
-                           true);
-          }
-        }
-        deleteEventById(calendarEvent.eventId, calendarEvent.calendarId);
+        deleteEventById(calendarEvent.calendarId, calendarEvent.eventId);
       }
     }
 
@@ -697,6 +644,28 @@ var singleSortEvent, sortEvents;
    * @param {String} calendarId - The event's calendar's ID.
    */
   singleSortEvent = function(eventId, calendarId) {
+    var calendar = getCalendarById(calendarId);
+    if (calendar) {
+      singleSortByCalendar(calendar, eventId);
+      if (calendar !== ALL_CALENDAR) {
+        singleSortByCalendar(ALL_CALENDAR, eventId);
+      }
+    }
+  };
+
+  /**
+   * Sort all of a calendar's events.
+   *
+   * Does not notify.
+   *
+   * @param {Object} calendar - The calendar object whose events should be
+   *   sorted.
+   */
+  sortEvents = function(calendar) {
+    calendar.events = calendar.events.sort(compareEvents);
+  };
+
+  var singleSortByCalendar = function(calendar, eventId) {
     /************************
     Algorithm Summary Drawing
     *************************
@@ -722,61 +691,45 @@ var singleSortEvent, sortEvents;
              - to -
     [1, 9, 15, 16, 17, 19, 22]
     ************************/
-    var calendar = getCalendarById(calendarId);
-    if (calendar) {
-      var misplacedIndex = calendar.events.findIndex(function(calendarEvent) {
-        return calendarEvent.eventId === eventId;
-      });
-      var misplacedEvent = calendar.events.splice(misplacedIndex, 1)[0];
+    var misplacedIndex = calendar.events.findIndex(function(calendarEvent) {
+      return calendarEvent.eventId === eventId;
+    });
+    var misplacedEvent = calendar.events.splice(misplacedIndex, 1)[0];
 
-      var targetIndex = calendar.events.findIndex(function(calendarEvent) {
-        return compareEvents(calendarEvent, misplacedEvent) > 0;
-      });
-      calendar.events.splice(targetIndex, 0, misplacedEvent);
+    var targetIndex = calendar.events.findIndex(function(calendarEvent) {
+      return compareEvents(calendarEvent, misplacedEvent) > 0;
+    });
+    calendar.events.splice(targetIndex, 0, misplacedEvent);
 
-      app.notifySplices('selectedCalendar.events', [
-        {
-          index: misplacedIndex,
-          removed: [misplacedEvent],
-          addedCount: 0,
-          object: app.selectedCalendar.events,
-          type: 'splice'
-        },
-        {
-          index: targetIndex,
-          removed: [],
-          addedCount: 1,
-          object: app.selectedCalendar.events,
-          type: 'splice'
-        }
-      ]);
+    if (calendar === app.selectedCalendar) {
+      app.notifySplices('selectedCalendar.events', [{
+        index: misplacedIndex,
+        removed: [misplacedEvent],
+        addedCount: 0,
+        object: app.selectedCalendar.events,
+        type: 'splice'
+      }, {
+        index: targetIndex,
+        removed: [],
+        addedCount: 1,
+        object: app.selectedCalendar.events,
+        type: 'splice'
+      }]);
     }
   };
 
-  /**
-   * Sort all of a calendar's events.
-   *
-   * Does not notify.
-   *
-   * @param {Object} calendar - The calendar object whose events should be
-   *   sorted.
-   */
-  sortEvents = function(calendar) {
-    calendar.events = calendar.events.sort(compareEvents);
-  };
-
-  // True is first.
   var compareBools = function(a, b) {
+    // True is first.
     return b - a;
   };
 
-  // Sort alphabetically, any language, case insensitive.
   var compareStrings = function(a, b) {
+    // Sort alphabetically, any language, case insensitive.
     return a.localeCompare(b);
   };
 
-  // Sort order: starred, duration, alphabetical, id.
   var compareEvents = function(a, b) {
+    // Sort order: starred, duration, alphabetical, id.
     return compareBools(a.starred, b.starred) ||
            compareStrings(a.startDate || a.endDate,
                           b.startDate || b.endDate) ||
@@ -785,33 +738,5 @@ var singleSortEvent, sortEvents;
            0;
   };
 })();
-
-/**
- * Ensure only one event is opened in selectedCalendar.
- *
- * @param {Boolean} openTopEvent - If no events are open, open the top one.
- */
-var openOnlyOne = function(openTopEvent) {
-  if (!app.selectedCalendar.events.length) {
-    return;
-  }
-  var foundOpened = false;
-  app.selectedCalendar.events.forEach(function(calendarEvent, i) {
-    if (calendarEvent.opened) {
-      if (!foundOpened &&
-          !app.getEventHidden(
-            calendarEvent.eventHidden, calendarEvent.calendarHidden,
-            app.showHiddenEvents, app.showHiddenCalendars)) {
-        foundOpened = true;
-      } else {
-        app.set(['selectedCalendar', 'events', i, 'opened'], false);
-      }
-    }
-  });
-  if (openTopEvent && !foundOpened) {
-    app.set('selectedCalendar.events.0.opened', true);
-    console.log('did not find opened');
-  }
-};
 
 })(app);

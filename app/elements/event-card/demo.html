@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>event-card Demo</title>
+
+  <script
+    src="../../bower_components/webcomponentsjs/webcomponents-lite.js">
+  </script>
+
+  <link rel="import" href="event-card.html">
+
+  <link rel="import" href="../../styles/shared-styles.html">
+  <style is="custom-style" include="shared-styles"></style>
+  <link rel="stylesheet" href="../../styles/main.css" type="text/css">
+</head>
+
+<body>
+  <span id="browser-sync-binding"></span>
+
+  <template is="dom-bind" id="demo">
+    <!-- <template is="dom-repeat" items="{{events}}"> -->
+      <event-card
+        event-id="[[item.eventId]]"
+        calendar-id="[[item.calendarId]]"
+        name="[[item.name]]"
+        color="[[item.color]]"
+        first="[[!index]]"
+        opened="{{item.opened}}"
+        duration="{{item.duration}}"
+        duration-from-start="[[item.durationFromStart]]"
+        starred="{{item.starred}}"
+        event-hidden="{{item.hidden}}"
+        calendar-hidden="{{item.calendarHidden}}"
+        link="[[item.link]]"
+        recurrence-id="[[item.recurrenceId]]"
+        show-hidden-events="[[showHiddenEvents]]"
+        show-hidden-calendars="[[showHiddenCalendars]]">
+      </event-card>
+    <!-- </template> -->
+
+    <div style="height: 1px; background: black;"></div>
+  </template>
+
+  <script>
+  /* globals demo */
+  (function() {
+    'use strict';
+
+    var ITEMS = [
+      {
+        'calendarId': 'zotavka@gmail.com',
+        'endDate': '2016-02-24T10:50:00-08:00',
+        'eventId': 'c5hm4c9pc9ij4b9o6gr6cb9k6oqjgb9pckrj2b9pcgsj8c1k6srmaeb36k',
+        'hidden': false,
+        'link': 'https://www.google.com/calendar/event?eid=YzVobTRjOXBjOWlqNGI5bzZncjZjYjlrNXBja3JqMmI5cGNnc2o4YzFrNnNybWFlYjM2ayB6b3RhdmthQG0&ctz=America/Los_Angeles',
+        'name': 'Work with Nick Brown',
+        'starred': false,
+        'startDate': '2016-02-24T10:00:00-08:00',
+        'color': '#ff7537',
+        'opened': true,
+        'calendarHidden': false,
+        'duration': 945910,
+        'durationFromStart': true
+      },
+      {
+        'calendarId': 'zotavka@gmail.com',
+        'endDate': '2016-03-06T15:00:00-08:00',
+        'eventId': '6cr36chp6tj3gb9k6cq3cb9kchgjabb26cq3cbb3cdh3gdj16ksm8e1g6k',
+        'hidden': false,
+        'link': 'https://www.google.com/calendar/event?eid=NmNyMzZjaHA2dGozZ2I5azZjcTNjYjlrYjI2Y3EzY2JiM2NkaDNnZGoxNmtzbThlMWc2ayB6b3RhdmthQG0&ctz=America/Los_Angeles',
+        'name': 'Outside rehearsal',
+        'starred': false,
+        'startDate': '2016-03-06T12:00:00-08:00',
+        'color': '#ff7537',
+        'opened': false,
+        'calendarHidden': false,
+        'duration': 1903026,
+        'durationFromStart': true
+      }
+    ];
+
+    // demo.events = [];
+    demo.index = 0;
+    demo.item = ITEMS[demo.index];
+
+    demo.showHiddenEvents = true;
+    demo.showHiddenCalendars = true;
+
+    demo.toggleItems = function() {
+      // demo.events = demo.events.length ? [] : ITEMS;
+      demo.index++;
+      demo.index %= ITEMS.length;
+      demo.item = ITEMS[demo.index];
+    };
+  })();
+  </script>
+</body>
+
+</html>

@@ -14,18 +14,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../../bower_components/paper-styles/shadow.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
 <link rel="import" href="../../bower_components/progress-bubble/progress-bubble.html">
 <link rel="import" href="../ticktock-icons/ticktock-icons.html">
 <link rel="import" href="../calendar-icon/calendar-icon.html">
 <link rel="import" href="../dropdown-menu/dropdown-menu.html">
+<link rel="import" href="event-collapse-expand-animation.html">
+<link rel="import" href="event-margin-expand-animation.html">
 
 <dom-module id="event-card">
   <template>
     <style>
       :host {
+        --collapse-content-height: 330px;
+
         display: block;
         border-bottom: 1px solid rgba(0, 0, 0, 0);
       }
@@ -60,13 +64,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         --progress-bubble-bg-stroke-color: var(--accent-grey);
         --progress-bubble-background: rgba(0, 0, 0, 0);
         --progress-bubble-reflection-display: none;
-        width: 300px;
-        height: 300px;
+        width: calc(var(--collapse-content-height) - 10px - 32px);
+        height: calc(var(--collapse-content-height) - 10px - 32px);
+        margin-top: 10px;
         margin-bottom: 32px;
-      }
-
-      .outer-spacer {
-        height: 16px;
       }
 
       #material {
@@ -74,8 +75,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: white;
         cursor: default;
         max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
+        margin: 0 auto;
+      }
+
+      :host([opened]) #material {
+        margin-bottom: 16px;
+      }
+
+      :host([opened]:not([first])) #material {
+        margin-top: 16px;
       }
 
       #toolbar {
@@ -90,7 +98,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 8px;
       }
 
-      #nameWrapper.event-hidden {
+      :host([event-hidden]) #nameWrapper {
         opacity: .5;
       }
 
@@ -101,7 +109,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         overflow: hidden;
       }
 
-      #star.starred {
+      :host([starred]) #star {
         color: #f8bb03;
       }
 
@@ -118,6 +126,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       #collapse {
         @apply(--layout-vertical);
         @apply(--layout-center);
+        height: 0;
+        overflow: hidden;
+      }
+
+      :host([opened]) #collapse {
+        height: var(--collapse-content-height);
       }
 
       #bubbleContent {
@@ -146,12 +160,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <iron-collapse
-      opened="[[_isSpacedTop(opened, index)]]"
-      no-animation="[[noAnimation]]">
-      <div class="outer-spacer"></div>
-    </iron-collapse>
-
     <paper-material
       id="material"
       elevation="[[_getElevation(opened)]]"
@@ -163,7 +171,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           color="[[color]]"
           faded="[[_getIconFaded(eventHidden, calendarHidden)]]">
         </calendar-icon>
-        <div id="nameWrapper" class$="[[_getEventHiddenClass(eventHidden)]]">
+        <div id="nameWrapper">
           <div id="name">
             [[name]] [[_getNameSuffixText(durationFromStart)]]
           </div>
@@ -175,7 +183,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-icon-button
           id="star"
           icon="icons:star"
-          class$="[[_getStarredClass(starred)]]"
           on-tap="toggleStar">
         </paper-icon-button>
 
@@ -200,10 +207,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </dropdown-menu>
       </div>
 
-      <iron-collapse
-        id="collapse"
-        opened="[[opened]]"
-        no-animation="[[noAnimation]]">
+      <div id="collapse">
         <!-- TODO: invert direction -->
         <!-- Pink should extend to the left and grow smaller over time. -->
         <progress-bubble
@@ -223,16 +227,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
           </div>
         </progress-bubble>
-      </iron-collapse>
+      </div>
     </paper-material>
-
-    <iron-collapse opened="[[opened]]" no-animation="[[noAnimation]]">
-      <div class="outer-spacer"></div>
-    </iron-collapse>
   </template>
   <script>
   (function() {
     'use strict';
+
+    var COLLAPSE_CONTENT_HEIGHT = 330;
 
     var S_IN_SECOND = 1;
     var S_IN_MINUTE = S_IN_SECOND * 60;
@@ -299,17 +301,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     Polymer({
       is: 'event-card',
 
+      behaviors: [
+        Polymer.NeonAnimationRunnerBehavior
+      ],
+
       properties: {
-        index: {
-          type: Number,
-          value: 1
-        },
         eventId: String,
         calendarId: String,
         name: String,
         color: String,
         opened: {
           type: Boolean,
+          reflectToAttribute: true,
           notify: true
         },
         duration: Number,
@@ -319,16 +322,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         starred: {
           type: Boolean,
+          reflectToAttribute: true,
           notify: true
         },
         eventHidden: {
           type: Boolean,
+          reflectToAttribute: true,
           notify: true
         },
         calendarHidden: Boolean,
         link: String,
         recurrenceId: String,
-        noAnimation: Boolean
+        first: {
+          type: Boolean,
+          reflectToAttribute: true
+        },
+        animationConfig: {
+          value: function() {
+            var getAnimationConfig = (function(timing) {
+              return [{
+                name: 'event-collapse-expand-animation',
+                node: this.$.collapse,
+                maxHeight: COLLAPSE_CONTENT_HEIGHT,
+                timing: timing
+              }, {
+                name: 'event-margin-expand-animation',
+                node: this.$.material,
+                isFirst: (function() {
+                  return this.first;
+                }).bind(this),
+                timing: timing
+              }];
+            }).bind(this);
+            return {
+              'open': getAnimationConfig({
+                duration: 200,
+                easing: 'ease-out',
+                direction: 'normal'
+              }),
+              'close': getAnimationConfig({
+                duration: 200,
+                easing: 'ease-in',
+                direction: 'reverse'
+              })
+            };
+          }
+        }
       },
 
       //
@@ -336,7 +375,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       //
 
       toggleExpand: function() {
-        this.opened = !this.opened;
+        var opened = !this.opened;
+        this.playAnimation(opened ? 'open' : 'close');
+        this.fire('event-open-toggled', {
+          eventId: this.eventId,
+          calendarId: this.calendarId,
+          opened: opened
+        });
       },
 
       toggleStar: function(event) {
@@ -352,10 +397,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       //
       // Getters
       //
-
-      _isSpacedTop: function(opened, index) {
-        return opened && index;
-      },
 
       _getElevation: function(opened) {
         return opened ? 2 : 1;
@@ -392,14 +433,39 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return eventHidden ? 'Unhide' : 'Hide';
       },
 
-      // Class Getters
+      //
+      // Observers
+      //
 
-      _getStarredClass: function(starred) {
-        return starred ? 'starred' : '';
+      observers: [
+        '_starChanged(starred)',
+        '_hideChanged(eventHidden)'
+      ],
+
+      _starChanged: function(starred) {
+        if (starred && this.eventHidden) {
+          this.eventHidden = false;
+        } else {
+          this.fire('event-modified', {
+            eventId: this.eventId,
+            calendarId: this.calendarId,
+            starred: this.starred,
+            hidden: this.eventHidden
+          });
+        }
       },
 
-      _getEventHiddenClass: function(eventHidden) {
-        return eventHidden ? 'event-hidden' : '';
+      _hideChanged: function(hidden) {
+        if (hidden && this.starred) {
+          this.starred = false;
+        } else {
+          this.fire('event-modified', {
+            eventId: this.eventId,
+            calendarId: this.calendarId,
+            starred: this.starred,
+            hidden: this.eventHidden
+          });
+        }
       },
 
       //
