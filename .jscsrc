@@ -1,5 +1,6 @@
 {
-  "preset": "google",
-  "disallowSpacesInAnonymousFunctionExpression": null,
+  "preset": "airbnb",
+  "maximumLineLength": 80,
+  "requireCamelCaseOrUpperCaseIdentifiers": false,
   "excludeFiles": ["node_modules/**"]
 }

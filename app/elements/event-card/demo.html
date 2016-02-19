@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 
 <head>
@@ -45,9 +45,10 @@
 
   <script>
   /* globals demo */
-  (function() {
+  (function () {
     'use strict';
 
+    // jscs:disable disallowQuotedKeysInObjects, maximumLineLength
     var ITEMS = [
       {
         'calendarId': 'zotavka@gmail.com',
@@ -62,7 +63,7 @@
         'opened': true,
         'calendarHidden': false,
         'duration': 945910,
-        'durationFromStart': true
+        'durationFromStart': true,
       },
       {
         'calendarId': 'zotavka@gmail.com',
@@ -77,9 +78,11 @@
         'opened': false,
         'calendarHidden': false,
         'duration': 1903026,
-        'durationFromStart': true
-      }
+        'durationFromStart': true,
+      },
     ];
+
+    // jscs:enable disallowQuotedKeysInObjects, maximumLineLength
 
     // demo.events = [];
     demo.index = 0;
@@ -88,7 +91,7 @@
     demo.showHiddenEvents = true;
     demo.showHiddenCalendars = true;
 
-    demo.toggleItems = function() {
+    demo.toggleItems = function () {
       // demo.events = demo.events.length ? [] : ITEMS;
       demo.index++;
       demo.index %= ITEMS.length;

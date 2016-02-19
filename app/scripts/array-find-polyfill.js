@@ -1,12 +1,16 @@
-// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+// From
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/
+// Global_Objects/Array/find
 if (!Array.prototype.find) {
-  Array.prototype.find = function(predicate) {
+  Array.prototype.find = function (predicate) {
     if (this === null) {
       throw new TypeError('Array.prototype.find called on null or undefined');
     }
+
     if (typeof predicate !== 'function') {
       throw new TypeError('predicate must be a function');
     }
+
     var list = Object(this);
     var length = list.length >>> 0; // jshint ignore:line
     var thisArg = arguments[1];
@@ -18,19 +22,25 @@ if (!Array.prototype.find) {
         return value;
       }
     }
+
     return undefined;
   };
 }
 
-// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
+// From
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/
+// Global_Objects/Array/findIndex
 if (!Array.prototype.findIndex) {
-  Array.prototype.findIndex = function(predicate) {
+  Array.prototype.findIndex = function (predicate) {
     if (this === null) {
-      throw new TypeError('Array.prototype.findIndex called on null or undefined');
+      throw new TypeError('Array.prototype.findIndex called on null or ' +
+                          'undefined');
     }
+
     if (typeof predicate !== 'function') {
       throw new TypeError('predicate must be a function');
     }
+
     var list = Object(this);
     var length = list.length >>> 0; // jshint ignore:line
     var thisArg = arguments[1];
@@ -42,6 +52,7 @@ if (!Array.prototype.findIndex) {
         return i;
       }
     }
+
     return -1;
   };
 }

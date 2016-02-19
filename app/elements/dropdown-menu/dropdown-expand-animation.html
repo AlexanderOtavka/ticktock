@@ -16,17 +16,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   Polymer({
     is: 'dropdown-expand-animation',
     behaviors: [
-      Polymer.NeonAnimationBehavior
+      Polymer.NeonAnimationBehavior,
     ],
-    configure: function(config) {
+    configure: function (config) {
       var node = config.node;
       var height = node.getBoundingClientRect().height;
-      this._effect = new KeyframeEffect(node, [{
-        height: (height / 2) + 'px'
-      }, {
-        height: height + 'px'
-      }], this.timingFromConfig(config));
+      this._effect = new KeyframeEffect(node, [
+        { height: (height / 2) + 'px' },
+        { height: height + 'px' },
+      ], this.timingFromConfig(config));
       return this._effect;
-    }
+    },
   });
 </script>

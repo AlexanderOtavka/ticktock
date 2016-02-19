@@ -79,7 +79,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </paper-icon-item>
   </template>
   <script>
-  (function() {
+  (function () {
     'use strict';
 
     Polymer({
@@ -89,42 +89,42 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: String,
         icon: {
           type: String,
-          value: ''
+          value: '',
         },
         name: String,
         calendarId: String,
         calendarHidden: {
           type: Boolean,
           notify: true,
-          value: false
+          value: false,
         },
-        noMenu: Boolean
+        noMenu: Boolean,
       },
 
-      attached: function() {
-        this.$$('dropdown-menu').onclick = function(event) {
+      attached: function () {
+        this.$$('dropdown-menu').onclick = function (event) {
           event.stopPropagation();
           return false;
         };
       },
 
-      toggleHide: function(event) {
+      toggleHide: function (event) {
         this.calendarHidden = !this.calendarHidden;
         event.stopPropagation();
       },
 
-      _getIcon: function(icon, calendarHidden) {
+      _getIcon: function (icon, calendarHidden) {
         return icon || (calendarHidden ? 'ticktock:calendar-hidden' :
                                          'ticktock:calendar');
       },
 
-      _getHideButtonText: function(calendarHidden) {
+      _getHideButtonText: function (calendarHidden) {
         return calendarHidden ? 'Unhide' : 'Hide';
       },
 
-      _getHiddenClass: function(calendarHidden) {
+      _getHiddenClass: function (calendarHidden) {
         return calendarHidden ? 'hidden' : '';
-      }
+      },
     });
   })();
   </script>

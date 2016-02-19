@@ -231,10 +231,192 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </paper-material>
   </template>
   <script>
-  (function() {
+  (function () {
     'use strict';
 
     var COLLAPSE_CONTENT_HEIGHT = 330;
+
+    Polymer({
+      is: 'event-card',
+
+      behaviors: [
+        Polymer.NeonAnimationRunnerBehavior,
+      ],
+
+      properties: {
+        eventId: String,
+        calendarId: String,
+        name: String,
+        color: String,
+        opened: {
+          type: Boolean,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        duration: Number,
+        durationFromStart: {
+          type: Boolean,
+          value: true,
+        },
+        starred: {
+          type: Boolean,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        eventHidden: {
+          type: Boolean,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        calendarHidden: Boolean,
+        link: String,
+        recurrenceId: String,
+        first: {
+          type: Boolean,
+          reflectToAttribute: true,
+        },
+        animationConfig: {
+          value: function () {
+            var getAnimationConfig = (function (timing) {
+              return [
+                {
+                  name: 'event-collapse-expand-animation',
+                  node: this.$.collapse,
+                  maxHeight: COLLAPSE_CONTENT_HEIGHT,
+                  timing: timing,
+                },
+                {
+                  name: 'event-margin-expand-animation',
+                  node: this.$.material,
+                  isFirst: (function () {
+                    return this.first;
+                  }).bind(this),
+                  timing: timing,
+                },
+              ];
+            }).bind(this);
+            return {
+              open: getAnimationConfig({
+                duration: 200,
+                easing: 'ease-out',
+                direction: 'normal',
+              }),
+              close: getAnimationConfig({
+                duration: 200,
+                easing: 'ease-in',
+                direction: 'reverse',
+              }),
+            };
+          },
+        },
+      },
+
+      observers: [
+        '_starChanged(starred)',
+        '_hideChanged(eventHidden)',
+      ],
+
+      //
+      // Actions
+      //
+
+      toggleExpand: function () {
+        var opened = !this.opened;
+        this.playAnimation(opened ? 'open' : 'close');
+        this.fire('event-open-toggled', {
+          eventId: this.eventId,
+          calendarId: this.calendarId,
+          opened: opened,
+        });
+      },
+
+      toggleStar: function (event) {
+        this.starred = !this.starred;
+        event.stopPropagation();
+      },
+
+      toggleHide: function (event) {
+        this.eventHidden = !this.eventHidden;
+        event.stopPropagation();
+      },
+
+      //
+      // Getters
+      //
+
+      _getElevation: function (opened) {
+        return opened ? 2 : 1;
+      },
+
+      _getIcon: function (calendarHidden) {
+        return calendarHidden ? 'ticktock:calendar-hidden' :
+                                'ticktock:calendar';
+      },
+
+      _getIconFaded: function (eventHidden, calendarHidden) {
+        return eventHidden || calendarHidden;
+      },
+
+      _getMajorDurationMax: function (duration) {
+        return getMajorDurationMax(duration);
+      },
+
+      _getMinorDurationSegments: function (duration) {
+        return getDurationSegments(duration).slice(1);
+      },
+
+      // Text Getters
+
+      _getNameSuffixText: function (durationFromStart) {
+        return durationFromStart ? '' : 'Ends';
+      },
+
+      _getMajorDurationText: function (duration) {
+        return getDurationSegments(duration, false)[0];
+      },
+
+      _getHideButtonText: function (eventHidden) {
+        return eventHidden ? 'Unhide' : 'Hide';
+      },
+
+      //
+      // Observers
+      //
+
+      _starChanged: function (starred) {
+        if (starred && this.eventHidden) {
+          this.eventHidden = false;
+        } else {
+          this.fire('event-modified', {
+            eventId: this.eventId,
+            calendarId: this.calendarId,
+            starred: this.starred,
+            hidden: this.eventHidden,
+          });
+        }
+      },
+
+      _hideChanged: function (hidden) {
+        if (hidden && this.starred) {
+          this.starred = false;
+        } else {
+          this.fire('event-modified', {
+            eventId: this.eventId,
+            calendarId: this.calendarId,
+            starred: this.starred,
+            hidden: this.eventHidden,
+          });
+        }
+      },
+
+      //
+      // Event Handlers
+      //
+
+      _noPropagation: function (event) {
+        event.stopPropagation();
+      },
+    });
 
     var S_IN_SECOND = 1;
     var S_IN_MINUTE = S_IN_SECOND * 60;
@@ -249,7 +431,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       S_IN_DAY,
       S_IN_HOUR,
       S_IN_MINUTE,
-      S_IN_SECOND
+      S_IN_SECOND,
     ];
     var MAX_CONVERSION_FACTOR = S_IN_YEAR * 10;
 
@@ -261,20 +443,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     units[S_IN_MONTH] = 'Month';
     units[S_IN_YEAR] = 'Year';
 
-    var getDurationSegments = function(seconds, multiple) {
+    function getDurationSegments(seconds, multiple) {
       multiple = (multiple === undefined) ? true : multiple;
       var segments = [];
       var number;
       for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
         if (number) {
-          seconds = seconds % (CONVERSION_FACTORS[i - 1] || MAX_CONVERSION_FACTOR);
+          seconds = seconds % (CONVERSION_FACTORS[i - 1] ||
+                               MAX_CONVERSION_FACTOR);
         }
+
         number = Math.floor(seconds / CONVERSION_FACTORS[i]);
         if (number || i === CONVERSION_FACTORS.length - 1) {
           var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
           if (number !== 1) {
             segment += 's';
           }
+
           if (!multiple) {
             return [segment];
           } else {
@@ -282,10 +467,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         }
       }
-      return segments;
-    };
 
-    var getMajorDurationMax = function(seconds) {
+      return segments;
+    }
+
+    function getMajorDurationMax(seconds) {
       var max;
       for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
         var number = Math.floor(seconds / CONVERSION_FACTORS[i]);
@@ -295,187 +481,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           max = CONVERSION_FACTORS[i];
         }
       }
+
       return 1;
-    };
-
-    Polymer({
-      is: 'event-card',
-
-      behaviors: [
-        Polymer.NeonAnimationRunnerBehavior
-      ],
-
-      properties: {
-        eventId: String,
-        calendarId: String,
-        name: String,
-        color: String,
-        opened: {
-          type: Boolean,
-          reflectToAttribute: true,
-          notify: true
-        },
-        duration: Number,
-        durationFromStart: {
-          type: Boolean,
-          value: true
-        },
-        starred: {
-          type: Boolean,
-          reflectToAttribute: true,
-          notify: true
-        },
-        eventHidden: {
-          type: Boolean,
-          reflectToAttribute: true,
-          notify: true
-        },
-        calendarHidden: Boolean,
-        link: String,
-        recurrenceId: String,
-        first: {
-          type: Boolean,
-          reflectToAttribute: true
-        },
-        animationConfig: {
-          value: function() {
-            var getAnimationConfig = (function(timing) {
-              return [{
-                name: 'event-collapse-expand-animation',
-                node: this.$.collapse,
-                maxHeight: COLLAPSE_CONTENT_HEIGHT,
-                timing: timing
-              }, {
-                name: 'event-margin-expand-animation',
-                node: this.$.material,
-                isFirst: (function() {
-                  return this.first;
-                }).bind(this),
-                timing: timing
-              }];
-            }).bind(this);
-            return {
-              'open': getAnimationConfig({
-                duration: 200,
-                easing: 'ease-out',
-                direction: 'normal'
-              }),
-              'close': getAnimationConfig({
-                duration: 200,
-                easing: 'ease-in',
-                direction: 'reverse'
-              })
-            };
-          }
-        }
-      },
-
-      //
-      // Actions
-      //
-
-      toggleExpand: function() {
-        var opened = !this.opened;
-        this.playAnimation(opened ? 'open' : 'close');
-        this.fire('event-open-toggled', {
-          eventId: this.eventId,
-          calendarId: this.calendarId,
-          opened: opened
-        });
-      },
-
-      toggleStar: function(event) {
-        this.starred = !this.starred;
-        event.stopPropagation();
-      },
-
-      toggleHide: function(event) {
-        this.eventHidden = !this.eventHidden;
-        event.stopPropagation();
-      },
-
-      //
-      // Getters
-      //
-
-      _getElevation: function(opened) {
-        return opened ? 2 : 1;
-      },
-
-      _getIcon: function(calendarHidden) {
-        return calendarHidden ? 'ticktock:calendar-hidden' :
-                                'ticktock:calendar';
-      },
-
-      _getIconFaded: function(eventHidden, calendarHidden) {
-        return eventHidden || calendarHidden;
-      },
-
-      _getMajorDurationMax: function(duration) {
-        return getMajorDurationMax(duration);
-      },
-
-      _getMinorDurationSegments: function(duration) {
-        return getDurationSegments(duration).slice(1);
-      },
-
-      // Text Getters
-
-      _getNameSuffixText: function(durationFromStart) {
-        return durationFromStart ? '' : 'Ends';
-      },
-
-      _getMajorDurationText: function(duration) {
-        return getDurationSegments(duration, false)[0];
-      },
-
-      _getHideButtonText: function(eventHidden) {
-        return eventHidden ? 'Unhide' : 'Hide';
-      },
-
-      //
-      // Observers
-      //
-
-      observers: [
-        '_starChanged(starred)',
-        '_hideChanged(eventHidden)'
-      ],
-
-      _starChanged: function(starred) {
-        if (starred && this.eventHidden) {
-          this.eventHidden = false;
-        } else {
-          this.fire('event-modified', {
-            eventId: this.eventId,
-            calendarId: this.calendarId,
-            starred: this.starred,
-            hidden: this.eventHidden
-          });
-        }
-      },
-
-      _hideChanged: function(hidden) {
-        if (hidden && this.starred) {
-          this.starred = false;
-        } else {
-          this.fire('event-modified', {
-            eventId: this.eventId,
-            calendarId: this.calendarId,
-            starred: this.starred,
-            hidden: this.eventHidden
-          });
-        }
-      },
-
-      //
-      // Event Handlers
-      //
-
-      _noPropagation: function(event) {
-        event.stopPropagation();
-      }
-    });
+    }
   })();
   </script>
 </dom-module>

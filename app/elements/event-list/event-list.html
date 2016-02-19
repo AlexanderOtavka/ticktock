@@ -42,7 +42,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </template>
   </template>
   <script>
-  (function() {
+  (function () {
     'use strict';
 
     Polymer({
@@ -51,15 +51,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       properties: {
         events: {
           type: Array,
-          notify: true
+          notify: true,
         },
+
+        // TODO: make openedIndex change when order changes
         openedIndex: {
           type: Number,
-          value: 0
+          value: 0,
         },
-        // TODO: make openedIndex change when order changes
         showHiddenEvents: Boolean,
-        showHiddenCalendars: Boolean
+        showHiddenCalendars: Boolean,
       },
 
       /**
@@ -67,35 +68,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
        *
        * @param {String} eventId - The event's id.
        */
-      openEvent: function(calendarId, eventId) {
+      openEvent: function (calendarId, eventId) {
         var eventIndex = this._getEventIndex(calendarId, eventId);
         if (eventIndex !== -1) {
           this.openedIndex = eventIndex;
         }
       },
 
-      _isOpened: function(eventIndex, openedIndex) {
+      _isOpened: function (eventIndex, openedIndex) {
         return eventIndex === openedIndex;
       },
 
-      _getEventIndex: function(calendarId, eventId) {
-        return this.events.findIndex(function(calendarEvent) {
+      _getEventIndex: function (calendarId, eventId) {
+        return this.events.findIndex(function (calendarEvent) {
           return calendarEvent.eventId === eventId &&
                  calendarEvent.calendarId === calendarId;
         });
       },
 
-      _getFilter: function(showHiddenEvents, showHiddenCalendars) {
+      _getFilter: function (showHiddenEvents, showHiddenCalendars) {
         if (!showHiddenEvents && !showHiddenCalendars) {
-          return function(calendarEvent) {
+          return function (calendarEvent) {
             return !calendarEvent.hidden && !calendarEvent.calendarHidden;
           };
         } else if (!showHiddenEvents) {
-          return function(calendarEvent) {
+          return function (calendarEvent) {
             return !calendarEvent.hidden;
           };
         } else if (!showHiddenCalendars) {
-          return function(calendarEvent) {
+          return function (calendarEvent) {
             return !calendarEvent.calendarHidden;
           };
         } else {
@@ -103,17 +104,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
-      _onEventOpenToggled: function(event) {
+      _onEventOpenToggled: function (event) {
         if (event.detail.opened) {
           var old = Polymer.dom(this.root).querySelector('event-card[opened]');
           if (old) {
             old.toggleExpand();
           }
+
           this.openedIndex = event.model.index;
         } else {
           this.openedIndex = -1;
         }
-      }
+      },
     });
   })();
   </script>

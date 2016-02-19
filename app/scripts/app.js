@@ -1,20 +1,23 @@
 /*
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+The complete set of contributors may be found at
+http://polymer.github.io/CONTRIBUTORS.txt
 Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
 */
 
-/* globals Promise, GAPIManager */
+/* globals GAPIManager */
 
-(function(app) {
+(function (app) {
 'use strict';
 
 // Imports are loaded and elements have been registered.
-window.addEventListener('WebComponentsReady', function() {
-  setInterval(function() {
+window.addEventListener('WebComponentsReady', function () {
+  setInterval(function () {
     updateDurations(app.selectedCalendar);
   }, 1000);
 
@@ -32,7 +35,7 @@ GAPIManager.setClientId(
 GAPIManager.setScopes([
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/plus.me',
-  'https://www.googleapis.com/auth/calendar.readonly'
+  'https://www.googleapis.com/auth/calendar.readonly',
 ]);
 
 var LOCAL_API_ROOT = '//' + window.location.host + '/_ah/api';
@@ -48,13 +51,13 @@ var SIGNED_OUT_USER_INFO = {
   name: 'Sign In with Google',
   picture: '/images/google-logo.svg',
   loading: false,
-  signedOut: true
+  signedOut: true,
 };
 var LOADING_USER_INFO = {
   name: 'Loading...',
   picture: '',
   loading: true,
-  signedOut: false
+  signedOut: false,
 };
 app.userInfo = LOADING_USER_INFO;
 
@@ -68,7 +71,7 @@ var ALL_CALENDAR = {
   loading: true,
   hidden: false,
   events: [],
-  nextPageToken: null
+  nextPageToken: null,
 };
 var LOADING_CALENDAR = {
   kind: 'pseudo:loading',
@@ -79,7 +82,7 @@ var LOADING_CALENDAR = {
   loading: true,
   hidden: false,
   events: [],
-  nextPageToken: null
+  nextPageToken: null,
 };
 var ERROR_CALENDAR = {
   kind: 'pseudo:error',
@@ -90,7 +93,7 @@ var ERROR_CALENDAR = {
   loading: false,
   hidden: false,
   events: [],
-  nextPageToken: null
+  nextPageToken: null,
 };
 app.selectedCalendar = LOADING_CALENDAR;
 
@@ -106,65 +109,70 @@ app.showHiddenEvents = false;
 // Getters
 //
 
-app.getSignedOutClass = function(signedOut) {
+app.getSignedOutClass = function (signedOut) {
   return signedOut ? 'signed-out' : '';
 };
 
-app.getHiddenEventsToggleText = function(showHiddenEvents) {
+app.getHiddenEventsToggleText = function (showHiddenEvents) {
   return showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events';
 };
 
-app.getHiddenCalendarToggleText = function(showHiddenCalendars) {
+app.getHiddenCalendarToggleText = function (showHiddenCalendars) {
   return showHiddenCalendars ? 'Hide Hidden Calendars' :
                                'Show Hidden Calendars';
 };
 
-app.getUrlEncoded = function(string) {
+app.getUrlEncoded = function (string) {
   return encodeURIComponent(string);
 };
 
-app.getUrlDecoded = function(string) {
+app.getUrlDecoded = function (string) {
   return decodeURIComponent(string);
 };
 
-(function() {
-  var calendarStatus = function(signedOut, calendarErrored, eventsLoading,
+(function () {
+  var calendarStatus = function (signedOut, calendarErrored, eventsLoading,
                                 nextPageToken, events) {
     if (signedOut) {
       return calendarStatus.Status.SIGNED_OUT;
     }
+
     if (calendarErrored) {
       return calendarStatus.Status.ERRORED;
     }
+
     if (eventsLoading || nextPageToken) {
       return calendarStatus.Status.LOADING;
     }
+
     if (!Boolean((events || []).length)) {
       return calendarStatus.Status.EMPTY;
     }
+
     return calendarStatus.Status.GOOD;
   };
+
   calendarStatus.Status = {
     GOOD: 0,
     EMPTY: 1,
     LOADING: 2,
     ERRORED: 3,
-    SIGNED_OUT: 4
+    SIGNED_OUT: 4,
   };
 
-  app.getCalendarEmpty = function(signedOut, calendarErrored, eventsLoading,
+  app.getCalendarEmpty = function (signedOut, calendarErrored, eventsLoading,
                                   nextPageToken, events) {
     return calendarStatus(signedOut, calendarErrored, eventsLoading,
                           nextPageToken, events) ===
            calendarStatus.Status.EMPTY;
   };
 
-  app.getCalendarErrored = function(signedOut, calendarErrored) {
+  app.getCalendarErrored = function (signedOut, calendarErrored) {
     return calendarStatus(signedOut, calendarErrored) ===
            calendarStatus.Status.ERRORED;
   };
 
-  app.getCalendarLoading = function(signedOut, calendarErrored, eventsLoading,
+  app.getCalendarLoading = function (signedOut, calendarErrored, eventsLoading,
                                     nextPageToken) {
     return calendarStatus(signedOut, calendarErrored, eventsLoading,
                           nextPageToken) ===
@@ -176,8 +184,9 @@ app.getUrlDecoded = function(string) {
 // Actions
 //
 
-app.displayInstalledToast = function() {
-  // Check to make sure caching is actually enabled—it won't be in the dev environment.
+app.displayInstalledToast = function () {
+  // Check to make sure caching is actually enabled—it won't be in the dev
+  // environment.
   // if (!Polymer.dom(document).querySelector('platinum-sw-cache').disabled) {
   //   app.$.cachingComplete.show();
   // }
@@ -186,7 +195,7 @@ app.displayInstalledToast = function() {
 /**
  * Close drawer after menu item is selected if drawerPanel is narrow.
  */
-app.closeDrawer = function() {
+app.closeDrawer = function () {
   var drawerPanel = app.$.paperDrawerPanel;
   if (drawerPanel.narrow) {
     drawerPanel.closeDrawer();
@@ -196,7 +205,7 @@ app.closeDrawer = function() {
 /**
  * Scroll page to top and expand header.
  */
-app.scrollPageToTop = function() {
+app.scrollPageToTop = function () {
   app.$.mainArea.$.mainContainer.scrollTop = 0;
 };
 
@@ -206,13 +215,14 @@ app.scrollPageToTop = function() {
  * If no calendar ID is provided, the selectedCalendar will be forced off the
  * LOADING_CALENDAR, either on to a proper calendar, or the ERROR_CALENDAR.
  */
-app.selectCalendar = function(calendarId) {
+app.selectCalendar = function (calendarId) {
   if (!calendarId) {
     calendarId = app.selectedCalendar.calendarId;
   } else if (app.selectedCalendar === LOADING_CALENDAR) {
     LOADING_CALENDAR.calendarId = calendarId;
     return;
   }
+
   var calendar = getCalendarById(calendarId);
   if (calendar) {
     app.selectedCalendar = calendar;
@@ -220,28 +230,29 @@ app.selectCalendar = function(calendarId) {
     ERROR_CALENDAR.calendarId = calendarId;
     app.selectedCalendar = ERROR_CALENDAR;
   }
+
   updateListedCalendars();
   app.$.eventList.openedIndex = 0;
 };
 
-app.toggleShowHiddenEvents = function() {
+app.toggleShowHiddenEvents = function () {
   app.showHiddenEvents = !app.showHiddenEvents;
 };
 
-app.toggleShowHiddenCalendars = function() {
-  setTimeout(function() {
+app.toggleShowHiddenCalendars = function () {
+  setTimeout(function () {
     app.showHiddenCalendars = !app.showHiddenCalendars;
     updateListedCalendars();
   }, 20);
 };
 
-app.showSigninPopup = function() {
+app.showSigninPopup = function () {
   signIn(false)
     .then(loadAllData)
     .catch(logError);
 };
 
-app.refreshThisCalendar = function() {
+app.refreshThisCalendar = function () {
   if (app.selectedCalendar === LOADING_CALENDAR ||
       app.selectedCalendar === ERROR_CALENDAR ||
       app.selectedCalendar.loading ||
@@ -266,26 +277,27 @@ app.refreshThisCalendar = function() {
 // Event handlers
 //
 
-app.onEventChanged = function(event) {
+app.onEventChanged = function (event) {
   singleSortEvent(event.detail.eventId, event.detail.calendarId);
   patchEvent(event.detail)
     .catch(handleHTTPError)
     .catch(logError);
 };
 
-app.onCalendarHiddenToggled = function(event) {
+app.onCalendarHiddenToggled = function (event) {
   var calendar = getCalendarById(event.target.calendarId);
   if (calendar) {
-    calendar.events.forEach(function(calendarEvent) {
+    calendar.events.forEach(function (calendarEvent) {
       calendarEvent.calendarHidden = calendar.hidden;
     });
+
     if (calendar === app.selectedCalendar) {
-      calendar.events.forEach(function(calendarEvent, i) {
+      calendar.events.forEach(function (calendarEvent, i) {
         app.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
                        calendar.hidden);
       });
     } else if (app.selectedCalendar === ALL_CALENDAR) {
-      ALL_CALENDAR.events.forEach(function(calendarEvent, i) {
+      ALL_CALENDAR.events.forEach(function (calendarEvent, i) {
         if (calendarEvent.calendarId === event.target.calendarId) {
           app.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
                          calendar.hidden);
@@ -293,10 +305,11 @@ app.onCalendarHiddenToggled = function(event) {
       });
     }
   }
+
   updateListedCalendars();
   patchCalendar({
     calendarId: event.target.calendarId,
-    hidden: event.detail.value
+    hidden: event.detail.value,
   })
     .catch(handleHTTPError)
     .catch(logError);
@@ -306,7 +319,7 @@ app.onCalendarHiddenToggled = function(event) {
 // Network
 //
 
-var handleHTTPError = function(err) {
+function handleHTTPError(err) {
   if (err instanceof GAPIManager.HTTPError) {
     console.error(err);
     if (err.code === -1) {
@@ -319,40 +332,42 @@ var handleHTTPError = function(err) {
   } else {
     throw err;
   }
-};
+}
 
-var handleAuthError = function(err) {
+function handleAuthError(err) {
   if (err.code === 401) {
     console.error(err);
     return signIn(true);
   } else {
     throw err;
   }
-};
+}
 
-var sendReAuthedRequest = function(request) {
+function sendReAuthedRequest(request) {
   return request
-    .catch(function(err) {
+    .catch(function (err) {
       return handleAuthError(err)
-        .then(function() {
+        .then(function () {
           return request;
         });
     });
-};
+}
 
-var updateAllCalendarState = function() {
+function updateAllCalendarState() {
   ALL_CALENDAR.events = [];
-  app.calendars.forEach(function(calendar) {
+  app.calendars.forEach(function (calendar) {
     ALL_CALENDAR.events = ALL_CALENDAR.events.concat(calendar.events);
   });
+
   sortEvents(ALL_CALENDAR);
 
   ALL_CALENDAR.loading = false;
   ALL_CALENDAR.errored = true;
-  app.calendars.forEach(function(calendar) {
+  app.calendars.forEach(function (calendar) {
     if (calendar.loading) {
       ALL_CALENDAR.loading = true;
     }
+
     if (!calendar.errored) {
       ALL_CALENDAR.errored = false;
     }
@@ -363,97 +378,99 @@ var updateAllCalendarState = function() {
     app.notifyPath('selectedCalendar.loading', ALL_CALENDAR.loading);
     app.notifyPath('selectedCalendar.errored', ALL_CALENDAR.errored);
   }
-};
+}
 
-var signIn = function(mode) {
+function signIn(mode) {
   return GAPIManager.authorize(mode)
-    .then(function() {
+    .then(function () {
       app.userInfo = LOADING_USER_INFO;
       app.$.userBar.removeEventListener('tap', app.showSigninPopup);
     })
-    .catch(function(err) {
+    .catch(function (err) {
       if (err instanceof GAPIManager.AuthError && err.accessDenied) {
         signOut();
       }
+
       throw err;
     });
-};
+}
 
-var signOut = function() {
+function signOut() {
   app.userInfo = SIGNED_OUT_USER_INFO;
   app.$.userBar.addEventListener('tap', app.showSigninPopup);
   updateListedCalendars();
-};
+}
 
-var patchEvent = function(params) {
+function patchEvent(params) {
   return sendReAuthedRequest(loadedTickTockAPI
-    .then(function(ticktock) {
+    .then(function (ticktock) {
       return ticktock.events.patch({
         calendarId: encodeURIComponent(params.calendarId),
         eventId: params.eventId,
         starred: params.starred,
-        hidden: params.hidden
+        hidden: params.hidden,
       });
     }));
-};
+}
 
-var patchCalendar = function(params) {
+function patchCalendar(params) {
   return sendReAuthedRequest(loadedTickTockAPI
-    .then(function(ticktock) {
+    .then(function (ticktock) {
       return ticktock.calendars.patch({
         calendarId: encodeURIComponent(params.calendarId),
-        hidden: params.hidden
+        hidden: params.hidden,
       });
     }));
-};
+}
 
-var loadAllData = function() {
+function loadAllData() {
   return Promise.all([
     loadProfile()
       .catch(handleHTTPError),
     loadCalendars()
       .then(loadEvents)
-      .catch(handleHTTPError)
+      .catch(handleHTTPError),
   ]);
-};
+}
 
-var loadProfile = function() {
+function loadProfile() {
   return sendReAuthedRequest(loadedOauth2API
-    .then(function(oauth2) {
+    .then(function (oauth2) {
       return oauth2.userinfo.v2.me.get({
-        fields: 'name,picture'
+        fields: 'name,picture',
       });
     }))
-    .then(function(resp) {
+    .then(function (resp) {
       resp.loading = false;
       resp.signedOut = false;
       app.userInfo = resp;
     });
-};
+}
 
-var loadCalendars = function() {
+function loadCalendars() {
   LOADING_CALENDAR.calendarId = app.selectedCalendar.calendarId;
   app.selectedCalendar = LOADING_CALENDAR;
   return sendReAuthedRequest(loadedTickTockAPI
-    .then(function(ticktock) {
+    .then(function (ticktock) {
       return ticktock.calendars.list({
-        hidden: null
+        hidden: null,
       });
     }))
-    .then(function(resp) {
+    .then(function (resp) {
       var calendars = resp.items || [];
-      calendars.forEach(function(calendar) {
+      calendars.forEach(function (calendar) {
         calendar.events = [];
         calendar.errored = false;
         calendar.nextPageToken = null;
       });
+
       app.calendars = calendars;
       app.selectCalendar();
       return calendars;
     });
-};
+}
 
-var loadEvents = function(calendars) {
+function loadEvents(calendars) {
   var timeZone;
   try {
     timeZone =  Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -463,7 +480,7 @@ var loadEvents = function(calendars) {
 
   app.$.eventList.openedIndex = 0;
 
-  var promise = Promise.all(calendars.map(function(calendar) {
+  var promise = Promise.all(calendars.map(function (calendar) {
     calendar.events = [];
     calendar.errored = false;
     calendar.loading = true;
@@ -473,33 +490,35 @@ var loadEvents = function(calendars) {
     }
 
     return sendReAuthedRequest(loadedTickTockAPI
-      .then(function(ticktock) {
+      .then(function (ticktock) {
         return ticktock.events.list({
           calendarId: encodeURIComponent(calendar.calendarId),
           hidden: null,
           maxResults: 10,
-          timeZone: timeZone
+          timeZone: timeZone,
         });
       }))
-      .then(function(resp) {
+      .then(function (resp) {
         if (resp.items) {
-          resp.items.forEach(function(calendarEvent) {
+          resp.items.forEach(function (calendarEvent) {
             calendarEvent.color = calendar.color;
             calendarEvent.calendarHidden = calendar.hidden;
           });
+
           calendar.events = resp.items;
           sortEvents(calendar);
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         calendar.errored = true;
         if (calendar === app.selectedCalendar) {
           app.notifyPath('selectedCalendar.errored', true);
         }
+
         throw err;
       })
       .catch(handleHTTPError)
-      .then(function() {
+      .then(function () {
         calendar.loading = false;
         if (calendar === app.selectedCalendar) {
           app.notifyPath('selectedCalendar.events', calendar.events);
@@ -512,72 +531,78 @@ var loadEvents = function(calendars) {
   updateAllCalendarState();
 
   return promise;
-};
+}
 
 //
 // Utility Functions
 //
 
-var logError = function(err) {
+function logError(err) {
   console.error(err);
   throw err;
-};
+}
 
-var getCalendarById = function(calendarId) {
+function getCalendarById(calendarId) {
   if (calendarId === ALL_CALENDAR.calendarId) {
     return ALL_CALENDAR;
   } else {
-    return app.calendars.find(function(calendar) {
+    return app.calendars.find(function (calendar) {
       return calendar.calendarId === calendarId;
     });
   }
-};
+}
 
-var getEventIndexById = function(calendar, eventId, calendarId) {
-  return calendar.events.findIndex(function(calendarEvent) {
+function getEventIndexById(calendar, eventId, calendarId) {
+  return calendar.events.findIndex(function (calendarEvent) {
     return calendarEvent.eventId === eventId &&
            calendarEvent.calendarId === (calendarId || calendar.calendarId);
   });
-};
+}
 
-var deleteEventById = function(calendarId, eventId) {
-  var i;
+function deleteEventById(calendarId, eventId) {
   var calendar = getCalendarById(calendarId);
+  var i;
+  var removed;
   if (calendar) {
     i = getEventIndexById(calendar, eventId);
     if (i >= 0) {
-      var removed = calendar.events.splice(i, 1);
+      removed = calendar.events.splice(i, 1);
       if (calendar === app.selectedCalendar) {
-        app.notifySplices('selectedCalendar.events', [{
+        app.notifySplices('selectedCalendar.events', [
+          {
+            index: i,
+            removed: removed,
+            addedCount: 0,
+            object: app.selectedCalendar.events,
+            type: 'splice',
+          },
+        ]);
+      }
+    }
+  }
+
+  i = getEventIndexById(ALL_CALENDAR, eventId, calendarId);
+  if (i >= 0) {
+    removed = ALL_CALENDAR.events.splice(i, 1);
+    if (calendar === app.selectedCalendar) {
+      app.notifySplices('selectedCalendar.events', [
+        {
           index: i,
           removed: removed,
           addedCount: 0,
           object: app.selectedCalendar.events,
-          type: 'splice'
-        }]);
-      }
+          type: 'splice',
+        },
+      ]);
     }
   }
-  i = getEventIndexById(ALL_CALENDAR, eventId, calendarId);
-  if (i >= 0) {
-    var removed = ALL_CALENDAR.events.splice(i, 1);
-    if (calendar === app.selectedCalendar) {
-      app.notifySplices('selectedCalendar.events', [{
-        index: i,
-        removed: removed,
-        addedCount: 0,
-        object: app.selectedCalendar.events,
-        type: 'splice'
-      }]);
-    }
-  }
-};
+}
 
-var updateDurations = function(calendar) {
+function updateDurations(calendar) {
   // TODO: Optimize this.
   var now = Date.now();
 
-  calendar.events.forEach(function(calendarEvent, i) {
+  calendar.events.forEach(function (calendarEvent, i) {
     var timeToStart = 0;
     var timeToEnd = 0;
     if (calendarEvent.startDate) {
@@ -606,9 +631,9 @@ var updateDurations = function(calendar) {
                      calendarEvent.durationFromStart);
     }
   });
-};
+}
 
-var updateListedCalendars = function() {
+function updateListedCalendars() {
   if (app.userInfo.signedOut) {
     app.listedCalendars = [];
     app.hasHiddenCalendars = false;
@@ -621,122 +646,126 @@ var updateListedCalendars = function() {
 
   var hasHidden = false;
   var listed = [];
-  app.calendars.forEach(function(calendar) {
+  app.calendars.forEach(function (calendar) {
     if (!hasHidden && calendar.hidden) {
       hasHidden = true;
     }
+
     if (!calendar.hidden || app.showHiddenCalendars) {
       listed.push(calendar);
     }
   });
+
   app.listedCalendars = listed;
   app.hasHiddenCalendars = hasHidden;
-};
+}
 
-var singleSortEvent, sortEvents;
-(function() {
-  /**
-   * Move an event to its proper place in its calendar and the ALL_CALENDAR.
-   *
-   * Uses the insertion sort algorithm, and notifies splices.
-   *
-   * @param {String} eventId - The event's ID.
-   * @param {String} calendarId - The event's calendar's ID.
-   */
-  singleSortEvent = function(eventId, calendarId) {
-    var calendar = getCalendarById(calendarId);
-    if (calendar) {
-      singleSortByCalendar(calendar, eventId);
-      if (calendar !== ALL_CALENDAR) {
-        singleSortByCalendar(ALL_CALENDAR, eventId);
-      }
+/**
+ * Move an event to its proper place in its calendar and the ALL_CALENDAR.
+ *
+ * Uses the insertion sort algorithm, and notifies splices.
+ *
+ * @param {String} eventId - The event's ID.
+ * @param {String} calendarId - The event's calendar's ID.
+ */
+function singleSortEvent(eventId, calendarId) {
+  var calendar = getCalendarById(calendarId);
+  if (calendar) {
+    singleSortByCalendar(calendar, eventId);
+    if (calendar !== ALL_CALENDAR) {
+      singleSortByCalendar(ALL_CALENDAR, eventId);
     }
-  };
+  }
+}
 
-  /**
-   * Sort all of a calendar's events.
-   *
-   * Does not notify.
-   *
-   * @param {Object} calendar - The calendar object whose events should be
-   *   sorted.
-   */
-  sortEvents = function(calendar) {
-    calendar.events = calendar.events.sort(compareEvents);
-  };
+/**
+ * Sort all of a calendar's events.
+ *
+ * Does not notify.
+ *
+ * @param {Object} calendar - The calendar object whose events should be
+ *   sorted.
+ */
+function sortEvents(calendar) {
+  calendar.events = calendar.events.sort(compareEvents);
+}
 
-  var singleSortByCalendar = function(calendar, eventId) {
-    /************************
-    Algorithm Summary Drawing
-    *************************
-                  *-3
-    [1, 6, 9, 15, 19, 22]
-        ^
-    (1, 3)? yes
-       (6, 3)? no
+function singleSortByCalendar(calendar, eventId) {
+  /************************
+  Algorithm Summary Drawing
+  *************************
+                *-3
+  [1, 6, 9, 15, 19, 22]
+      ^
+  (1, 3)? yes
+     (6, 3)? no
 
-    [1, 6, 9, 15, 3, 19, 22]
-            - to -
-    [1, 3, 6, 9, 15, 19, 22]
-    -----------------------------
-        *-16
-    [1, 9, 15, 17, 19, 22]
-               ^
-    (1, 16)? yes
-       (9, 16)? yes
-          (15, 16)? yes
-              (17, 16)? no
+  [1, 6, 9, 15, 3, 19, 22]
+          - to -
+  [1, 3, 6, 9, 15, 19, 22]
+  -----------------------------
+      *-16
+  [1, 9, 15, 17, 19, 22]
+             ^
+  (1, 16)? yes
+     (9, 16)? yes
+        (15, 16)? yes
+            (17, 16)? no
 
-    [1, 16, 9, 15, 17, 19, 22]
-             - to -
-    [1, 9, 15, 16, 17, 19, 22]
-    ************************/
-    var misplacedIndex = calendar.events.findIndex(function(calendarEvent) {
-      return calendarEvent.eventId === eventId;
-    });
-    var misplacedEvent = calendar.events.splice(misplacedIndex, 1)[0];
+  [1, 16, 9, 15, 17, 19, 22]
+           - to -
+  [1, 9, 15, 16, 17, 19, 22]
+  ************************/
+  var misplacedIndex = calendar.events.findIndex(function (calendarEvent) {
+    return calendarEvent.eventId === eventId;
+  });
 
-    var targetIndex = calendar.events.findIndex(function(calendarEvent) {
-      return compareEvents(calendarEvent, misplacedEvent) > 0;
-    });
-    calendar.events.splice(targetIndex, 0, misplacedEvent);
+  var misplacedEvent = calendar.events.splice(misplacedIndex, 1)[0];
 
-    if (calendar === app.selectedCalendar) {
-      app.notifySplices('selectedCalendar.events', [{
+  var targetIndex = calendar.events.findIndex(function (calendarEvent) {
+    return compareEvents(calendarEvent, misplacedEvent) > 0;
+  });
+
+  calendar.events.splice(targetIndex, 0, misplacedEvent);
+
+  if (calendar === app.selectedCalendar) {
+    app.notifySplices('selectedCalendar.events', [
+      {
         index: misplacedIndex,
         removed: [misplacedEvent],
         addedCount: 0,
         object: app.selectedCalendar.events,
-        type: 'splice'
-      }, {
+        type: 'splice',
+      },
+      {
         index: targetIndex,
         removed: [],
         addedCount: 1,
         object: app.selectedCalendar.events,
-        type: 'splice'
-      }]);
-    }
-  };
+        type: 'splice',
+      },
+    ]);
+  }
+}
 
-  var compareBools = function(a, b) {
-    // True is first.
-    return b - a;
-  };
+function compareBools(a, b) {
+  // True is first.
+  return b - a;
+}
 
-  var compareStrings = function(a, b) {
-    // Sort alphabetically, any language, case insensitive.
-    return a.localeCompare(b);
-  };
+function compareStrings(a, b) {
+  // Sort alphabetically, any language, case insensitive.
+  return a.localeCompare(b);
+}
 
-  var compareEvents = function(a, b) {
-    // Sort order: starred, duration, alphabetical, id.
-    return compareBools(a.starred, b.starred) ||
-           compareStrings(a.startDate || a.endDate,
-                          b.startDate || b.endDate) ||
-           compareStrings(a.name, b.name) ||
-           compareStrings(a.eventId, b.eventId) ||
-           0;
-  };
-})();
+function compareEvents(a, b) {
+  // Sort order: starred, duration, alphabetical, id.
+  return compareBools(a.starred, b.starred) ||
+         compareStrings(a.startDate || a.endDate,
+                        b.startDate || b.endDate) ||
+         compareStrings(a.name, b.name) ||
+         compareStrings(a.eventId, b.eventId) ||
+         0;
+}
 
 })(app);

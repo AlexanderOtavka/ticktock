@@ -43,7 +43,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </iron-dropdown>
   </template>
   <script>
-  (function() {
+  (function () {
     'use strict';
 
     Polymer({
@@ -51,56 +51,61 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       properties: {
         verticalAlign: {
           type: String,
-          value: 'top'
+          value: 'top',
         },
         verticalOffset: Number,
         horizontalAlign: {
           type: String,
-          value: 'right'
+          value: 'right',
         },
         horizontalOffset: Number,
         disabled: Boolean,
         openAnimationConfig: {
           type: Array,
-          value: function() {
-            return [{
-              name: 'fade-in-animation',
-              timing: {
-                delay: 150,
-                duration: 50
-              }
-            }, {
-              name: 'dropdown-expand-animation',
-              timing: {
-                delay: 150,
-                duration: 200
-              }
-            }];
-          }
+          value: function () {
+            return [
+              {
+                name: 'fade-in-animation',
+                timing: {
+                  delay: 150,
+                  duration: 50,
+                },
+              },
+              {
+                name: 'dropdown-expand-animation',
+                timing: {
+                  delay: 150,
+                  duration: 200,
+                },
+              },
+            ];
+          },
         },
         closeAnimationConfig: {
           type: Array,
-          value: function() {
-            return [{
-              name: 'fade-out-animation',
-              timing: {
-                duration: 200
-              }
-            }];
-          }
+          value: function () {
+            return [
+              {
+                name: 'fade-out-animation',
+                timing: {
+                  duration: 200,
+                },
+              },
+            ];
+          },
         },
         opened: {
           type: Boolean,
-          notify: true
-        }
+          notify: true,
+        },
       },
 
-      open: function(event) {
-        setTimeout((function() {
+      open: function (event) {
+        setTimeout((function () {
           this.$.dropdown.open();
         }).bind(this), 20);
         event.stopPropagation();
-      }
+      },
     });
   })();
   </script>

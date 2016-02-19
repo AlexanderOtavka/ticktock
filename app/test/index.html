@@ -11,22 +11,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <html>
 
-  <head>
-    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <title>Elements Test Runner</title>
-    <meta charset="UTF-8">
+<head>
+  <meta
+    name="viewport"
+    content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>Elements Test Runner</title>
+  <meta charset="UTF-8">
 
-    <script src="../../bower_components/webcomponentsjs/webcomponents.min.js"></script>
-    <script src="../../bower_components/web-component-tester/browser.js"></script>
-  </head>
+  <script
+    src="../../bower_components/webcomponentsjs/webcomponents.min.js">
+  </script>
+  <script
+    src="../../bower_components/web-component-tester/browser.js">
+  </script>
+</head>
 
-  <body>
+<body>
 
-    <script>
-      WCT.loadSuites(['event-card-basic.html', 'calendar-icon-basic.html', 'more-button-basic.html', 'selectable-calendar-basic.html', 'event-list-basic.html']);
-    </script>
+  <script>
+    /* globals WCT */
+
+    WCT.loadSuites([
+      'event-card-basic.html',
+      'calendar-icon-basic.html',
+      'more-button-basic.html',
+      'selectable-calendar-basic.html',
+      'event-list-basic.html',
+    ]);
+  </script>
 
 
-  </body>
+</body>
 
 </html>
