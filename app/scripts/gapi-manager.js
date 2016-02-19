@@ -10,6 +10,8 @@
  * ```
  *   <script src="https://apis.google.com/js/client.js?onload=GAPIManager"></script>
  * ```
+ *
+ * @author Zander Otavka
  */
 (function() {
 'use strict';
@@ -17,6 +19,60 @@
 var _scopes = [];
 var _clientId = '';
 var _loadedAPIs = [];
+
+/**
+ * Recursively crawl the API and return a modified copy that uses promises.
+ */
+var _patchifyAPI = function(apiObject, notInAPIRoot) {
+  if (apiObject instanceof Function) {
+    return function(params) {
+      return new Promise(function(resolve, reject) {
+        apiObject(params).execute(function(resp) {
+          if (!resp) {
+            reject(new HTTPError(404, 'Not Found.'));
+          } else if (resp.code) {
+            reject(new HTTPError(resp.code, resp.message));
+          } else {
+            resolve(resp);
+          }
+        });
+      });
+    };
+  } else {
+    var copy = {};
+    Object.keys(apiObject).forEach(function(name) {
+      if (notInAPIRoot || name !== 'kB') {
+        copy[name] = _patchifyAPI(apiObject[name], true);
+      }
+    });
+    return copy;
+  }
+};
+
+/**
+ * Error with an HTTP status code, thrown when API request fails.
+ */
+var HTTPError = function(code, message) {
+  Error.call(this);
+  this.message = message;
+  this.code = code;
+};
+HTTPError.prototype = Object.create(Error.prototype);
+HTTPError.prototype.constructor = HTTPError;
+
+/**
+ * Error signaling authorization failed.
+ */
+var AuthError = function(errorType, errorSubtype) {
+  Error.call(this);
+  this.message = errorType + ': ' + errorSubtype;
+  this.type = errorType;
+  this.subtype = errorSubtype;
+
+  this.accessDenied = (errorSubtype === 'access_denied');
+};
+AuthError.prototype = Object.create(Error.prototype);
+AuthError.prototype.constructor = AuthError;
 
 var GAPIManager, _loadedGAPI;
 (function() {
@@ -129,61 +185,8 @@ GAPIManager.signOut = function() {
     });
 };
 
-/**
- * Error with an HTTP status code, thrown when API request fails.
- */
-var HTTPError = function(code, message) {
-  Error.call(this);
-  this.message = message;
-  this.code = code;
-};
-HTTPError.prototype = Object.create(Error.prototype);
-HTTPError.prototype.constructor = HTTPError;
 GAPIManager.HTTPError = HTTPError;
-
-/**
- * Error signaling authorization failed.
- */
-var AuthError = function(errorType, errorSubtype) {
-  Error.call(this);
-  this.message = errorType + ': ' + errorSubtype;
-  this.type = errorType;
-  this.subtype = errorSubtype;
-
-  this.accessDenied = (errorSubtype === 'access_denied');
-};
-AuthError.prototype = Object.create(Error.prototype);
-AuthError.prototype.constructor = AuthError;
 GAPIManager.AuthError = AuthError;
-
-/**
- * Recursively crawl the API and return a modified copy that uses promises.
- */
-var _patchifyAPI = function(apiObject, notInAPIRoot) {
-  if (apiObject instanceof Function) {
-    return function(params) {
-      return new Promise(function(resolve, reject) {
-        apiObject(params).execute(function(resp) {
-          if (!resp) {
-            reject(new HTTPError(404, 'Not Found.'));
-          } else if (resp.code) {
-            reject(new HTTPError(resp.code, resp.message));
-          } else {
-            resolve(resp);
-          }
-        });
-      });
-    };
-  } else {
-    var copy = {};
-    Object.keys(apiObject).forEach(function(name) {
-      if (notInAPIRoot || name !== 'kB') {
-        copy[name] = _patchifyAPI(apiObject[name], true);
-      }
-    });
-    return copy;
-  }
-};
 
 window.GAPIManager = GAPIManager;
 
