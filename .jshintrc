@@ -17,6 +17,7 @@
     "Platform": true,
     "page": true,
     "app": true,
-    "Promise": true
+    "Promise": true,
+    "Class": true
   }
 }

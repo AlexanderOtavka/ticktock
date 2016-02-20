@@ -24,29 +24,31 @@ var _onLoad;
 /**
  * Error with an HTTP status code, thrown when API request fails.
  */
-var HTTPError = function (code, message) {
-  Error.call(this);
-  this.message = message;
-  this.code = code;
-};
+var HTTPError = Class({
+  extends: Error,
 
-HTTPError.prototype = Object.create(Error.prototype);
-HTTPError.prototype.constructor = HTTPError;
+  constructor: function (code, message) {
+    HTTPError.super.constructor.call(this);
+    this.message = message;
+    this.code = code;
+  },
+});
 
 /**
  * Error signaling authorization failed.
  */
-var AuthError = function (errorType, errorSubtype) {
-  Error.call(this);
-  this.message = errorType + ': ' + errorSubtype;
-  this.type = errorType;
-  this.subtype = errorSubtype;
+var AuthError = Class({
+  extends: Error,
 
-  this.accessDenied = (errorSubtype === 'access_denied');
-};
+  constructor: function (errorType, errorSubtype) {
+    AuthError.super.constructor.call(this);
+    this.message = errorType + ': ' + errorSubtype;
+    this.type = errorType;
+    this.subtype = errorSubtype;
 
-AuthError.prototype = Object.create(Error.prototype);
-AuthError.prototype.constructor = AuthError;
+    this.accessDenied = (errorSubtype === 'access_denied');
+  },
+});
 
 /**
  * Promise that resolves to the gapi object.
