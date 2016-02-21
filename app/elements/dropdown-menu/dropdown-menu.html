@@ -13,100 +13,103 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="dropdown-expand-animation.html">
 
 <dom-module id="dropdown-menu">
-  <template>
-    <style>
-      :host {
-        display: inline-block;
-      }
 
-      #dropdown > ::content .dropdown-content {
-        @apply(--shadow-elevation-3dp);
-        background-color: white;
-        border-radius: 2px;
-      }
-    </style>
+<style>
+  :host {
+    display: inline-block;
+  }
 
-    <div on-tap="open">
-      <content select=".dropdown-trigger"></content>
-    </div>
+  #dropdown > ::content .dropdown-content {
+    @apply(--shadow-elevation-3dp);
+    background-color: white;
+    border-radius: 2px;
+  }
+</style>
 
-    <iron-dropdown id="dropdown"
-      vertical-align="[[verticalAlign]]"
-      vertical-offset="[[verticalOffset]]"
-      horizontal-align="[[horizontalAlign]]"
-      horizontal-offset="[[horizontalOffset]]"
-      disabled="[[disabled]]"
-      open-animation-config="[[openAnimationConfig]]"
-      close-animation-config="[[closeAnimationConfig]]"
-      opened="{{opened}}">
-      <content select=".dropdown-content"></content>
-    </iron-dropdown>
-  </template>
-  <script>
-  (function () {
-    'use strict';
+<template>
+  <div on-tap="open">
+    <content select=".dropdown-trigger"></content>
+  </div>
 
-    Polymer({
-      is: 'dropdown-menu',
-      properties: {
-        verticalAlign: {
-          type: String,
-          value: 'top',
-        },
-        verticalOffset: Number,
-        horizontalAlign: {
-          type: String,
-          value: 'right',
-        },
-        horizontalOffset: Number,
-        disabled: Boolean,
-        openAnimationConfig: {
-          type: Array,
-          value: function () {
-            return [
-              {
-                name: 'fade-in-animation',
-                timing: {
-                  delay: 150,
-                  duration: 50,
-                },
+  <iron-dropdown id="dropdown"
+    vertical-align="[[verticalAlign]]"
+    vertical-offset="[[verticalOffset]]"
+    horizontal-align="[[horizontalAlign]]"
+    horizontal-offset="[[horizontalOffset]]"
+    disabled="[[disabled]]"
+    open-animation-config="[[openAnimationConfig]]"
+    close-animation-config="[[closeAnimationConfig]]"
+    opened="{{opened}}">
+    <content select=".dropdown-content"></content>
+  </iron-dropdown>
+</template>
+
+<script>
+(function () {
+  'use strict';
+
+  Polymer({
+    is: 'dropdown-menu',
+    properties: {
+      verticalAlign: {
+        type: String,
+        value: 'top',
+      },
+      verticalOffset: Number,
+      horizontalAlign: {
+        type: String,
+        value: 'right',
+      },
+      horizontalOffset: Number,
+      disabled: Boolean,
+      openAnimationConfig: {
+        type: Array,
+        value: function () {
+          return [
+            {
+              name: 'fade-in-animation',
+              timing: {
+                delay: 150,
+                duration: 50,
               },
-              {
-                name: 'dropdown-expand-animation',
-                timing: {
-                  delay: 150,
-                  duration: 200,
-                },
+            },
+            {
+              name: 'dropdown-expand-animation',
+              timing: {
+                delay: 150,
+                duration: 200,
               },
-            ];
-          },
-        },
-        closeAnimationConfig: {
-          type: Array,
-          value: function () {
-            return [
-              {
-                name: 'fade-out-animation',
-                timing: {
-                  duration: 200,
-                },
-              },
-            ];
-          },
-        },
-        opened: {
-          type: Boolean,
-          notify: true,
+            },
+          ];
         },
       },
-
-      open: function (event) {
-        setTimeout((function () {
-          this.$.dropdown.open();
-        }).bind(this), 20);
-        event.stopPropagation();
+      closeAnimationConfig: {
+        type: Array,
+        value: function () {
+          return [
+            {
+              name: 'fade-out-animation',
+              timing: {
+                duration: 200,
+              },
+            },
+          ];
+        },
       },
-    });
-  })();
-  </script>
+      opened: {
+        type: Boolean,
+        notify: true,
+      },
+    },
+
+    open: function (event) {
+      setTimeout((function () {
+        this.$.dropdown.open();
+      }).bind(this), 20);
+      event.stopPropagation();
+    },
+  });
+})();
+</script>
+
 </dom-module>

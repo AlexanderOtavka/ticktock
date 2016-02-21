@@ -13,64 +13,68 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../ticktock-icons/ticktock-icons.html">
 
 <dom-module id="calendar-icon">
-  <template>
-    <style>
-      :host {
-        display: inline-block;
-      }
 
-      #wrapper {
-        position: relative;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-      }
+<style>
+  :host {
+    display: inline-block;
+  }
 
-      #fade {
-        display: inline-block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.5);
-      }
+  #wrapper {
+    position: relative;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+  }
 
-      #icon {
-        color: white;
-        margin: 8px;
-        --iron-icon-width: 16px;
-        --iron-icon-height: 16px;
-      }
-    </style>
-    <div id="wrapper" style$="background-color: [[color]];">
-      <div id="fade" hidden="[[!faded]]"></div>
-      <iron-icon id="icon" icon="[[icon]]"></iron-icon>
-    </div>
-  </template>
-  <script>
-  (function () {
-    'use strict';
+  #fade {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+  }
 
-    Polymer({
-      is: 'calendar-icon',
+  #icon {
+    color: white;
+    margin: 8px;
+    --iron-icon-width: 16px;
+    --iron-icon-height: 16px;
+  }
+</style>
 
-      properties: {
-        color: {
-          type: String,
-          value: '#bbb',
-        },
-        icon: {
-          type: String,
-          value: 'ticktock:calendar',
-        },
-        faded: {
-          type: Boolean,
-          value: false,
-        },
+<template>
+  <div id="wrapper" style$="background-color: [[color]];">
+    <div id="fade" hidden="[[!faded]]"></div>
+    <iron-icon id="icon" icon="[[icon]]"></iron-icon>
+  </div>
+</template>
+
+<script>
+(function () {
+  'use strict';
+
+  Polymer({
+    is: 'calendar-icon',
+
+    properties: {
+      color: {
+        type: String,
+        value: '#bbb',
       },
-    });
-  })();
-  </script>
+      icon: {
+        type: String,
+        value: 'ticktock:calendar',
+      },
+      faded: {
+        type: Boolean,
+        value: false,
+      },
+    },
+  });
+})();
+</script>
+
 </dom-module>

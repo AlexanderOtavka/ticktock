@@ -25,465 +25,468 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="event-margin-expand-animation.html">
 
 <dom-module id="event-card">
-  <template>
-    <style>
-      :host {
-        --collapse-content-height: 330px;
 
-        display: block;
-        border-bottom: 1px solid rgba(0, 0, 0, 0);
-      }
+<style>
+  :host {
+    --collapse-content-height: 330px;
 
-      calendar-icon {
-        margin: 16px;
-      }
+    display: block;
+    border-bottom: 1px solid rgba(0, 0, 0, 0);
+  }
 
-      paper-icon-button {
-        color: var(--dark-icon-color);
-      }
+  calendar-icon {
+    margin: 16px;
+  }
 
-      paper-item {
-        cursor: pointer;
-      }
+  paper-icon-button {
+    color: var(--dark-icon-color);
+  }
 
-      paper-item iron-icon {
-        color: var(--dark-icon-color);
-      }
+  paper-item {
+    cursor: pointer;
+  }
 
-      paper-item iron-icon.right {
-        margin-left: 12px;
-      }
+  paper-item iron-icon {
+    color: var(--dark-icon-color);
+  }
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+  paper-item iron-icon.right {
+    margin-left: 12px;
+  }
 
-      progress-bubble {
-        --progress-bubble-stroke-color: var(--primary-color);
-        --progress-bubble-bg-stroke-color: var(--accent-grey);
-        --progress-bubble-background: rgba(0, 0, 0, 0);
-        --progress-bubble-reflection-display: none;
-        width: calc(var(--collapse-content-height) - 10px - 32px);
-        height: calc(var(--collapse-content-height) - 10px - 32px);
-        margin-top: 10px;
-        margin-bottom: 32px;
-      }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-      #material {
-        padding: 0;
-        background-color: white;
-        cursor: default;
-        max-width: 600px;
-        margin: 0 auto;
-      }
+  progress-bubble {
+    --progress-bubble-stroke-color: var(--primary-color);
+    --progress-bubble-bg-stroke-color: var(--accent-grey);
+    --progress-bubble-background: rgba(0, 0, 0, 0);
+    --progress-bubble-reflection-display: none;
+    width: calc(var(--collapse-content-height) - 10px - 32px);
+    height: calc(var(--collapse-content-height) - 10px - 32px);
+    margin-top: 10px;
+    margin-bottom: 32px;
+  }
 
-      :host([opened]) #material {
-        margin-bottom: 16px;
-      }
+  #material {
+    padding: 0;
+    background-color: white;
+    cursor: default;
+    max-width: 600px;
+    margin: 0 auto;
+  }
 
-      :host([opened]:not([first])) #material {
-        margin-top: 16px;
-      }
+  :host([opened]) #material {
+    margin-bottom: 16px;
+  }
 
-      #toolbar {
-        @apply(--layout-horizontal);
-        @apply(--layout-center);
-      }
+  :host([opened]:not([first])) #material {
+    margin-top: 16px;
+  }
 
-      #nameWrapper {
-        @apply(--layout-vertical);
-        @apply(--layout-start);
-        @apply(--layout-flex);
-        margin: 8px;
-      }
+  #toolbar {
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
+  }
 
-      :host([event-hidden]) #nameWrapper {
-        opacity: .5;
-      }
+  #nameWrapper {
+    @apply(--layout-vertical);
+    @apply(--layout-start);
+    @apply(--layout-flex);
+    margin: 8px;
+  }
 
-      #name {
-        font-size: 16px;
-        line-height: 18px;
-        max-height: 36px;
-        overflow: hidden;
-      }
+  :host([event-hidden]) #nameWrapper {
+    opacity: .5;
+  }
 
-      :host([starred]) #star {
-        color: #f8bb03;
-      }
+  #name {
+    font-size: 16px;
+    line-height: 18px;
+    max-height: 36px;
+    overflow: hidden;
+  }
 
-      #miniTimer {
-        color: var(--secondary-text-color);
-        font-weight: 300;
-        font-size: .8rem;
-      }
+  :host([starred]) #star {
+    color: #f8bb03;
+  }
 
-      #toolbar paper-icon-button:last-child {
-        margin-right: 4px;
-      }
+  #miniTimer {
+    color: var(--secondary-text-color);
+    font-weight: 300;
+    font-size: .8rem;
+  }
 
-      #collapse {
-        @apply(--layout-vertical);
-        @apply(--layout-center);
-        height: 0;
-        overflow: hidden;
-      }
+  #toolbar paper-icon-button:last-child {
+    margin-right: 4px;
+  }
 
-      :host([opened]) #collapse {
-        height: var(--collapse-content-height);
-      }
+  #collapse {
+    @apply(--layout-vertical);
+    @apply(--layout-center);
+    height: 0;
+    overflow: hidden;
+  }
 
-      #bubbleContent {
-        @apply(--layout-vertical);
-        @apply(--layout-center-center);
-        text-shadow: none;
-        color: var(--secondary-text-color);
-        font-weight: 300;
-        width: 100%;
-        height: 100%;
-      }
+  :host([opened]) #collapse {
+    height: var(--collapse-content-height);
+  }
 
-      #majorDurationSegment {
-        font-size: 3rem;
-      }
+  #bubbleContent {
+    @apply(--layout-vertical);
+    @apply(--layout-center-center);
+    text-shadow: none;
+    color: var(--secondary-text-color);
+    font-weight: 300;
+    width: 100%;
+    height: 100%;
+  }
 
-      #minorDurationSegmentsWrapper {
-        font-size: 1rem;
-        width: 60%;
-        text-align: center;
-      }
+  #majorDurationSegment {
+    font-size: 3rem;
+  }
 
-      #minorDurationSegmentsWrapper span {
-        display: inline-block;
-        margin: 0 2px;
-      }
-    </style>
+  #minorDurationSegmentsWrapper {
+    font-size: 1rem;
+    width: 60%;
+    text-align: center;
+  }
 
-    <paper-material
-      id="material"
-      elevation="[[_getElevation(opened)]]"
-      on-tap="toggleExpand"
-      animated>
-      <div id="toolbar">
-        <calendar-icon
-          icon="[[_getIcon(calendarHidden)]]"
-          color="[[color]]"
-          faded="[[_getIconFaded(eventHidden, calendarHidden)]]">
-        </calendar-icon>
-        <div id="nameWrapper">
-          <div id="name">
-            [[name]] [[_getNameSuffixText(durationFromStart)]]
-          </div>
-          <div id="miniTimer" hidden="[[opened]]">
-            [[_getMajorDurationText(duration)]]
-          </div>
+  #minorDurationSegmentsWrapper span {
+    display: inline-block;
+    margin: 0 2px;
+  }
+</style>
+
+<template>
+  <paper-material
+    id="material"
+    elevation="[[_getElevation(opened)]]"
+    on-tap="toggleExpand"
+    animated>
+    <div id="toolbar">
+      <calendar-icon
+        icon="[[_getIcon(calendarHidden)]]"
+        color="[[color]]"
+        faded="[[_getIconFaded(eventHidden, calendarHidden)]]">
+      </calendar-icon>
+      <div id="nameWrapper">
+        <div id="name">
+          [[name]] [[_getNameSuffixText(durationFromStart)]]
         </div>
+        <div id="miniTimer" hidden="[[opened]]">
+          [[_getMajorDurationText(duration)]]
+        </div>
+      </div>
 
+      <paper-icon-button
+        id="star"
+        icon="icons:star"
+        on-tap="toggleStar">
+      </paper-icon-button>
+
+      <dropdown-menu horizontal-offset="8" vertical-offset="0">
         <paper-icon-button
-          id="star"
-          icon="icons:star"
-          on-tap="toggleStar">
+          icon="icons:more-vert"
+          class="dropdown-trigger">
         </paper-icon-button>
 
-        <dropdown-menu horizontal-offset="8" vertical-offset="0">
-          <paper-icon-button
-            icon="icons:more-vert"
-            class="dropdown-trigger">
-          </paper-icon-button>
+        <div class="dropdown-content">
+          <paper-item on-tap="toggleHide">
+            <div>[[_getHideButtonText(eventHidden)]]</div>
+          </paper-item>
 
-          <div class="dropdown-content">
-            <paper-item on-tap="toggleHide">
-              <div>[[_getHideButtonText(eventHidden)]]</div>
+          <a href="[[link]]" target="_blank">
+            <paper-item on-tap="_noPropagation">
+              <div>Open in Google Calendar</div>
+              <iron-icon class="right" icon="icons:open-in-new"></iron-icon>
             </paper-item>
+          </a>
+        </div>
+      </dropdown-menu>
+    </div>
 
-            <a href="[[link]]" target="_blank">
-              <paper-item on-tap="_noPropagation">
-                <div>Open in Google Calendar</div>
-                <iron-icon class="right" icon="icons:open-in-new"></iron-icon>
-              </paper-item>
-            </a>
+    <div id="collapse">
+      <!-- TODO: invert direction -->
+      <!-- Pink should extend to the left and grow smaller over time. -->
+      <progress-bubble
+        stroke-width="15"
+        value="[[duration]]"
+        max="[[_getMajorDurationMax(duration)]]">
+        <div id="bubbleContent">
+          <div id="majorDurationSegment">
+            [[_getMajorDurationText(duration)]]
           </div>
-        </dropdown-menu>
-      </div>
-
-      <div id="collapse">
-        <!-- TODO: invert direction -->
-        <!-- Pink should extend to the left and grow smaller over time. -->
-        <progress-bubble
-          stroke-width="15"
-          value="[[duration]]"
-          max="[[_getMajorDurationMax(duration)]]">
-          <div id="bubbleContent">
-            <div id="majorDurationSegment">
-              [[_getMajorDurationText(duration)]]
-            </div>
-            <div id="minorDurationSegmentsWrapper">
-              <template
-                is="dom-repeat"
-                items="[[_getMinorDurationSegments(duration)]]">
-                <span>[[item]]</span>
-              </template>
-            </div>
+          <div id="minorDurationSegmentsWrapper">
+            <template
+              is="dom-repeat"
+              items="[[_getMinorDurationSegments(duration)]]">
+              <span>[[item]]</span>
+            </template>
           </div>
-        </progress-bubble>
-      </div>
-    </paper-material>
-  </template>
-  <script>
-  (function () {
-    'use strict';
+        </div>
+      </progress-bubble>
+    </div>
+  </paper-material>
+</template>
 
-    var COLLAPSE_CONTENT_HEIGHT = 330;
+<script>
+(function () {
+  'use strict';
 
-    Polymer({
-      is: 'event-card',
+  var COLLAPSE_CONTENT_HEIGHT = 330;
 
-      behaviors: [
-        Polymer.NeonAnimationRunnerBehavior,
-      ],
+  Polymer({
+    is: 'event-card',
 
-      properties: {
-        eventId: String,
-        calendarId: String,
-        name: String,
-        color: String,
-        opened: {
-          type: Boolean,
-          reflectToAttribute: true,
-          notify: true,
-        },
-        duration: Number,
-        durationFromStart: {
-          type: Boolean,
-          value: true,
-        },
-        starred: {
-          type: Boolean,
-          reflectToAttribute: true,
-          notify: true,
-        },
-        eventHidden: {
-          type: Boolean,
-          reflectToAttribute: true,
-          notify: true,
-        },
-        calendarHidden: Boolean,
-        link: String,
-        recurrenceId: String,
-        first: {
-          type: Boolean,
-          reflectToAttribute: true,
-        },
-        animationConfig: {
-          value: function () {
-            var getAnimationConfig = (function (timing) {
-              return [
-                {
-                  name: 'event-collapse-expand-animation',
-                  node: this.$.collapse,
-                  maxHeight: COLLAPSE_CONTENT_HEIGHT,
-                  timing: timing,
-                },
-                {
-                  name: 'event-margin-expand-animation',
-                  node: this.$.material,
-                  isFirst: (function () {
-                    return this.first;
-                  }).bind(this),
-                  timing: timing,
-                },
-              ];
-            }).bind(this);
-            return {
-              open: getAnimationConfig({
-                duration: 200,
-                easing: 'ease-out',
-                direction: 'normal',
-              }),
-              close: getAnimationConfig({
-                duration: 200,
-                easing: 'ease-in',
-                direction: 'reverse',
-              }),
-            };
-          },
+    behaviors: [
+      Polymer.NeonAnimationRunnerBehavior,
+    ],
+
+    properties: {
+      eventId: String,
+      calendarId: String,
+      name: String,
+      color: String,
+      opened: {
+        type: Boolean,
+        reflectToAttribute: true,
+        notify: true,
+      },
+      duration: Number,
+      durationFromStart: {
+        type: Boolean,
+        value: true,
+      },
+      starred: {
+        type: Boolean,
+        reflectToAttribute: true,
+        notify: true,
+      },
+      eventHidden: {
+        type: Boolean,
+        reflectToAttribute: true,
+        notify: true,
+      },
+      calendarHidden: Boolean,
+      link: String,
+      recurrenceId: String,
+      first: {
+        type: Boolean,
+        reflectToAttribute: true,
+      },
+      animationConfig: {
+        value: function () {
+          var getAnimationConfig = (function (timing) {
+            return [
+              {
+                name: 'event-collapse-expand-animation',
+                node: this.$.collapse,
+                maxHeight: COLLAPSE_CONTENT_HEIGHT,
+                timing: timing,
+              },
+              {
+                name: 'event-margin-expand-animation',
+                node: this.$.material,
+                isFirst: (function () {
+                  return this.first;
+                }).bind(this),
+                timing: timing,
+              },
+            ];
+          }).bind(this);
+          return {
+            open: getAnimationConfig({
+              duration: 200,
+              easing: 'ease-out',
+              direction: 'normal',
+            }),
+            close: getAnimationConfig({
+              duration: 200,
+              easing: 'ease-in',
+              direction: 'reverse',
+            }),
+          };
         },
       },
+    },
 
-      observers: [
-        '_starChanged(starred)',
-        '_hideChanged(eventHidden)',
-      ],
+    observers: [
+      '_starChanged(starred)',
+      '_hideChanged(eventHidden)',
+    ],
 
-      //
-      // Actions
-      //
+    //
+    // Actions
+    //
 
-      toggleExpand: function () {
-        var opened = !this.opened;
-        this.playAnimation(opened ? 'open' : 'close');
-        this.fire('event-open-toggled', {
+    toggleExpand: function () {
+      var opened = !this.opened;
+      this.playAnimation(opened ? 'open' : 'close');
+      this.fire('event-open-toggled', {
+        eventId: this.eventId,
+        calendarId: this.calendarId,
+        opened: opened,
+      });
+    },
+
+    toggleStar: function (event) {
+      this.starred = !this.starred;
+      event.stopPropagation();
+    },
+
+    toggleHide: function (event) {
+      this.eventHidden = !this.eventHidden;
+      event.stopPropagation();
+    },
+
+    //
+    // Getters
+    //
+
+    _getElevation: function (opened) {
+      return opened ? 2 : 1;
+    },
+
+    _getIcon: function (calendarHidden) {
+      return calendarHidden ? 'ticktock:calendar-hidden' :
+                              'ticktock:calendar';
+    },
+
+    _getIconFaded: function (eventHidden, calendarHidden) {
+      return eventHidden || calendarHidden;
+    },
+
+    _getMajorDurationMax: function (duration) {
+      return getMajorDurationMax(duration);
+    },
+
+    _getMinorDurationSegments: function (duration) {
+      return getDurationSegments(duration).slice(1);
+    },
+
+    // Text Getters
+
+    _getNameSuffixText: function (durationFromStart) {
+      return durationFromStart ? '' : 'Ends';
+    },
+
+    _getMajorDurationText: function (duration) {
+      return getDurationSegments(duration, false)[0];
+    },
+
+    _getHideButtonText: function (eventHidden) {
+      return eventHidden ? 'Unhide' : 'Hide';
+    },
+
+    //
+    // Observers
+    //
+
+    _starChanged: function (starred) {
+      if (starred && this.eventHidden) {
+        this.eventHidden = false;
+      } else {
+        this.fire('event-modified', {
           eventId: this.eventId,
           calendarId: this.calendarId,
-          opened: opened,
+          starred: this.starred,
+          hidden: this.eventHidden,
         });
-      },
+      }
+    },
 
-      toggleStar: function (event) {
-        this.starred = !this.starred;
-        event.stopPropagation();
-      },
+    _hideChanged: function (hidden) {
+      if (hidden && this.starred) {
+        this.starred = false;
+      } else {
+        this.fire('event-modified', {
+          eventId: this.eventId,
+          calendarId: this.calendarId,
+          starred: this.starred,
+          hidden: this.eventHidden,
+        });
+      }
+    },
 
-      toggleHide: function (event) {
-        this.eventHidden = !this.eventHidden;
-        event.stopPropagation();
-      },
+    //
+    // Event Handlers
+    //
 
-      //
-      // Getters
-      //
+    _noPropagation: function (event) {
+      event.stopPropagation();
+    },
+  });
 
-      _getElevation: function (opened) {
-        return opened ? 2 : 1;
-      },
+  var S_IN_SECOND = 1;
+  var S_IN_MINUTE = S_IN_SECOND * 60;
+  var S_IN_HOUR = S_IN_MINUTE * 60;
+  var S_IN_DAY = S_IN_HOUR * 24;
+  var S_IN_MONTH = S_IN_DAY * 30;
+  var S_IN_YEAR = S_IN_DAY * 365;
 
-      _getIcon: function (calendarHidden) {
-        return calendarHidden ? 'ticktock:calendar-hidden' :
-                                'ticktock:calendar';
-      },
+  var CONVERSION_FACTORS = [
+    S_IN_YEAR,
+    S_IN_MONTH,
+    S_IN_DAY,
+    S_IN_HOUR,
+    S_IN_MINUTE,
+    S_IN_SECOND,
+  ];
+  var MAX_CONVERSION_FACTOR = S_IN_YEAR * 10;
 
-      _getIconFaded: function (eventHidden, calendarHidden) {
-        return eventHidden || calendarHidden;
-      },
+  var units = {};
+  units[S_IN_SECOND] = 'Second';
+  units[S_IN_MINUTE] = 'Minute';
+  units[S_IN_HOUR] = 'Hour';
+  units[S_IN_DAY] = 'Day';
+  units[S_IN_MONTH] = 'Month';
+  units[S_IN_YEAR] = 'Year';
 
-      _getMajorDurationMax: function (duration) {
-        return getMajorDurationMax(duration);
-      },
-
-      _getMinorDurationSegments: function (duration) {
-        return getDurationSegments(duration).slice(1);
-      },
-
-      // Text Getters
-
-      _getNameSuffixText: function (durationFromStart) {
-        return durationFromStart ? '' : 'Ends';
-      },
-
-      _getMajorDurationText: function (duration) {
-        return getDurationSegments(duration, false)[0];
-      },
-
-      _getHideButtonText: function (eventHidden) {
-        return eventHidden ? 'Unhide' : 'Hide';
-      },
-
-      //
-      // Observers
-      //
-
-      _starChanged: function (starred) {
-        if (starred && this.eventHidden) {
-          this.eventHidden = false;
-        } else {
-          this.fire('event-modified', {
-            eventId: this.eventId,
-            calendarId: this.calendarId,
-            starred: this.starred,
-            hidden: this.eventHidden,
-          });
-        }
-      },
-
-      _hideChanged: function (hidden) {
-        if (hidden && this.starred) {
-          this.starred = false;
-        } else {
-          this.fire('event-modified', {
-            eventId: this.eventId,
-            calendarId: this.calendarId,
-            starred: this.starred,
-            hidden: this.eventHidden,
-          });
-        }
-      },
-
-      //
-      // Event Handlers
-      //
-
-      _noPropagation: function (event) {
-        event.stopPropagation();
-      },
-    });
-
-    var S_IN_SECOND = 1;
-    var S_IN_MINUTE = S_IN_SECOND * 60;
-    var S_IN_HOUR = S_IN_MINUTE * 60;
-    var S_IN_DAY = S_IN_HOUR * 24;
-    var S_IN_MONTH = S_IN_DAY * 30;
-    var S_IN_YEAR = S_IN_DAY * 365;
-
-    var CONVERSION_FACTORS = [
-      S_IN_YEAR,
-      S_IN_MONTH,
-      S_IN_DAY,
-      S_IN_HOUR,
-      S_IN_MINUTE,
-      S_IN_SECOND,
-    ];
-    var MAX_CONVERSION_FACTOR = S_IN_YEAR * 10;
-
-    var units = {};
-    units[S_IN_SECOND] = 'Second';
-    units[S_IN_MINUTE] = 'Minute';
-    units[S_IN_HOUR] = 'Hour';
-    units[S_IN_DAY] = 'Day';
-    units[S_IN_MONTH] = 'Month';
-    units[S_IN_YEAR] = 'Year';
-
-    function getDurationSegments(seconds, multiple) {
-      multiple = (multiple === undefined) ? true : multiple;
-      var segments = [];
-      var number;
-      for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
-        if (number) {
-          seconds = seconds % (CONVERSION_FACTORS[i - 1] ||
-                               MAX_CONVERSION_FACTOR);
-        }
-
-        number = Math.floor(seconds / CONVERSION_FACTORS[i]);
-        if (number || i === CONVERSION_FACTORS.length - 1) {
-          var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
-          if (number !== 1) {
-            segment += 's';
-          }
-
-          if (!multiple) {
-            return [segment];
-          } else {
-            segments.push(segment);
-          }
-        }
+  function getDurationSegments(seconds, multiple) {
+    multiple = (multiple === undefined) ? true : multiple;
+    var segments = [];
+    var number;
+    for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
+      if (number) {
+        seconds = seconds % (CONVERSION_FACTORS[i - 1] ||
+                             MAX_CONVERSION_FACTOR);
       }
 
-      return segments;
-    }
+      number = Math.floor(seconds / CONVERSION_FACTORS[i]);
+      if (number || i === CONVERSION_FACTORS.length - 1) {
+        var segment = String(number) + ' ' + units[CONVERSION_FACTORS[i]];
+        if (number !== 1) {
+          segment += 's';
+        }
 
-    function getMajorDurationMax(seconds) {
-      var max;
-      for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
-        var number = Math.floor(seconds / CONVERSION_FACTORS[i]);
-        if (number) {
-          return max || MAX_CONVERSION_FACTOR;
+        if (!multiple) {
+          return [segment];
         } else {
-          max = CONVERSION_FACTORS[i];
+          segments.push(segment);
         }
       }
-
-      return 1;
     }
-  })();
-  </script>
+
+    return segments;
+  }
+
+  function getMajorDurationMax(seconds) {
+    var max;
+    for (var i = 0; i < CONVERSION_FACTORS.length; i++) {
+      var number = Math.floor(seconds / CONVERSION_FACTORS[i]);
+      if (number) {
+        return max || MAX_CONVERSION_FACTOR;
+      } else {
+        max = CONVERSION_FACTORS[i];
+      }
+    }
+
+    return 1;
+  }
+})();
+</script>
+
 </dom-module>

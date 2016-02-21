@@ -19,113 +19,116 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../ticktock-icons/ticktock-icons.html">
 
 <dom-module id="selectable-calendar">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
 
-      paper-icon-button {
-        color: var(--light-icon-color);
-      }
+<style>
+  :host {
+    display: block;
+  }
 
-      paper-icon-item {
-        font-size: var(--calendar-font-size);
-        padding-right: 2px;
-        --paper-item-focused-before: {
-          background-color: rgba(0, 0, 0, 0);
-        }
-      }
+  paper-icon-button {
+    color: var(--light-icon-color);
+  }
 
-      .hidden {
-        opacity: 0.7;
-      }
+  paper-icon-item {
+    font-size: var(--calendar-font-size);
+    padding-right: 2px;
+    --paper-item-focused-before: {
+      background-color: rgba(0, 0, 0, 0);
+    }
+  }
 
-      #name {
-        @apply(--layout-flex);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    </style>
+  .hidden {
+    opacity: 0.7;
+  }
 
-    <paper-icon-item>
-      <calendar-icon
-        color="[[color]]"
-        icon="[[_getIcon(icon, calendarHidden)]]"
-        faded="[[calendarHidden]]"
-        item-icon>
-      </calendar-icon>
-      <span id="name" class$="[[_getHiddenClass(calendarHidden)]]">
-        [[name]]
-      </span>
+  #name {
+    @apply(--layout-flex);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
 
-      <dropdown-menu
-        horizontal-align="left"
-        horizontal-offset="0"
-        vertical-offset="0"
-        hidden="[[noMenu]]">
-        <paper-icon-button
-          icon="icons:more-vert"
-          class="dropdown-trigger">
-        </paper-icon-button>
+<template>
+  <paper-icon-item>
+    <calendar-icon
+      color="[[color]]"
+      icon="[[_getIcon(icon, calendarHidden)]]"
+      faded="[[calendarHidden]]"
+      item-icon>
+    </calendar-icon>
+    <span id="name" class$="[[_getHiddenClass(calendarHidden)]]">
+      [[name]]
+    </span>
 
-        <div class="dropdown-content">
-          <paper-item on-tap="toggleHide">
-            <div>[[_getHideButtonText(calendarHidden)]]</div>
-          </paper-item>
-        </div>
-      </dropdown-menu>
-    </paper-icon-item>
-  </template>
-  <script>
-  (function () {
-    'use strict';
+    <dropdown-menu
+      horizontal-align="left"
+      horizontal-offset="0"
+      vertical-offset="0"
+      hidden="[[noMenu]]">
+      <paper-icon-button
+        icon="icons:more-vert"
+        class="dropdown-trigger">
+      </paper-icon-button>
 
-    Polymer({
-      is: 'selectable-calendar',
+      <div class="dropdown-content">
+        <paper-item on-tap="toggleHide">
+          <div>[[_getHideButtonText(calendarHidden)]]</div>
+        </paper-item>
+      </div>
+    </dropdown-menu>
+  </paper-icon-item>
+</template>
 
-      properties: {
-        color: String,
-        icon: {
-          type: String,
-          value: '',
-        },
-        name: String,
-        calendarId: String,
-        calendarHidden: {
-          type: Boolean,
-          notify: true,
-          value: false,
-        },
-        noMenu: Boolean,
+<script>
+(function () {
+  'use strict';
+
+  Polymer({
+    is: 'selectable-calendar',
+
+    properties: {
+      color: String,
+      icon: {
+        type: String,
+        value: '',
       },
-
-      attached: function () {
-        this.$$('dropdown-menu').onclick = function (event) {
-          event.stopPropagation();
-          return false;
-        };
+      name: String,
+      calendarId: String,
+      calendarHidden: {
+        type: Boolean,
+        notify: true,
+        value: false,
       },
+      noMenu: Boolean,
+    },
 
-      toggleHide: function (event) {
-        this.calendarHidden = !this.calendarHidden;
+    attached: function () {
+      this.$$('dropdown-menu').onclick = function (event) {
         event.stopPropagation();
-      },
+        return false;
+      };
+    },
 
-      _getIcon: function (icon, calendarHidden) {
-        return icon || (calendarHidden ? 'ticktock:calendar-hidden' :
-                                         'ticktock:calendar');
-      },
+    toggleHide: function (event) {
+      this.calendarHidden = !this.calendarHidden;
+      event.stopPropagation();
+    },
 
-      _getHideButtonText: function (calendarHidden) {
-        return calendarHidden ? 'Unhide' : 'Hide';
-      },
+    _getIcon: function (icon, calendarHidden) {
+      return icon || (calendarHidden ? 'ticktock:calendar-hidden' :
+                                       'ticktock:calendar');
+    },
 
-      _getHiddenClass: function (calendarHidden) {
-        return calendarHidden ? 'hidden' : '';
-      },
-    });
-  })();
-  </script>
+    _getHideButtonText: function (calendarHidden) {
+      return calendarHidden ? 'Unhide' : 'Hide';
+    },
+
+    _getHiddenClass: function (calendarHidden) {
+      return calendarHidden ? 'hidden' : '';
+    },
+  });
+})();
+</script>
+
 </dom-module>
