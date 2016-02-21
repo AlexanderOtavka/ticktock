@@ -7,7 +7,7 @@
  * var MyClass = Class({
  *   // Defines the constructor.  Optional, defaults to calling the superclass
  *   // constructor without arguments.
- *   constructor: function (foo) {
+ *   constructor: function MyClass(foo) {
  *     this.foo = foo;
  *   },
  *
@@ -32,7 +32,7 @@
  *   // Extend a superclass.  Optional, defaults to Object.
  *   extends: MyClass,
  *
- *   constructor: function () {
+ *   constructor: function MySubclass() {
  *     // Call the superclass constructor.  MySubclass.super is equivalent to
  *     // MyClass.prototype.
  *     MySubclass.super.constructor.call(this, 'Subclass foo...');
