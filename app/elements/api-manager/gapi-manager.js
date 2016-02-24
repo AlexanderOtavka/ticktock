@@ -15,6 +15,10 @@
 (function () {
 'use strict';
 
+if (window.hasOwnProperty('GAPIManager')) {
+  return;
+}
+
 var _scopes = [];
 var _clientId = '';
 var _loadedAPIs = [];
@@ -27,7 +31,7 @@ var _onLoad;
 var HTTPError = Class({
   extends: Error,
 
-  constructor: function (code, message) {
+  constructor: function HTTPError(code, message) {
     HTTPError.super.constructor.call(this);
     this.message = message;
     this.code = code;
@@ -40,7 +44,7 @@ var HTTPError = Class({
 var AuthError = Class({
   extends: Error,
 
-  constructor: function (errorType, errorSubtype) {
+  constructor: function AuthError(errorType, errorSubtype) {
     AuthError.super.constructor.call(this);
     this.message = errorType + ': ' + errorSubtype;
     this.type = errorType;

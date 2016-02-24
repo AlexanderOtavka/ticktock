@@ -91,7 +91,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           selectable="a"
           attr-for-selected="data-route"
           selected="[[route]]">
-          <div id="userBar" class$="[[getSignedOutClass(userInfo.signedOut)]]">
+          <div
+            id="userBar"
+            class$="[[getSignedOutClass(userInfo.signedOut)]]"
+            on-tap="showSigninPopup">
             <iron-image src="[[userInfo.picture]]" sizing="cover"></iron-image>
             <span id="userName">[[userInfo.name]]</span>
           </div>
@@ -108,7 +111,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </selectable-calendar>
           </a>
 
-          <template is="dom-repeat" items="{{listedCalendars}}">
+          <template
+            is="dom-repeat"
+            items="{{calendars}}"
+            filter="{{getCalendarFilter(showHiddenCalendars)}}"
+            observe="hidden">
             <a
               href="/calendars/[[getUrlEncoded(item.calendarId)]]"
               on-click="closeDrawer"
@@ -213,7 +220,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <div
                 id="calNotLoaded"
                 class="centered-content"
-                hidden="[[!getCalendarErrored(userInfo.signedOut, selectedCalendar.errored)]]">
+                hidden="[[!getCalendarErrored(userInfo.signedOut, selectedCalendar.calendarErrored, selectedCalendar.eventsErrored)]]">
                 Oops... this calendar could not be loaded :(
                 <br>
                 <paper-button on-tap="refreshThisCalendar">
@@ -223,14 +230,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
               <div
                 class="centered-content"
-                hidden="[[!getCalendarEmpty(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken, selectedCalendar.events)]]">
+                hidden="[[!getCalendarEmpty(userInfo.signedOut, selectedCalendar.calendarErrored, selectedCalendar.eventsErrored, selectedCalendar.eventsLoading, selectedCalendar.nextPageToken, selectedCalendar.events)]]">
                 Looks like there's nothing here.
               </div>
 
               <div
                 id="spinnerWrapper"
                 class="centered-content"
-                hidden="[[!getCalendarLoading(userInfo.signedOut, selectedCalendar.errored, selectedCalendar.loading, selectedCalendar.nextPageToken)]]">
+                hidden="[[!getCalendarLoading(userInfo.signedOut, selectedCalendar.calendarErrored, selectedCalendar.eventsErrored, selectedCalendar.eventsLoading, selectedCalendar.nextPageToken)]]">
                 <paper-spinner active></paper-spinner>
               </div>
             </section>
@@ -257,6 +264,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       text="There was a problem with the network.">
     </paper-toast>
 
+    <api-manager
+      id="apiManager"
+      user-info="{{userInfo}}"
+      calendars="{{calendars}}"
+      has-hidden-calendars="{{hasHiddenCalendars}}"
+      selected-calendar="{{selectedCalendar}}"
+      show-hidden-events="[[showHiddenEvents]]"
+      show-hidden-calendars="[[showHiddenCalendars]]"
+      on-error="showErrorToast"
+      on-network-error="showNetworkErrorToast">
+    </api-manager>
+
     <!-- SW Stuff -->
     <paper-toast
       id="cachingComplete"
@@ -268,7 +287,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       auto-register
       clients-claim
       skip-waiting
-      on-service-worker-installed="displayInstalledToast">
+      on-service-worker-installed="showInstalledToast">
       <platinum-sw-cache
         default-cache-strategy="fastest"
         cache-config-file="cache-config.json">
@@ -280,13 +299,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </platinum-sw-register>
 
   </template>
-
-  <!-- build:js scripts/gapi-manager.js -->
-  <script src="scripts/gapi-manager.js"></script>
-  <!-- endbuild -->
-  <script
-    src="https://apis.google.com/js/client.js?onload=GAPIManager">
-  </script>
 
   <!-- build:js scripts/app.js -->
   <script src="scripts/app.js"></script>

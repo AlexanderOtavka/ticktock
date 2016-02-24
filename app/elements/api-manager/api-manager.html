@@ -1,0 +1,649 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="gapi-manager.html">
+
+<script>
+/* globals GAPIManager */
+
+(function () {
+'use strict';
+
+//
+// API configuration
+//
+
+GAPIManager.setClientId(
+  '208366307202-00824keo9p663g1uhkd8misc52e1c5pa.apps.googleusercontent.com');
+GAPIManager.setScopes([
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/plus.me',
+  'https://www.googleapis.com/auth/calendar.readonly',
+]);
+
+var LOCAL_API_ROOT = '//' + window.location.host + '/_ah/api';
+var loadedTickTockAPI = GAPIManager.loadAPI('ticktock', 'v1', LOCAL_API_ROOT);
+var loadedOauth2API = GAPIManager.loadAPI('oauth2', 'v2');
+
+//
+// Constants
+//
+
+var SIGNED_OUT_USER_INFO = {
+  name: 'Sign In with Google',
+  picture: '/images/google-logo.svg',
+  loading: false,
+  signedOut: true,
+};
+var LOADING_USER_INFO = {
+  name: 'Loading...',
+  picture: '',
+  loading: true,
+  signedOut: false,
+};
+
+var ALL_CALENDAR = {
+  name: 'All Calendars',
+  calendarId: '*',
+  color: '#e91e63',
+  eventsErrored: false,
+  eventsLoading: true,
+  calendarErrored: false,
+  hidden: false,
+  events: [],
+  nextPageToken: null,
+};
+
+//
+// Static Variables
+//
+
+var _calendars = {
+  loading: [],
+  all: [],
+  unhidden: [],
+};
+
+var _calendarsLoading = true;
+
+//
+// Element registration
+//
+
+var APIManager = Polymer({
+  is: 'api-manager',
+
+  properties: {
+    userInfo: {
+      type: Object,
+      notify: true,
+      value: LOADING_USER_INFO,
+    },
+    calendars: {
+      type: Object,
+      notify: true,
+    },
+    hasHiddenCalendars: {
+      type: Boolean,
+      notify: true,
+      readOnly: true,
+    },
+
+    // TODO: move calendar selection to app.js
+    selectedCalendar: {
+      type: Object,
+      notify: true,
+      value: ALL_CALENDAR,
+    },
+    showHiddenEvents: Boolean,
+    showHiddenCalendars: Boolean,
+  },
+
+  /**
+   * Authenticate the user and do an initial load.
+   *
+   * @param {Boolean} mode - True suppresses the popup and uses the cookie.
+   */
+  signIn: function (mode) {
+    this._authorize(mode)
+      .then(this._loadAllData.bind(this))
+      .catch(logError);
+  },
+
+  /**
+   * Remove all signed in UI.
+   */
+  signOut: function () {
+    this.userInfo = SIGNED_OUT_USER_INFO;
+    this.calendars = [];
+
+    // TODO: actually sign the user out
+  },
+
+  /**
+   * Clear cache and reload events for given calendar.
+   *
+   * @param {Object} calendar - Calendar data object to be reloaded.
+   */
+  reloadEvents: function (calendar) {
+    if (calendar.calendarErrored ||
+        calendar.eventsLoading ||
+        this.userInfo.signedOut) {
+      return;
+    }
+
+    var calendars;
+    if (calendar === ALL_CALENDAR) {
+      calendars = this.calendars;
+    } else {
+      calendars = [calendar];
+    }
+
+    this._loadEvents(calendars)
+      .catch(logError);
+  },
+
+  /**
+   * Update event's data on the server.
+   *
+   * @param {Object} params - Calendar and event ids as well as new starred
+   *   and/or hidden state.
+   */
+  patchEvent: function (params) {
+    this._singleSortEvent(params.eventId, params.calendarId);
+    this._sendReAuthedRequest(loadedTickTockAPI
+      .then(function (ticktock) {
+        return ticktock.events.patch({
+          calendarId: encodeURIComponent(params.calendarId),
+          eventId: params.eventId,
+          starred: params.starred,
+          hidden: params.hidden,
+        });
+      }))
+      .catch(logError);
+  },
+
+  /**
+   * Update calendar's data on the server.
+   *
+   * @param {Object} params - Calendar id and new hidden state.
+   */
+  patchCalendar: function (params) {
+    var calendar = getCalendarById(params.calendarId);
+
+    calendar.events.forEach(function (calendarEvent) {
+      calendarEvent.calendarHidden = calendar.hidden;
+    });
+
+    if (calendar === this.selectedCalendar) {
+      calendar.events.forEach(function (calendarEvent, i) {
+        this.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
+                        calendar.hidden);
+      });
+    } else if (this.selectedCalendar === ALL_CALENDAR) {
+      ALL_CALENDAR.events.forEach(function (calendarEvent, i) {
+        if (calendarEvent.calendarId === event.target.calendarId) {
+          this.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
+                          calendar.hidden);
+        }
+      });
+    }
+
+    this._sendReAuthedRequest(loadedTickTockAPI
+      .then(function (ticktock) {
+        return ticktock.calendars.patch({
+          calendarId: encodeURIComponent(params.calendarId),
+          hidden: params.hidden,
+        });
+      }))
+      .catch(logError);
+  },
+
+  deleteEventById: function (calendarId, eventId) {
+    var calendar = getCalendarById(calendarId);
+    var i;
+    var removed;
+
+    i = getEventIndexById(calendar, eventId);
+    if (i !== -1) {
+      removed = calendar.events.splice(i, 1);
+      if (calendar === this.selectedCalendar) {
+        this.notifySplices('selectedCalendar.events', [
+          {
+            index: i,
+            removed: removed,
+            addedCount: 0,
+            object: this.selectedCalendar.events,
+            type: 'splice',
+          },
+        ]);
+      }
+    }
+
+    i = getEventIndexById(ALL_CALENDAR, eventId, calendarId);
+    if (i >= 0) {
+      removed = ALL_CALENDAR.events.splice(i, 1);
+      if (calendar === this.selectedCalendar) {
+        this.notifySplices('selectedCalendar.events', [
+          {
+            index: i,
+            removed: removed,
+            addedCount: 0,
+            object: this.selectedCalendar.events,
+            type: 'splice',
+          },
+        ]);
+      }
+    }
+  },
+
+  _authorize: function (mode) {
+    return GAPIManager.authorize(mode)
+      .then((function () {
+        this.userInfo = LOADING_USER_INFO;
+      }).bind(this))
+      .catch((function (err) {
+        if (err instanceof GAPIManager.AuthError && err.accessDenied) {
+          this.signOut();
+        }
+
+        throw err;
+      }).bind(this));
+  },
+
+  _loadAllData: function () {
+    return Promise.all([
+      this._loadProfile()
+        .catch(this._handleHTTPError.bind(this)),
+      this._loadCalendars()
+        .then(this._loadEvents.bind(this))
+        .catch(this._handleHTTPError.bind(this)),
+    ]);
+  },
+
+  _loadProfile: function () {
+    return this._sendReAuthedRequest(loadedOauth2API
+      .then(function (oauth2) {
+        return oauth2.userinfo.v2.me.get({
+          fields: 'name,picture',
+        });
+      }))
+      .then((function (resp) {
+        resp.loading = false;
+        resp.signedOut = false;
+        this.userInfo = resp;
+      }).bind(this));
+  },
+
+  _loadCalendars: function () {
+    _calendarsLoading = true;
+    return this._sendReAuthedRequest(loadedTickTockAPI
+      .then(function (ticktock) {
+        return ticktock.calendars.list({
+          hidden: null,
+        });
+      }))
+      .then((function (resp) {
+        var calendars = resp.items || [];
+        calendars.forEach((function (calendar, i) {
+          var proxyIndex = _calendars.loading.findIndex(
+            function (loadingCalendar) {
+              return loadingCalendar.calendarId === calendar.calendarId;
+            });
+
+          if (proxyIndex !== -1) {
+            var proxy = _calendars.loading.splice(proxyIndex, 1)[0];
+            updateObject(proxy, calendar);
+            calendar = proxy;
+            calendars.splice(i, 1, calendar);
+          }
+
+          calendar.calendarErrored = false;
+
+          calendar.events = calendar.events || [];
+          calendar.eventsErrored = calendar.eventsErrored || false;
+          calendar.eventsLoading = calendar.eventsLoading || false;
+          calendar.nextPageToken = calendar.nextPageToken || null;
+
+          if (calendar === this.selectedCalendar) {
+            Object.keys(calendar).forEach((function (key) {
+              this.notifyPath('selectedCalendar.' + key, calendar[key]);
+            }).bind(this));
+          }
+        }).bind(this));
+
+        _calendars.loading.forEach(setCalendarToErrorState);
+        _calendars.loading = [];
+        _calendarsLoading = false;
+
+        this.calendars = _calendars.all = calendars;
+        return calendars;
+      }).bind(this));
+  },
+
+  _loadEvents: function (calendars) {
+    var timeZone;
+    try {
+      timeZone =  Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (err) {
+      timeZone = null;
+    }
+
+    var promise = Promise.all(calendars.map((function (calendar) {
+      calendar.events = [];
+      calendar.eventsErrored = false;
+      calendar.eventsLoading = true;
+      if (calendar === this.selectedCalendar) {
+        this.notifyPath('selectedCalendar.eventsErrored', false);
+        this.notifyPath('selectedCalendar.eventsLoading', true);
+      }
+
+      return this._sendReAuthedRequest(loadedTickTockAPI
+        .then(function (ticktock) {
+          return ticktock.events.list({
+            calendarId: encodeURIComponent(calendar.calendarId),
+            hidden: null,
+            maxResults: 10,
+            timeZone: timeZone,
+          });
+        }))
+        .then(function (resp) {
+          if (resp.items) {
+            resp.items.forEach(function (calendarEvent) {
+              calendarEvent.color = calendar.color;
+              calendarEvent.calendarHidden = calendar.hidden;
+            });
+
+            calendar.events = resp.items;
+            sortEvents(calendar);
+          }
+        })
+        .catch((function (err) {
+          calendar.eventsErrored = true;
+          if (calendar === this.selectedCalendar) {
+            this.notifyPath('selectedCalendar.eventsErrored', true);
+          }
+
+          throw err;
+        }).bind(this))
+        .catch(this._handleHTTPError.bind(this))
+        .then((function () {
+          calendar.eventsLoading = false;
+          if (calendar === this.selectedCalendar) {
+            this.notifyPath('selectedCalendar.events', calendar.events);
+            this.notifyPath('selectedCalendar.eventsLoading', false);
+          }
+        }).bind(this));
+    }).bind(this)))
+      .then(this._updateAllCalendarState.bind(this));
+
+    this._updateAllCalendarState();
+
+    return promise;
+  },
+
+  _updateAllCalendarState: function () {
+    ALL_CALENDAR.events = [];
+    this.calendars.forEach(function (calendar) {
+      ALL_CALENDAR.events = ALL_CALENDAR.events.concat(calendar.events);
+    });
+
+    sortEvents(ALL_CALENDAR);
+
+    ALL_CALENDAR.eventsLoading = false;
+    ALL_CALENDAR.eventsErrored = true;
+    this.calendars.forEach(function (calendar) {
+      if (calendar.eventsLoading) {
+        ALL_CALENDAR.eventsLoading = true;
+      }
+
+      if (!calendar.eventsErrored) {
+        ALL_CALENDAR.eventsErrored = false;
+      }
+    });
+
+    if (ALL_CALENDAR === this.selectedCalendar) {
+      this.notifyPath('selectedCalendar.events', ALL_CALENDAR.events);
+      this.notifyPath('selectedCalendar.eventsLoading',
+                      ALL_CALENDAR.eventsLoading);
+      this.notifyPath('selectedCalendar.eventsErrored',
+                      ALL_CALENDAR.eventsErrored);
+    }
+  },
+
+  _handleHTTPError: function (err) {
+    if (err instanceof GAPIManager.HTTPError) {
+      console.warn(err);
+      if (err.code === -1) {
+        this.fire('network-error');
+      } else if (err.code === 401) {
+        this.signOut();
+      } else {
+        this.fire('error');
+      }
+    } else {
+      throw err;
+    }
+  },
+
+  _sendReAuthedRequest: function (request) {
+    return request
+      .catch((function (err) {
+        if (err.code === 401) {
+          console.warn(err);
+          return this.signIn(true)
+            .then(function () {
+              return request;
+            });
+        } else {
+          throw err;
+        }
+      }).bind(this));
+  },
+
+  /**
+   * Move an event to its proper place in its calendar and the ALL_CALENDAR.
+   *
+   * Uses the insertion sort algorithm, and notifies splices.
+   *
+   * @param {String} eventId - The event's ID.
+   * @param {String} calendarId - The event's calendar's ID.
+   */
+  _singleSortEvent: function (eventId, calendarId) {
+    var calendar = getCalendarById(calendarId);
+    this._singleSortByCalendar(calendar, eventId);
+    if (calendar !== ALL_CALENDAR) {
+      this._singleSortByCalendar(ALL_CALENDAR, eventId);
+    }
+  },
+
+  _singleSortByCalendar: function (calendar, eventId) {
+    /************************
+    Algorithm Summary Drawing
+    *************************
+                  *-3
+    [1, 6, 9, 15, 19, 22]
+        ^
+    (1, 3)? yes
+       (6, 3)? no
+
+    [1, 6, 9, 15, 3, 19, 22]
+            - to -
+    [1, 3, 6, 9, 15, 19, 22]
+    -----------------------------
+        *-16
+    [1, 9, 15, 17, 19, 22]
+               ^
+    (1, 16)? yes
+       (9, 16)? yes
+          (15, 16)? yes
+              (17, 16)? no
+
+    [1, 16, 9, 15, 17, 19, 22]
+             - to -
+    [1, 9, 15, 16, 17, 19, 22]
+    ************************/
+    var misplacedIndex = calendar.events.findIndex(function (calendarEvent) {
+      return calendarEvent.eventId === eventId;
+    });
+
+    if (misplacedIndex === -1) {
+      return;
+    }
+
+    var misplacedEvent = calendar.events.splice(misplacedIndex, 1)[0];
+
+    var targetIndex = calendar.events.findIndex(function (calendarEvent) {
+      return compareEvents(calendarEvent, misplacedEvent) > 0;
+    });
+
+    calendar.events.splice(targetIndex, 0, misplacedEvent);
+
+    if (calendar === this.selectedCalendar) {
+      this.notifySplices('selectedCalendar.events', [
+        {
+          index: misplacedIndex,
+          removed: [misplacedEvent],
+          addedCount: 0,
+          object: this.selectedCalendar.events,
+          type: 'splice',
+        },
+        {
+          index: targetIndex,
+          removed: [],
+          addedCount: 1,
+          object: this.selectedCalendar.events,
+          type: 'splice',
+        },
+      ]);
+    }
+  },
+});
+
+APIManager.getCalendarById = getCalendarById;
+
+//
+// Utility function
+//
+
+function logError(err) {
+  console.error(err);
+  throw err;
+}
+
+function getCalendarById(calendarId) {
+  if (calendarId === ALL_CALENDAR.calendarId) {
+    return ALL_CALENDAR;
+  } else {
+    var isThisCalendar = function (calendar) {
+      return calendar.calendarId === calendarId;
+    };
+
+    return _calendars.all.find(isThisCalendar) ||
+           _calendars.loading.find(isThisCalendar) ||
+           makeProxyCalendar(calendarId);
+  }
+}
+
+function getEventIndexById(calendar, eventId, calendarId) {
+  return calendar.events.findIndex(function (calendarEvent) {
+    return calendarEvent.eventId === eventId &&
+           calendarEvent.calendarId === (calendarId || calendar.calendarId);
+  });
+}
+
+function makeProxyCalendar(calendarId) {
+  var proxy = {
+    name: 'TickTock',
+    calendarId: calendarId,
+    color: '#e91e63',
+    eventsErrored: false,
+    eventsLoading: true,
+    calendarErrored: false,
+    hidden: false,
+    events: [],
+    nextPageToken: null,
+  };
+
+  if (_calendarsLoading) {
+    _calendars.loading.push(proxy);
+    return proxy;
+  } else {
+    setCalendarToErrorState(proxy);
+    return proxy;
+  }
+}
+
+function setCalendarToErrorState(calendar) {
+  calendar.eventsLoading = false;
+  calendar.eventsErrored = true;
+  calendar.calendarErrored = true;
+}
+
+// function updateListedCalendars() {
+//   if (app.userInfo.signedOut) {
+//     app.listedCalendars = [];
+//     app.hasHiddenCalendars = false;
+//     return;
+//   }
+//
+//   if (app.selectedCalendar.hidden) {
+//     app.showHiddenCalendars = true;
+//   }
+//
+//   var hasHidden = false;
+//   var listed = [];
+//   app.calendars.forEach(function (calendar) {
+//     if (!hasHidden && calendar.hidden) {
+//       hasHidden = true;
+//     }
+//
+//     if (!calendar.hidden || app.showHiddenCalendars) {
+//       listed.push(calendar);
+//     }
+//   });
+//
+//   app.listedCalendars = listed;
+//   app.hasHiddenCalendars = hasHidden;
+// }
+
+/**
+ * Sort all of a calendar's events.
+ *
+ * Does not notify.
+ *
+ * @param {Object} calendar - The calendar object whose events should be
+ *   sorted.
+ */
+function sortEvents(calendar) {
+  calendar.events = calendar.events.sort(compareEvents);
+}
+
+function compareBools(a, b) {
+  // True is first.
+  return b - a;
+}
+
+function compareStrings(a, b) {
+  // Sort alphabetically, any language, case insensitive.
+  return a.localeCompare(b);
+}
+
+function compareEvents(a, b) {
+  // Sort order: starred, duration, alphabetical, id.
+  return compareBools(a.starred, b.starred) ||
+         compareStrings(a.startDate || a.endDate,
+                        b.startDate || b.endDate) ||
+         compareStrings(a.name, b.name) ||
+         compareStrings(a.eventId, b.eventId) ||
+         0;
+}
+
+function updateObject(object, newValues) {
+  Object.keys(object).forEach(function (key) {
+    object[key] = newValues[key];
+  });
+}
+
+window.APIManager = APIManager;
+
+})();
+</script>
