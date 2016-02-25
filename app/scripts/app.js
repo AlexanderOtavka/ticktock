@@ -10,8 +10,6 @@ subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 */
 
-/* globals APIManager */
-
 (function (app) {
 'use strict';
 
@@ -61,6 +59,11 @@ app.getHiddenCalendarToggleText = function (showHiddenCalendars) {
                                'Show Hidden Calendars';
 };
 
+app.getHideHiddenCalendarToggle = function (hasHiddenCalendars,
+                                            selectedHidden) {
+  return selectedHidden || !hasHiddenCalendars;
+};
+
 app.getUrlEncoded = function (string) {
   return encodeURIComponent(string);
 };
@@ -72,7 +75,8 @@ app.getUrlDecoded = function (string) {
 app.getCalendarFilter = function (showHiddenCalendars) {
   if (!showHiddenCalendars) {
     return function (calendar) {
-      return !calendar.hidden;
+      return !calendar.hidden && !calendar.calendarLoading &&
+             !calendar.calendarErrored;
     };
   } else {
     return null;
@@ -136,7 +140,12 @@ app.scrollPageToTop = function () {
 };
 
 app.selectCalendar = function (calendarId) {
-  var calendar = APIManager.getCalendarById(calendarId);
+  var calendar;
+  if (calendarId) {
+    calendar = app.$.apiManager.getCalendarById(calendarId);
+  } else {
+    calendar = app.selectedCalendar;
+  }
 
   if (calendar.hidden) {
     app.showHiddenCalendars = true;
@@ -144,7 +153,12 @@ app.selectCalendar = function (calendarId) {
 
   app.$.eventList.openedIndex = 0;
 
-  app.selectedCalendar = calendar;
+  console.log(calendar);
+  app.$$scal = calendar;
+
+  console.log(app.calendars);
+
+  app.$.calendarSelector.select(calendar);
 };
 
 app.toggleShowHiddenEvents = function () {
@@ -171,6 +185,10 @@ app.refreshThisCalendar = function () {
 //
 // Event handlers
 //
+
+app.onCalendarsLoaded = function () {
+  app.selectCalendar();
+};
 
 app.onEventChanged = function (event) {
   app.$.apiManager.patchEvent(event.detail);

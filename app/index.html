@@ -115,7 +115,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             is="dom-repeat"
             items="{{calendars}}"
             filter="{{getCalendarFilter(showHiddenCalendars)}}"
-            observe="hidden">
+            observe="hidden calendarLoading calendarErrored">
             <a
               href="/calendars/[[getUrlEncoded(item.calendarId)]]"
               on-click="closeDrawer"
@@ -133,7 +133,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div
             id="showHiddenCalendars"
             on-tap="toggleShowHiddenCalendars"
-            hidden="[[!hasHiddenCalendars]]">
+            hidden="[[getHideHiddenCalendarToggle(hasHiddenCalendars, selectedCalendar.hidden)]]">
             [[getHiddenCalendarToggleText(showHiddenCalendars)]]
           </div>
         </paper-menu>
@@ -264,6 +264,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       text="There was a problem with the network.">
     </paper-toast>
 
+    <calendar-selector
+      id="calendarSelector"
+      calendars="{{calendars}}"
+      selected-calendar="{{selectedCalendar}}">
+    </calendar-selector>
+
     <api-manager
       id="apiManager"
       user-info="{{userInfo}}"
@@ -273,7 +279,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       show-hidden-events="[[showHiddenEvents]]"
       show-hidden-calendars="[[showHiddenCalendars]]"
       on-error="showErrorToast"
-      on-network-error="showNetworkErrorToast">
+      on-network-error="showNetworkErrorToast"
+      on-calendars-loaded="onCalendarsLoaded">
     </api-manager>
 
     <!-- SW Stuff -->

@@ -57,7 +57,6 @@ var ALL_CALENDAR = {
 //
 
 var _calendars = {
-  loading: [],
   all: [],
   unhidden: [],
 };
@@ -68,7 +67,7 @@ var _calendarsLoading = true;
 // Element registration
 //
 
-var APIManager = Polymer({
+Polymer({
   is: 'api-manager',
 
   properties: {
@@ -80,18 +79,23 @@ var APIManager = Polymer({
     calendars: {
       type: Object,
       notify: true,
+      value: function () {
+        return [];
+      },
     },
     hasHiddenCalendars: {
       type: Boolean,
       notify: true,
       readOnly: true,
+      value: false,
     },
 
     // TODO: move calendar selection to app.js
     selectedCalendar: {
       type: Object,
       notify: true,
-      value: ALL_CALENDAR,
+
+      // value: ALL_CALENDAR,
     },
     showHiddenEvents: Boolean,
     showHiddenCalendars: Boolean,
@@ -167,10 +171,10 @@ var APIManager = Polymer({
    * @param {Object} params - Calendar id and new hidden state.
    */
   patchCalendar: function (params) {
-    var calendar = getCalendarById(params.calendarId);
+    var calendar = this.getCalendarById(params.calendarId);
 
     calendar.events.forEach(function (calendarEvent) {
-      calendarEvent.calendarHidden = calendar.hidden;
+      calendarEvent.hidden = calendar.hidden;
     });
 
     if (calendar === this.selectedCalendar) {
@@ -179,12 +183,12 @@ var APIManager = Polymer({
                         calendar.hidden);
       });
     } else if (this.selectedCalendar === ALL_CALENDAR) {
-      ALL_CALENDAR.events.forEach(function (calendarEvent, i) {
+      ALL_CALENDAR.events.forEach((function (calendarEvent, i) {
         if (calendarEvent.calendarId === event.target.calendarId) {
           this.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
                           calendar.hidden);
         }
-      });
+      }).bind(this));
     }
 
     this._sendReAuthedRequest(loadedTickTockAPI
@@ -197,8 +201,21 @@ var APIManager = Polymer({
       .catch(logError);
   },
 
+  getCalendarById: function (calendarId) {
+    if (calendarId === ALL_CALENDAR.calendarId) {
+      return ALL_CALENDAR;
+    } else {
+      var isThisCalendar = function (calendar) {
+        return calendar.calendarId === calendarId;
+      };
+
+      return _calendars.all.find(isThisCalendar) ||
+             this._makeProxyCalendar(calendarId);
+    }
+  },
+
   deleteEventById: function (calendarId, eventId) {
-    var calendar = getCalendarById(calendarId);
+    var calendar = this.getCalendarById(calendarId);
     var i;
     var removed;
 
@@ -233,6 +250,10 @@ var APIManager = Polymer({
         ]);
       }
     }
+  },
+
+  _getCalendarKey: function (calendar) {
+    return Polymer.Collection.get(this.calendars).getKey(calendar);
   },
 
   _authorize: function (mode) {
@@ -282,26 +303,32 @@ var APIManager = Polymer({
         });
       }))
       .then((function (resp) {
+        var hasHiddenCalendars = false;
         var calendars = resp.items || [];
         calendars.forEach((function (calendar, i) {
-          var proxyIndex = _calendars.loading.findIndex(
+          var proxyIndex = _calendars.all.findIndex(
             function (loadingCalendar) {
               return loadingCalendar.calendarId === calendar.calendarId;
             });
 
           if (proxyIndex !== -1) {
-            var proxy = _calendars.loading.splice(proxyIndex, 1)[0];
+            var proxy = _calendars.all.splice(proxyIndex, 1)[0];
             updateObject(proxy, calendar);
             calendar = proxy;
             calendars.splice(i, 1, calendar);
           }
 
           calendar.calendarErrored = false;
+          calendar.calendarLoading = false;
 
           calendar.events = calendar.events || [];
           calendar.eventsErrored = calendar.eventsErrored || false;
           calendar.eventsLoading = calendar.eventsLoading || false;
           calendar.nextPageToken = calendar.nextPageToken || null;
+
+          if (calendar.hidden) {
+            hasHiddenCalendars = true;
+          }
 
           if (calendar === this.selectedCalendar) {
             Object.keys(calendar).forEach((function (key) {
@@ -310,11 +337,17 @@ var APIManager = Polymer({
           }
         }).bind(this));
 
-        _calendars.loading.forEach(setCalendarToErrorState);
-        _calendars.loading = [];
+        this._setHasHiddenCalendars(hasHiddenCalendars);
+
         _calendarsLoading = false;
+        _calendars.all.forEach(function (calendar) {
+          if (calendar.calendarLoading) {
+            setCalendarToErrorState(calendar);
+          }
+        });
 
         this.calendars = _calendars.all = calendars;
+        this.fire('calendars-loaded');
         return calendars;
       }).bind(this));
   },
@@ -448,7 +481,7 @@ var APIManager = Polymer({
    * @param {String} calendarId - The event's calendar's ID.
    */
   _singleSortEvent: function (eventId, calendarId) {
-    var calendar = getCalendarById(calendarId);
+    var calendar = this.getCalendarById(calendarId);
     this._singleSortByCalendar(calendar, eventId);
     if (calendar !== ALL_CALENDAR) {
       this._singleSortByCalendar(ALL_CALENDAR, eventId);
@@ -516,9 +549,30 @@ var APIManager = Polymer({
       ]);
     }
   },
-});
 
-APIManager.getCalendarById = getCalendarById;
+  _makeProxyCalendar: function (calendarId) {
+    var proxy = {
+      name: 'TickTock',
+      calendarId: calendarId,
+      color: '#e91e63',
+      eventsErrored: false,
+      eventsLoading: true,
+      calendarErrored: false,
+      calendarLoading: true,
+      hidden: false,
+      events: [],
+      nextPageToken: null,
+    };
+
+    if (!_calendarsLoading) {
+      setCalendarToErrorState(proxy);
+    }
+
+    _calendars.all.push(proxy);
+    this.calendars.push(proxy);
+    return proxy;
+  },
+});
 
 //
 // Utility function
@@ -529,20 +583,6 @@ function logError(err) {
   throw err;
 }
 
-function getCalendarById(calendarId) {
-  if (calendarId === ALL_CALENDAR.calendarId) {
-    return ALL_CALENDAR;
-  } else {
-    var isThisCalendar = function (calendar) {
-      return calendar.calendarId === calendarId;
-    };
-
-    return _calendars.all.find(isThisCalendar) ||
-           _calendars.loading.find(isThisCalendar) ||
-           makeProxyCalendar(calendarId);
-  }
-}
-
 function getEventIndexById(calendar, eventId, calendarId) {
   return calendar.events.findIndex(function (calendarEvent) {
     return calendarEvent.eventId === eventId &&
@@ -550,32 +590,11 @@ function getEventIndexById(calendar, eventId, calendarId) {
   });
 }
 
-function makeProxyCalendar(calendarId) {
-  var proxy = {
-    name: 'TickTock',
-    calendarId: calendarId,
-    color: '#e91e63',
-    eventsErrored: false,
-    eventsLoading: true,
-    calendarErrored: false,
-    hidden: false,
-    events: [],
-    nextPageToken: null,
-  };
-
-  if (_calendarsLoading) {
-    _calendars.loading.push(proxy);
-    return proxy;
-  } else {
-    setCalendarToErrorState(proxy);
-    return proxy;
-  }
-}
-
 function setCalendarToErrorState(calendar) {
-  calendar.eventsLoading = false;
   calendar.eventsErrored = true;
+  calendar.eventsLoading = false;
   calendar.calendarErrored = true;
+  calendar.calendarLoading = false;
 }
 
 // function updateListedCalendars() {
@@ -642,8 +661,6 @@ function updateObject(object, newValues) {
     object[key] = newValues[key];
   });
 }
-
-window.APIManager = APIManager;
 
 })();
 </script>

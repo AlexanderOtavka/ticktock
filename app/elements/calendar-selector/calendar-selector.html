@@ -1,0 +1,41 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<script>
+(function () {
+'use strict';
+
+Polymer({
+  is: 'calendar-selector',
+
+  properties: {
+    calendars: {
+      type: Array,
+      observer: '_calendarsChanged',
+      value: function () {
+        return [];
+      },
+    },
+    selectedCalendar: {
+      type: Object,
+      notify: true,
+      readOnly: true,
+    },
+  },
+
+  select: function (calendar) {
+    var key = Polymer.Collection.get(this.calendars).getKey(calendar);
+    this._setSelectedCalendar(calendar);
+    this.linkPaths('selectedCalendar', 'calendars.' + key);
+  },
+
+  _calendarsChanged: function (newArray, oldArray) {
+    console.log('calendars changed');
+    console.log(oldArray);
+    console.log(newArray);
+  },
+
+  // TODO: observe the calendar splices
+});
+
+})();
+</script>
