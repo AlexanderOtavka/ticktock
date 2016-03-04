@@ -10,7 +10,7 @@ Polymer({
   properties: {
     calendars: {
       type: Array,
-      observer: '_calendarsChanged',
+      observer: '_reselect',
       value: function () {
         return [];
       },
@@ -22,19 +22,24 @@ Polymer({
     },
   },
 
+  observers: [
+    '_selectedHiddenChanged(selectedCalendar.hidden)',
+  ],
+
   select: function (calendar) {
-    var key = Polymer.Collection.get(this.calendars).getKey(calendar);
+    var collection = Polymer.Collection.get(this.calendars);
+    var newKey = collection.getKey(calendar);
     this._setSelectedCalendar(calendar);
-    this.linkPaths('selectedCalendar', 'calendars.' + key);
+    this.linkPaths('selectedCalendar', 'calendars.' + newKey);
   },
 
-  _calendarsChanged: function (newArray, oldArray) {
-    console.log('calendars changed');
-    console.log(oldArray);
-    console.log(newArray);
+  _selectedHiddenChanged: function (hidden) {
+    this.fire('selected-hidden-changed', { value: hidden });
   },
 
-  // TODO: observe the calendar splices
+  _reselect: function () {
+    this.select(this.selectedCalendar);
+  },
 });
 
 })();

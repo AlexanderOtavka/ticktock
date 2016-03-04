@@ -147,16 +147,7 @@ app.selectCalendar = function (calendarId) {
     calendar = app.selectedCalendar;
   }
 
-  if (calendar.hidden) {
-    app.showHiddenCalendars = true;
-  }
-
   app.$.eventList.openedIndex = 0;
-
-  console.log(calendar);
-  app.$$scal = calendar;
-
-  console.log(app.calendars);
 
   app.$.calendarSelector.select(calendar);
 };
@@ -186,8 +177,10 @@ app.refreshThisCalendar = function () {
 // Event handlers
 //
 
-app.onCalendarsLoaded = function () {
-  app.selectCalendar();
+app.onSelectedCalendarHiddenChanged = function (event) {
+  if (event.detail.value) {
+    app.showHiddenCalendars = true;
+  }
 };
 
 app.onEventChanged = function (event) {

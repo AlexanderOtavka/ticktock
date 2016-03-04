@@ -44,9 +44,12 @@ var ALL_CALENDAR = {
   name: 'All Calendars',
   calendarId: '*',
   color: '#e91e63',
+  icon: 'ticktock:calendar-multiple',
+  noMenu: true,
   eventsErrored: false,
   eventsLoading: true,
   calendarErrored: false,
+  calendarLoading: false,
   hidden: false,
   events: [],
   nextPageToken: null,
@@ -57,8 +60,8 @@ var ALL_CALENDAR = {
 //
 
 var _calendars = {
-  all: [],
-  unhidden: [],
+  all: [ALL_CALENDAR],
+  unhidden: [ALL_CALENDAR],
 };
 
 var _calendarsLoading = true;
@@ -80,7 +83,7 @@ Polymer({
       type: Object,
       notify: true,
       value: function () {
-        return [];
+        return [ALL_CALENDAR];
       },
     },
     hasHiddenCalendars: {
@@ -89,16 +92,33 @@ Polymer({
       readOnly: true,
       value: false,
     },
-
-    // TODO: move calendar selection to app.js
-    selectedCalendar: {
-      type: Object,
-      notify: true,
-
-      // value: ALL_CALENDAR,
+    showHiddenEvents: {
+      type: Boolean,
     },
-    showHiddenEvents: Boolean,
-    showHiddenCalendars: Boolean,
+    showHiddenCalendars: {
+      type: Boolean,
+    },
+  },
+
+  observers: [
+    '_calendarsChanged(calendars.*)',
+  ],
+
+  _calendarsChanged: function (changeRecord) {
+    var allCalendarIndex = this.calendars.indexOf(ALL_CALENDAR);
+    var calendarsSplicesRE = new RegExp('^calendars$');
+    // var calendarEventsSplicesRE =
+    //   new RegExp('^calendars\\.#(?!' + allCalendarIndex + ')\\d+\\.events$');
+    var calendarStateRE =
+      new RegExp('^calendars\\.#(?!' + allCalendarIndex + ')\\d+\\.' +
+                 '(hidden|eventsErrored|eventsLoading)$');
+
+    if (calendarsSplicesRE.test(changeRecord.path)) {
+      this._updateAllCalendarState();
+      this._updateAllCalendarEvents();
+    } else if (calendarStateRE.test(changeRecord.path)) {
+      this._updateAllCalendarState();
+    }
   },
 
   /**
@@ -162,6 +182,7 @@ Polymer({
           hidden: params.hidden,
         });
       }))
+      .catch(this._handleHTTPError.bind(this))
       .catch(logError);
   },
 
@@ -172,24 +193,21 @@ Polymer({
    */
   patchCalendar: function (params) {
     var calendar = this.getCalendarById(params.calendarId);
+    var calendarKey = this._getCalendarKey(calendar);
+    var allCalendarKey = this._getCalendarKey(ALL_CALENDAR);
 
-    calendar.events.forEach(function (calendarEvent) {
-      calendarEvent.hidden = calendar.hidden;
-    });
+    calendar.events.forEach((function (calendarEvent, i) {
+      this.set(['calendars', calendarKey, 'events', i, 'calendarHidden'],
+               calendar.hidden);
+    }).bind(this));
 
-    if (calendar === this.selectedCalendar) {
-      calendar.events.forEach(function (calendarEvent, i) {
-        this.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
-                        calendar.hidden);
-      });
-    } else if (this.selectedCalendar === ALL_CALENDAR) {
-      ALL_CALENDAR.events.forEach((function (calendarEvent, i) {
-        if (calendarEvent.calendarId === event.target.calendarId) {
-          this.notifyPath(['selectedCalendar', 'events', i, 'calendarHidden'],
-                          calendar.hidden);
-        }
-      }).bind(this));
-    }
+    ALL_CALENDAR.events.forEach((function (calendarEvent, i) {
+      if (calendarEvent.calendarId === calendar.calendarId) {
+        this.notifyPath(
+          ['calendars', allCalendarKey, 'events', i, 'calendarHidden'],
+          calendarEvent.calendarHidden);
+      }
+    }).bind(this));
 
     this._sendReAuthedRequest(loadedTickTockAPI
       .then(function (ticktock) {
@@ -198,57 +216,32 @@ Polymer({
           hidden: params.hidden,
         });
       }))
+      .catch(this._handleHTTPError.bind(this))
       .catch(logError);
   },
 
   getCalendarById: function (calendarId) {
-    if (calendarId === ALL_CALENDAR.calendarId) {
-      return ALL_CALENDAR;
-    } else {
-      var isThisCalendar = function (calendar) {
-        return calendar.calendarId === calendarId;
-      };
+    var foundCalendar = _calendars.all.find(function (calendar) {
+      return calendar.calendarId === calendarId;
+    });
 
-      return _calendars.all.find(isThisCalendar) ||
-             this._makeProxyCalendar(calendarId);
-    }
+    return foundCalendar || this._makeProxyCalendar(calendarId);
   },
 
   deleteEventById: function (calendarId, eventId) {
     var calendar = this.getCalendarById(calendarId);
     var i;
-    var removed;
 
     i = getEventIndexById(calendar, eventId);
     if (i !== -1) {
-      removed = calendar.events.splice(i, 1);
-      if (calendar === this.selectedCalendar) {
-        this.notifySplices('selectedCalendar.events', [
-          {
-            index: i,
-            removed: removed,
-            addedCount: 0,
-            object: this.selectedCalendar.events,
-            type: 'splice',
-          },
-        ]);
-      }
+      var calendarKey = this._getCalendarKey(calendar);
+      this.splice(['calendars', calendarKey, 'events'], i, 1);
     }
 
     i = getEventIndexById(ALL_CALENDAR, eventId, calendarId);
-    if (i >= 0) {
-      removed = ALL_CALENDAR.events.splice(i, 1);
-      if (calendar === this.selectedCalendar) {
-        this.notifySplices('selectedCalendar.events', [
-          {
-            index: i,
-            removed: removed,
-            addedCount: 0,
-            object: this.selectedCalendar.events,
-            type: 'splice',
-          },
-        ]);
-      }
+    if (i !== -1) {
+      var allCalendarKey = this._getCalendarKey(ALL_CALENDAR);
+      this.splice(['calendars', allCalendarKey, 'events'], i, 1);
     }
   },
 
@@ -306,33 +299,41 @@ Polymer({
         var hasHiddenCalendars = false;
         var calendars = resp.items || [];
         calendars.forEach((function (calendar, i) {
-          var proxyIndex = _calendars.all.findIndex(
+          var duplicateKey;
+          var duplicateIndex = _calendars.all.findIndex(
             function (loadingCalendar) {
               return loadingCalendar.calendarId === calendar.calendarId;
             });
 
-          if (proxyIndex !== -1) {
-            var proxy = _calendars.all.splice(proxyIndex, 1)[0];
-            updateObject(proxy, calendar);
-            calendar = proxy;
+          if (duplicateIndex !== -1) {
+            var duplicate = _calendars.all.splice(duplicateIndex, 1)[0];
+            duplicateKey = this._getCalendarKey(duplicate);
+            updateObject(duplicate, calendar);
+            calendar = duplicate;
             calendars.splice(i, 1, calendar);
           }
 
-          calendar.calendarErrored = false;
-          calendar.calendarLoading = false;
+          updateObject(calendar, {
+            calendarErrored: false,
+            calendarLoading: false,
+            icon: '',
+            noMenu: false,
+          });
 
-          calendar.events = calendar.events || [];
-          calendar.eventsErrored = calendar.eventsErrored || false;
-          calendar.eventsLoading = calendar.eventsLoading || false;
-          calendar.nextPageToken = calendar.nextPageToken || null;
+          addObjectFields(calendar, {
+            events: [],
+            eventsErrored: false,
+            eventsLoading: false,
+            nextPageToken: null,
+          });
 
           if (calendar.hidden) {
             hasHiddenCalendars = true;
           }
 
-          if (calendar === this.selectedCalendar) {
+          if (duplicateKey) {
             Object.keys(calendar).forEach((function (key) {
-              this.notifyPath('selectedCalendar.' + key, calendar[key]);
+              this.notifyPath(['calendars', duplicateKey, key], calendar[key]);
             }).bind(this));
           }
         }).bind(this));
@@ -346,8 +347,8 @@ Polymer({
           }
         });
 
-        this.calendars = _calendars.all = calendars;
-        this.fire('calendars-loaded');
+        this.calendars = _calendars.all = _calendars.all.concat(calendars);
+
         return calendars;
       }).bind(this));
   },
@@ -360,13 +361,12 @@ Polymer({
       timeZone = null;
     }
 
-    var promise = Promise.all(calendars.map((function (calendar) {
-      calendar.events = [];
-      calendar.eventsErrored = false;
-      calendar.eventsLoading = true;
-      if (calendar === this.selectedCalendar) {
-        this.notifyPath('selectedCalendar.eventsErrored', false);
-        this.notifyPath('selectedCalendar.eventsLoading', true);
+    return Promise.all(calendars.map((function (calendar) {
+      var calendarKey = this._getCalendarKey(calendar);
+      if (calendarKey) {
+        this.set(['calendars', calendarKey, 'events'], []);
+        this.set(['calendars', calendarKey, 'eventsErrored'], false);
+        this.set(['calendars', calendarKey, 'eventsLoading'], true);
       }
 
       return this._sendReAuthedRequest(loadedTickTockAPI
@@ -378,68 +378,70 @@ Polymer({
             timeZone: timeZone,
           });
         }))
-        .then(function (resp) {
+        .then((function (resp) {
+          calendarKey = this._getCalendarKey(calendar);
           if (resp.items) {
             resp.items.forEach(function (calendarEvent) {
               calendarEvent.color = calendar.color;
               calendarEvent.calendarHidden = calendar.hidden;
             });
 
-            calendar.events = resp.items;
+            if (calendarKey) {
+              this.set(['calendars', calendarKey, 'events'], resp.items);
+            }
+
             sortEvents(calendar);
           }
-        })
+        }).bind(this))
         .catch((function (err) {
-          calendar.eventsErrored = true;
-          if (calendar === this.selectedCalendar) {
-            this.notifyPath('selectedCalendar.eventsErrored', true);
+          if (calendarKey) {
+            this.set(['calendars', calendarKey, 'eventsErrored'], true);
           }
 
           throw err;
         }).bind(this))
         .catch(this._handleHTTPError.bind(this))
         .then((function () {
-          calendar.eventsLoading = false;
-          if (calendar === this.selectedCalendar) {
-            this.notifyPath('selectedCalendar.events', calendar.events);
-            this.notifyPath('selectedCalendar.eventsLoading', false);
+          if (calendarKey) {
+            this.set(['calendars', calendarKey, 'eventsLoading'], false);
           }
         }).bind(this));
     }).bind(this)))
-      .then(this._updateAllCalendarState.bind(this));
+      .then(this._updateAllCalendarEvents.bind(this));
+  },
 
-    this._updateAllCalendarState();
+  _updateAllCalendarEvents: function () {
+    var calendars = _calendars.all.slice();
+    var allCalendarIndex = calendars.indexOf(ALL_CALENDAR);
+    calendars.splice(allCalendarIndex, 1);
 
-    return promise;
+    var events = [];
+    calendars.forEach(function (calendar) {
+      events = events.concat(calendar.events);
+    });
+
+    events = events.sort(compareEvents);
+    this.set(['calendars', allCalendarIndex, 'events'], events);
   },
 
   _updateAllCalendarState: function () {
-    ALL_CALENDAR.events = [];
-    this.calendars.forEach(function (calendar) {
-      ALL_CALENDAR.events = ALL_CALENDAR.events.concat(calendar.events);
-    });
+    var allCalendarIndex = this.calendars.indexOf(ALL_CALENDAR);
+    var eventsLoading = (this.calendars.length - 1) ? false : _calendarsLoading;
+    var eventsErrored = (this.calendars.length - 1) ? true : false;
+    this.calendars.forEach((function (calendar) {
+      if (calendar !== ALL_CALENDAR) {
+        if (calendar.eventsLoading) {
+          eventsLoading = true;
+        }
 
-    sortEvents(ALL_CALENDAR);
-
-    ALL_CALENDAR.eventsLoading = false;
-    ALL_CALENDAR.eventsErrored = true;
-    this.calendars.forEach(function (calendar) {
-      if (calendar.eventsLoading) {
-        ALL_CALENDAR.eventsLoading = true;
+        if (!calendar.eventsErrored) {
+          eventsErrored = false;
+        }
       }
+    }).bind(this));
 
-      if (!calendar.eventsErrored) {
-        ALL_CALENDAR.eventsErrored = false;
-      }
-    });
-
-    if (ALL_CALENDAR === this.selectedCalendar) {
-      this.notifyPath('selectedCalendar.events', ALL_CALENDAR.events);
-      this.notifyPath('selectedCalendar.eventsLoading',
-                      ALL_CALENDAR.eventsLoading);
-      this.notifyPath('selectedCalendar.eventsErrored',
-                      ALL_CALENDAR.eventsErrored);
-    }
+    this.set(['calendars', allCalendarIndex, 'eventsLoading'], eventsLoading);
+    this.set(['calendars', allCalendarIndex, 'eventsErrored'], eventsErrored);
   },
 
   _handleHTTPError: function (err) {
@@ -530,20 +532,21 @@ Polymer({
 
     calendar.events.splice(targetIndex, 0, misplacedEvent);
 
-    if (calendar === this.selectedCalendar) {
-      this.notifySplices('selectedCalendar.events', [
+    var calendarKey = this._getCalendarKey(calendar);
+    if (calendarKey) {
+      this.notifySplices(['calendars', calendarKey, 'events'], [
         {
           index: misplacedIndex,
           removed: [misplacedEvent],
           addedCount: 0,
-          object: this.selectedCalendar.events,
+          object: calendar.events,
           type: 'splice',
         },
         {
           index: targetIndex,
           removed: [],
           addedCount: 1,
-          object: this.selectedCalendar.events,
+          object: calendar.events,
           type: 'splice',
         },
       ]);
@@ -555,6 +558,8 @@ Polymer({
       name: 'TickTock',
       calendarId: calendarId,
       color: '#e91e63',
+      icon: '',
+      noMenu: false,
       eventsErrored: false,
       eventsLoading: true,
       calendarErrored: false,
@@ -569,13 +574,13 @@ Polymer({
     }
 
     _calendars.all.push(proxy);
-    this.calendars.push(proxy);
+    this.push('calendars', proxy);
     return proxy;
   },
 });
 
 //
-// Utility function
+// Utility functions
 //
 
 function logError(err) {
@@ -657,8 +662,17 @@ function compareEvents(a, b) {
 }
 
 function updateObject(object, newValues) {
-  Object.keys(object).forEach(function (key) {
+  Object.keys(newValues).forEach(function (key) {
     object[key] = newValues[key];
+  });
+}
+
+function addObjectFields(object, fields) {
+  var keys = Object.keys(fields);
+  keys.forEach(function (key) {
+    if (!object.hasOwnProperty(key)) {
+      object[key] = fields[key];
+    }
   });
 }
 

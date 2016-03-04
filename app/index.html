@@ -99,18 +99,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <span id="userName">[[userInfo.name]]</span>
           </div>
 
-          <a
-            href="/"
-            on-click="closeDrawer"
-            data-route="eventsList:*">
-            <selectable-calendar
-              color="#e91e63"
-              icon="ticktock:calendar-multiple"
-              name="All Calendars"
-              no-menu>
-            </selectable-calendar>
-          </a>
-
           <template
             is="dom-repeat"
             items="{{calendars}}"
@@ -122,6 +110,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               data-route$="eventsList:[[item.calendarId]]">
               <selectable-calendar
                 color="[[item.color]]"
+                icon="[[item.icon]]"
+                no-menu="[[item.noMenu]]"
                 name="[[item.name]]"
                 calendar-id="[[item.calendarId]]"
                 calendar-hidden="{{item.hidden}}"
@@ -266,8 +256,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <calendar-selector
       id="calendarSelector"
-      calendars="{{calendars}}"
-      selected-calendar="{{selectedCalendar}}">
+      calendars="[[calendars]]"
+      selected-calendar="{{selectedCalendar}}"
+      on-selected-hidden-changed="onSelectedCalendarHiddenChanged">
     </calendar-selector>
 
     <api-manager
@@ -275,12 +266,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       user-info="{{userInfo}}"
       calendars="{{calendars}}"
       has-hidden-calendars="{{hasHiddenCalendars}}"
-      selected-calendar="{{selectedCalendar}}"
       show-hidden-events="[[showHiddenEvents]]"
       show-hidden-calendars="[[showHiddenCalendars]]"
       on-error="showErrorToast"
-      on-network-error="showNetworkErrorToast"
-      on-calendars-loaded="onCalendarsLoaded">
+      on-network-error="showNetworkErrorToast">
     </api-manager>
 
     <!-- SW Stuff -->
