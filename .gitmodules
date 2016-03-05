@@ -1,0 +1,4 @@
+[submodule "web-app"]
+	path = web-app
+	url = git@github.com:DHSDevelopersClub/ticktock-web.git
+	branch = dist

@@ -21,11 +21,11 @@ handlers:
 
 # Web App
 - url: /
-  static_files: dist/index.html
-  upload: dist/index\.html
+  static_files: web-app/index.html
+  upload: web-app/index\.html
   secure: always
 - url: /
-  static_dir: dist
+  static_dir: web-app
 
 
 skip_files:
@@ -40,16 +40,6 @@ skip_files:
 # Private Key Files
 - ^(.*/)?.*\.pem$
 - ^(.*/)?.*\.p12$
-
-# Dev Extras
-- ^node_modules/.*$
-- ^bower_components/.*$
-- ^app/.*$
-- ^package\.json$
-- ^bower\.json$
-- ^gulpfile\.js$
-- ^wct\.conf\.js$
-- ^requirements\.txt$
 
 
 libraries:
