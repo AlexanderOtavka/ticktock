@@ -1,3 +1,7 @@
+# Pip Dependencies
+# Install with `pip install -t lib -r requirements.txt`
+
+oauth2client<2
 google-api-python-client
 pytz
 basehash
