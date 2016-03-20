@@ -4,7 +4,12 @@
 
 ## Installing Requirements
 Run `pip install -t lib -r requirements.txt` from the project root to install
-all required python libraries.
+all required python libraries.  On Windows, you may need to run
+`python -m pip install -t lib -r requirements.txt`.
+
+## Pulling in Submodules
+Run `git submodule update --init` to pull in the latest production version of
+the web app.
 
 ## Running
 Run `dev_appserver.py . --log_level debug` to start up the dev server.
@@ -30,7 +35,6 @@ P12, and download the file to the project root.
 ### Making a .pem File From a .p12 File
 Run
 `openssl pkcs12 -in path/to/p12/file.p12 -out service-account-secret-key.pem -nodes`
-from project root, replacing
-`path/to/p12/file.p12` with the correct path.  Note, \*.p12 files are
-.gitignored, so it is okay to put them in the project root, to keep
-everything together.
+from the project root, replacing `path/to/p12/file.p12` with the correct path.
+Note, \*.p12 and \*.pem files are .gitignored, so it is okay to put them in the
+project root, to keep everything together.
